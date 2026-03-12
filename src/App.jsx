@@ -104,17 +104,15 @@ const AuthGate = ({ onLogin }) => {
 
 /* --- MAIN MODULES --- */
 
-const DashboardModule = ({ onNavigate, onDrillDown }) => {
+const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
   return (
     <div className="space-y-6">
       {/* Location Toggle */}
       <div className="flex flex-col sm:flex-row justify-between items-center bg-charcoal p-4 rounded border border-border">
-        <div className="flex space-x-2">
-          {["All Locations", "Baton Rouge", "Slidell", "Used Bikes Direct"].map((loc, i) => (
-            <button key={loc} onClick={() => onDrillDown('Location', {name: loc, status: 'Active', gm: i === 1 ? 'Jake Fontenot' : i === 2 ? 'Sarah Miller' : 'Mike Davis'})} className={`px-4 py-1 text-sm rounded ${i === 0 ? "bg-panel text-gold border border-gold-dim" : "text-text-muted hover:text-text cursor-pointer hover:border hover:border-border transition-all"}`}>
-              {loc}
-            </button>
-          ))}
+        <div className="flex space-x-2 items-center">
+           <span className="text-white font-bold">{company || "Friendly Powersports"}</span>
+           <span className="text-text-muted px-2">/</span>
+           <span className="text-gold">{location || "All Locations"}</span>
         </div>
         <div className="flex items-center space-x-4 mt-4 sm:mt-0">
           <span className="text-text-dim text-sm">MTD: Sep 1 - Sep 18, 2025</span>
@@ -1185,6 +1183,8 @@ const App = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [drillDown, setDrillDown] = useState(null);
+  const [activeCompany, setActiveCompany] = useState("Friendly Powersports");
+  const [activeLocation, setActiveLocation] = useState("All Locations");
 
   const handleDrillDown = (type, data) => setDrillDown({ type, data });
 
@@ -1216,9 +1216,29 @@ const App = () => {
            <img src="https://friendlyyamaha.com/wp-content/uploads/2025/10/new-logo.png" alt="Logo" className="h-6 object-contain mb-2" onError={(e) => { e.target.style.display='none'; }}/>
            <div className="text-gold font-playfair font-bold text-xl tracking-wider">DealerCommand™</div>
            
-           <div className="mt-4 w-full bg-black border border-border rounded px-3 py-2 flex justify-between items-center cursor-pointer hover:border-border-light text-sm">
-             <span className="truncate">Friendly Powersports</span>
-             <ChevronDown className="w-4 h-4 text-text-muted" />
+           <div className="mt-4 w-full">
+             <select 
+               className="w-full bg-black border border-border rounded px-2 py-2 text-sm text-white focus:outline-none focus:border-gold cursor-pointer"
+               value={`${activeCompany}|${activeLocation}`}
+               onChange={(e) => {
+                 const [comp, loc] = e.target.value.split('|');
+                 setActiveCompany(comp);
+                 setActiveLocation(loc);
+               }}
+             >
+               <optgroup label="Friendly Powersports">
+                 <option value="Friendly Powersports|All Locations">All Locations</option>
+                 <option value="Friendly Powersports|Baton Rouge, LA">Baton Rouge, LA</option>
+                 <option value="Friendly Powersports|Slidell, LA">Slidell, LA</option>
+               </optgroup>
+               <optgroup label="Used Bikes Direct">
+                 <option value="Used Bikes Direct|All Locations">All Locations</option>
+                 <option value="Used Bikes Direct|Baton Rouge, LA">Baton Rouge, LA</option>
+                 <option value="Used Bikes Direct|Slidell, LA">Slidell, LA</option>
+                 <option value="Used Bikes Direct|Houston, TX">Houston, TX</option>
+                 <option value="Used Bikes Direct|Dallas, TX">Dallas, TX</option>
+               </optgroup>
+             </select>
            </div>
         </div>
         
@@ -1291,7 +1311,7 @@ const App = () => {
         {/* SCROLLABLE MODULE RENDERER */}
         <div className="flex-1 overflow-y-auto p-6 bg-black">
           <div className="max-w-[1600px] mx-auto">
-            {activeTab === "Dashboard" && <DashboardModule onNavigate={setActiveTab} onDrillDown={handleDrillDown} />}
+            {activeTab === "Dashboard" && <DashboardModule onNavigate={setActiveTab} onDrillDown={handleDrillDown} company={activeCompany} location={activeLocation} />}
             {activeTab === "Sales" && <SalesModule onNavigate={setActiveTab} onDrillDown={handleDrillDown} />}
             {activeTab === "F&I / Finance" && <FIModule onDrillDown={handleDrillDown} />}
             {activeTab === "Inventory" && <InventoryModule onDrillDown={handleDrillDown} />}
