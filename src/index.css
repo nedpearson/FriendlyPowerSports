@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+:root {
+  --black: #0a0a0a;
+  --charcoal: #141414;
+  --dark: #1c1c1c;
+  --panel: #222222;
+  --border: #2e2e2e;
+  --border-light: #3a3a3a;
+  --gold: #c9a84c;
+  --gold-light: #e8c96a;
+  --gold-dim: #8a6d2f;
+  --red: #c0392b;
+  --green: #27ae60;
+  --amber: #e67e22;
+  --blue: #2980b9;
+  --text: #e8e4da;
+  --text-muted: #8a857a;
+  --text-dim: #5a5550;
+  --white: #f5f1eb;
+}
+
+body {
+  margin: 0;
+  font-family: 'DM Sans', sans-serif;
+  background-color: var(--black);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6, .font-playfair {
+  font-family: 'Playfair Display', serif;
+}
+
+.font-mono {
+  font-family: 'DM Mono', monospace;
+}
+
+/* Base custom utility classes */
+.bg-black { background-color: var(--black); }
+.bg-charcoal { background-color: var(--charcoal); }
+.bg-dark { background-color: var(--dark); }
+.bg-panel { background-color: var(--panel); }
+
+.text-gold { color: var(--gold); }
+.text-gold-light { color: var(--gold-light); }
+.text-gold-dim { color: var(--gold-dim); }
+.text-white { color: var(--white); }
+.text-text { color: var(--text); }
+.text-text-muted { color: var(--text-muted); }
+.text-text-dim { color: var(--text-dim); }
+.text-green { color: var(--green); }
+.text-red { color: var(--red); }
+.text-amber { color: var(--amber); }
+
+.border-border { border-color: var(--border); }
+.border-border-light { border-color: var(--border-light); }
+.border-gold { border-color: var(--gold); }
+.border-gold-dim { border-color: var(--gold-dim); }
+
+/* Scrollbar styling for that dark luxury feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--black);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-light);
+}
