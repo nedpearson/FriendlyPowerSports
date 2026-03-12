@@ -1,63 +1,50 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
-:root {
-  --black: #0a0a0a;
-  --charcoal: #141414;
-  --dark: #1c1c1c;
-  --panel: #222222;
-  --border: #2e2e2e;
-  --border-light: #3a3a3a;
-  --gold: #c9a84c;
-  --gold-light: #e8c96a;
-  --gold-dim: #8a6d2f;
-  --red: #c0392b;
-  --green: #27ae60;
-  --amber: #e67e22;
-  --blue: #2980b9;
-  --text: #e8e4da;
-  --text-muted: #8a857a;
-  --text-dim: #5a5550;
-  --white: #f5f1eb;
+@theme {
+  --color-black: #0a0a0a;
+  --color-charcoal: #141414;
+  --color-dark: #1c1c1c;
+  --color-panel: #222222;
+  --color-border: #2e2e2e;
+  --color-border-light: #3a3a3a;
+  --color-gold: #c9a84c;
+  --color-gold-light: #e8c96a;
+  --color-gold-dim: #8a6d2f;
+  --color-red: #c0392b;
+  --color-green: #27ae60;
+  --color-amber: #e67e22;
+  --color-blue: #2980b9;
+  --color-text: #e8e4da;
+  --color-text-muted: #8a857a;
+  --color-text-dim: #5a5550;
+  --color-white: #f5f1eb;
+
+  --font-playfair: 'Playfair Display', serif;
+  --font-mono: 'DM Mono', monospace;
+  --font-sans: 'DM Sans', sans-serif;
 }
 
 body {
   margin: 0;
-  font-family: 'DM Sans', sans-serif;
-  background-color: var(--black);
-  color: var(--text);
+  font-family: var(--font-sans);
+  background-color: var(--color-black);
+  color: var(--color-text);
   overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6, .font-playfair {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-playfair);
 }
 
 .font-mono {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
 }
 
-/* Base custom utility classes */
-.bg-black { background-color: var(--black); }
-.bg-charcoal { background-color: var(--charcoal); }
-.bg-dark { background-color: var(--dark); }
-.bg-panel { background-color: var(--panel); }
-
-.text-gold { color: var(--gold); }
-.text-gold-light { color: var(--gold-light); }
-.text-gold-dim { color: var(--gold-dim); }
-.text-white { color: var(--white); }
-.text-text { color: var(--text); }
-.text-text-muted { color: var(--text-muted); }
-.text-text-dim { color: var(--text-dim); }
-.text-green { color: var(--green); }
-.text-red { color: var(--red); }
-.text-amber { color: var(--amber); }
-
-.border-border { border-color: var(--border); }
-.border-border-light { border-color: var(--border-light); }
-.border-gold { border-color: var(--gold); }
-.border-gold-dim { border-color: var(--gold-dim); }
+/* Base custom utility classes for backward compatibility before refactoring the JS mappings */
+.text-text { color: var(--color-text); }
+.text-text-muted { color: var(--color-text-muted); }
+.text-text-dim { color: var(--color-text-dim); }
 
 /* Scrollbar styling for that dark luxury feel */
 ::-webkit-scrollbar {

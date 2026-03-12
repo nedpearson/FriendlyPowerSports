@@ -124,7 +124,7 @@ const DashboardModule = ({ onNavigate, onDrillDown }) => {
 
       {/* KPI Mega Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {KPI_STATS.map((kpi, i) => (
+        {getKpiStats().map((kpi, i) => (
           <KPICard 
             key={i} 
             label={kpi.label} 
@@ -244,7 +244,7 @@ const DashboardModule = ({ onNavigate, onDrillDown }) => {
             <span className="text-xs text-gold">View All →</span>
           </div>
           <div className="space-y-0">
-            {LIVE_LEADS.map((l, i) => (
+            {getLiveLeads().map((l, i) => (
               <div key={i} onClick={(e) => { e.stopPropagation(); onDrillDown('Lead', l); }} className="flex justify-between py-2 border-b border-border/50 last:border-0 hover:bg-panel p-2 -mx-2 rounded transition-colors cursor-pointer">
                 <div>
                   <div className="text-sm font-bold text-white flex items-center gap-2">
@@ -270,7 +270,7 @@ const DashboardModule = ({ onNavigate, onDrillDown }) => {
         <div className="bg-charcoal p-4 rounded border border-border">
           <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase">Top Performers MTD</h3>
           <div className="space-y-3">
-            {TOP_PERFORMERS.map((p, i) => (
+            {getTopPerformers().map((p, i) => (
               <div key={i} onClick={() => onDrillDown('Employee', p)} className="flex items-center justify-between bg-panel p-3 rounded cursor-pointer hover:border-gold border border-transparent transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-gold-dim flex items-center justify-center font-bold text-black border border-gold">
