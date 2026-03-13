@@ -14,6 +14,7 @@ import { SectionHeader } from './components/ui/SectionHeader';
 import { StatusChip } from './components/ui/StatusChip';
 import { TrendBadge } from './components/ui/TrendBadge';
 import { AutomatedInsights } from './components/ui/AutomatedInsights';
+import { DrillDownValue } from './components/ui/DrillDownValue';
 
 import { EMPLOYEES } from './data/mockDatabase';
 import { 
