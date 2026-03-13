@@ -125,10 +125,10 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
         </div>
       </div>
 
-      <AutomatedInsights insights={[
-        { type: "warning", message: "Yamaha Q3 Volume Tier: You are 4 units away from unlocking the $74,000 retroactive bonus. Tier expires in 6 days.", actionText: "View Eligible Pipeline" },
-        { type: "opportunity", message: "Baton Rouge F&I backend is pacing $315 per unit higher than Slidell MTD. Reviewing Rachel Tran's pitch structure with the Slidell team is recommended.", actionText: "Compare F&I Scorecards" },
-        { type: "action", message: "There are exactly 8 units across both locations aging past 120 days. Current floorplan carry cost for these units is $640/week.", actionText: "Review Aged Inventory" }
+      <AutomatedInsights onDrillDown={onDrillDown} insights={[
+        { type: "warning", message: <>Yamaha Q3 Volume Tier: You are <DrillDownValue value="4 units" label="Pipeline Need" type="Report" onDrillDown={onDrillDown} /> away from unlocking the $74,000 retroactive bonus. Tier expires in 6 days.</>, actionText: "View Eligible Pipeline" },
+        { type: "opportunity", message: <>Baton Rouge F&I backend is pacing <DrillDownValue value="$315 per unit" label="F&I Margin Delta" type="Report" onDrillDown={onDrillDown} color="text-gold" /> higher than Slidell MTD. Reviewing Rachel Tran's pitch structure with the Slidell team is recommended.</>, actionText: "Compare F&I Scorecards" },
+        { type: "action", message: <>There are exactly <DrillDownValue value="8 units" label="Aged Units" type="Inventory" onDrillDown={onDrillDown} /> across both locations aging past 120 days. Current floorplan carry cost for these units is $640/week.</>, actionText: "Review Aged Inventory" }
       ]} />
 
       {/* KPI Mega Stats */}
@@ -393,9 +393,9 @@ const SalesModule = ({ onDrillDown }) => {
         </div>
       </div>
 
-      <AutomatedInsights insights={[
-        { type: "warning", message: "Alex in Baton Rouge has a 12% closing ratio on web leads this week (Benchmark: 25%). 8 leads went unresponsive.", actionText: "Review Lost Leads" },
-        { type: "opportunity", message: "A deal penciled by Jake for a 2024 MT-07 has $0 back-end gross. Adding GAP and Tire/Wheel brings this deal to standard profitability.", actionText: "Review Deal Structure" }
+      <AutomatedInsights onDrillDown={onDrillDown} insights={[
+        { type: "warning", message: <>Alex in Baton Rouge has a <DrillDownValue value="12% closing ratio" label="Alex Closing Ratio" type="Employee" onDrillDown={onDrillDown} color="text-red-400" /> on web leads this week (Benchmark: 25%). 8 leads went unresponsive.</>, actionText: "Review Lost Leads" },
+        { type: "opportunity", message: <>A deal penciled by Jake for a 2024 MT-07 has <DrillDownValue value="$0 back-end gross" label="Jack Deal Margin" type="Deal" onDrillDown={onDrillDown} />. Adding GAP and Tire/Wheel brings this deal to standard profitability.</>, actionText: "Review Deal Structure" }
       ]} />
 
       {/* Deal Desk Calculator */}
@@ -460,7 +460,7 @@ const SalesModule = ({ onDrillDown }) => {
                 <span className="text-xs bg-amber-900/40 text-amber-400 px-2 py-1 rounded border border-amber-800">+1 Yamaha $74K Tier</span>
               </div>
               <div className="text-sm border-l-2 border-gold pl-3 py-1 bg-panel text-white">
-                <span className="font-bold text-gold">Recommendation:</span> PUSH (Finance Maximize)
+                <span className="font-bold text-gold">Recommendation:</span> <DrillDownValue value="PUSH (Finance Maximize)" label="Finance Strategy" type="Deal" onDrillDown={onDrillDown} />
               </div>
             </div>
           </div>
@@ -561,9 +561,9 @@ const InventoryModule = ({ onDrillDown }) => {
         </div>
       </div>
 
-      <AutomatedInsights insights={[
-        { type: "action", message: "3 Polaris RZRs in Slidell have been in stock for 115 days. Baton Rouge has turned the same model 4 times in the last 60 days.", actionText: "Initiate Transfer" },
-        { type: "negative", message: "Floorplan interest for 'Used Bikes Direct' inventory is currently pacing 14% higher than last month due to aged Harley-Davidson units.", actionText: "View Markdown Recommendations" }
+      <AutomatedInsights onDrillDown={onDrillDown} insights={[
+        { type: "action", message: <>3 Polaris RZRs in Slidell have been in stock for <DrillDownValue value="115 days" label="Slidell Aged RZRs" type="Inventory" onDrillDown={onDrillDown} color="text-amber-500" />. Baton Rouge has turned the same model 4 times in the last 60 days.</>, actionText: "Initiate Transfer" },
+        { type: "negative", message: <>Floorplan interest for 'Used Bikes Direct' inventory is currently pacing <DrillDownValue value="14% higher" label="Floorplan Interest Variance" type="Financials" onDrillDown={onDrillDown} color="text-red-400" /> than last month due to aged Harley-Davidson units.</>, actionText: "View Markdown Recommendations" }
       ]} />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">

@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertCircle, TrendingDown, Lightbulb, ArrowRight, Zap } from 'lucide-react';
 
-export const AutomatedInsights = ({ insights }) => {
+export const AutomatedInsights = ({ insights, onDrillDown }) => {
   if (!insights || insights.length === 0) return null;
 
   const getIcon = (type) => {
@@ -30,7 +30,13 @@ export const AutomatedInsights = ({ insights }) => {
                 {insight.message}
               </p>
               {insight.actionText && (
-                <button className="text-xs font-bold font-mono tracking-wide text-gold mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onDrillDown) onDrillDown('Action', { name: insight.actionText, context: 'Automated Insight' });
+                  }}
+                  className="text-xs font-bold font-mono tracking-wide text-gold mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform"
+                >
                   {insight.actionText} <ArrowRight className="w-3 h-3" />
                 </button>
               )}
