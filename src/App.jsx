@@ -112,14 +112,16 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
     <div className="space-y-6">
       {/* Location Toggle */}
       <div className="flex flex-col sm:flex-row justify-between items-center bg-charcoal p-4 rounded border border-border">
-        <div className="flex space-x-2 items-center">
+        <div className="flex space-x-2 items-center cursor-pointer hover:opacity-80 transition-opacity" onClick={() => onDrillDown('Report', { name: 'Multi-store Franchise Overview' })}>
            <span className="text-white font-bold">{company || "Friendly Powersports"}</span>
            <span className="text-text-muted px-2">/</span>
            <span className="text-gold">{location || "All Locations"}</span>
         </div>
         <div className="flex items-center space-x-4 mt-4 sm:mt-0">
-          <span className="text-text-dim text-sm">MTD: Sep 1 - Sep 18, 2025</span>
-          <button className="text-gold text-sm border border-gold px-3 py-1 rounded hover:bg-gold hover:text-black transition-colors">Export Report</button>
+          <span className="text-text-dim text-sm cursor-pointer hover:text-white transition-colors" onClick={() => onDrillDown('Action', { name: 'Change Dashboard Date Parameters' })}>
+             MTD: Sep 1 - Sep 18, 2025
+          </span>
+          <button className="text-gold text-sm border border-gold px-3 py-1 rounded hover:bg-gold hover:text-black transition-colors" onClick={() => onDrillDown('Action', { name: 'Export Global OS State', message: 'Extracting comprehensive CSV data sheet...' })}>Export Report</button>
         </div>
       </div>
 
@@ -255,26 +257,30 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
           </div>
         </div>
 
-        <div className="bg-charcoal p-4 rounded border border-border cursor-pointer" onClick={() => onNavigate("Sales")}>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-sm font-mono text-text-muted tracking-wide uppercase">Live Lead Feed</h3>
+        <div className="bg-charcoal p-4 rounded border border-border cursor-pointer hover:border-gold-dim transition-colors group" onClick={() => onNavigate("Sales")}>
+          <div className="flex justify-between items-center mb-4 border-b border-border/50 pb-2">
+            <h3 className="text-sm font-mono text-text-muted tracking-wide uppercase group-hover:text-gold transition-colors">Live Lead Feed</h3>
             <span className="text-xs text-gold">View All →</span>
           </div>
           <div className="space-y-0">
             {getLiveLeads().map((l, i) => (
-              <div key={i} onClick={(e) => { e.stopPropagation(); onDrillDown('Lead', l); }} className="flex justify-between py-2 border-b border-border/50 last:border-0 hover:bg-panel p-2 -mx-2 rounded transition-colors cursor-pointer">
+              <div key={i} onClick={(e) => { e.stopPropagation(); onDrillDown('Lead', l); }} className="flex justify-between py-3 border-b border-border/50 last:border-0 hover:bg-black -mx-2 px-2 rounded transition-colors cursor-pointer group/lead">
                 <div>
-                  <div className="text-sm font-bold text-white flex items-center gap-2">
+                  <div className="text-sm font-bold text-white flex items-center gap-2 group-hover/lead:text-gold transition-colors">
                     {l.name}
                     {l.urgent && <AlertCircle className="w-3 h-3 text-red-500" />}
                   </div>
-                  <div className="text-xs text-text-dim">{l.source} · {l.rep}</div>
-                </div>
-                <div className="text-right">
-                  <div className={`text-xs font-bold ${l.urgent ? 'text-red-500' : 'text-green-500'}`}>
-                    {l.time} ({l.status})
+                  <div className="text-xs text-text-dim mt-1">
+                     <DrillDownValue value={l.source} label={`${l.name} Lead Source`} type="Lead" onDrillDown={onDrillDown} color="text-text-dim" />
+                     <span className="mx-1">·</span> 
+                     <DrillDownValue value={l.rep} label={`${l.name} Assigned Rep`} type="Employee" onDrillDown={onDrillDown} color="text-text-dim" />
                   </div>
-                  <div className="text-xs text-text-muted">{l.stage}</div>
+                </div>
+                <div className="text-right flex flex-col justify-center">
+                  <div className={`text-xs font-bold ${l.urgent ? 'text-red-500' : 'text-green-500'}`}>
+                    <DrillDownValue value={`${l.time} (${l.status})`} label={`${l.name} Status`} type="Lead" onDrillDown={onDrillDown} color={l.urgent ? 'text-red-500' : 'text-green-500'} />
+                  </div>
+                  <div className="text-xs text-text-muted mt-1">{l.stage}</div>
                 </div>
               </div>
             ))}
@@ -288,14 +294,14 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
           <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase">Top Performers MTD</h3>
           <div className="space-y-3">
             {getTopPerformers().map((p, i) => (
-              <div key={i} onClick={() => onDrillDown('Employee', p)} className="flex items-center justify-between bg-panel p-3 rounded cursor-pointer hover:border-gold border border-transparent transition-colors">
+              <div key={i} onClick={() => onDrillDown('Employee', p)} className="flex items-center justify-between bg-panel p-3 rounded cursor-pointer hover:border-gold border border-transparent transition-colors group/perf">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gold-dim flex items-center justify-center font-bold text-black border border-gold">
+                  <div className="w-8 h-8 rounded-full bg-gold-dim flex items-center justify-center font-bold text-black border border-gold group-hover/perf:bg-gold transition-colors">
                     {i+1}
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-white">{p.name}</div>
-                    <div className="text-xs text-text-dim">{p.role}</div>
+                    <div className="text-sm font-bold text-white group-hover/perf:text-gold transition-colors">{p.name}</div>
+                    <div className="text-xs text-text-dim mt-1"><DrillDownValue value={p.role} label={`${p.name} Title`} type="Employee" onDrillDown={onDrillDown} color="text-text-dim" /></div>
                   </div>
                 </div>
                 <div className="text-right">
@@ -314,17 +320,25 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
         <div className="bg-charcoal p-4 rounded border border-border">
           <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase">Watch List</h3>
           <div className="space-y-3">
-              <div className="flex items-center justify-between bg-black p-3 rounded border-l-2 border-red-500 cursor-pointer hover:bg-panel transition-colors" onClick={() => onDrillDown('Employee', {name: 'Devon Arceneaux', role: 'Sales', alert: 'Close rate dropped 12% MTD'})}>
+              <div className="flex items-center justify-between bg-black p-3 rounded border-l-2 border-red-500 cursor-pointer hover:bg-panel transition-colors group/watch" onClick={() => onDrillDown('Employee', {name: 'Devon Arceneaux', role: 'Sales', alert: 'Close rate dropped 12% MTD'})}>
                 <div>
-                  <div className="text-sm font-bold text-white">Devon Arceneaux</div>
-                  <div className="text-xs text-text-dim">Sales · Close rate dropped 12% MTD</div>
+                  <div className="text-sm font-bold text-white group-hover/watch:text-gold transition-colors">Devon Arceneaux</div>
+                  <div className="text-xs text-text-dim mt-1 flex gap-1">
+                     <DrillDownValue value="Sales" label="Devon Title" type="Employee" onDrillDown={onDrillDown} color="text-text-dim" />
+                     <span>·</span>
+                     <DrillDownValue value="Close rate dropped 12% MTD" label="Performance Alert" type="Employee" onDrillDown={onDrillDown} color="text-red-400" />
+                  </div>
                 </div>
                 <button className="text-xs bg-panel border border-border px-2 py-1 rounded text-white hover:text-gold transition-colors">Review</button>
               </div>
-              <div className="flex items-center justify-between bg-black p-3 rounded border-l-2 border-red-500 cursor-pointer hover:bg-panel transition-colors" onClick={() => onDrillDown('Employee', {name: 'Sam LeBlanc', role: 'Service Tech', alert: 'Efficiency < 75% for 2 weeks'})}>
+              <div className="flex items-center justify-between bg-black p-3 rounded border-l-2 border-red-500 cursor-pointer hover:bg-panel transition-colors group/watch" onClick={() => onDrillDown('Employee', {name: 'Sam LeBlanc', role: 'Service Tech', alert: 'Efficiency < 75% for 2 weeks'})}>
                 <div>
-                  <div className="text-sm font-bold text-white">Sam LeBlanc</div>
-                  <div className="text-xs text-text-dim">Service Tech · Efficiency &lt; 75% for 2 weeks</div>
+                  <div className="text-sm font-bold text-white group-hover/watch:text-gold transition-colors">Sam LeBlanc</div>
+                  <div className="text-xs text-text-dim mt-1 flex gap-1">
+                     <DrillDownValue value="Service Tech" label="Sam Title" type="Employee" onDrillDown={onDrillDown} color="text-text-dim" />
+                     <span>·</span>
+                     <DrillDownValue value="Efficiency < 75% for 2 weeks" label="Efficiency Alert" type="Employee" onDrillDown={onDrillDown} color="text-red-400" />
+                  </div>
                 </div>
                 <button className="text-xs bg-panel border border-border px-2 py-1 rounded text-white hover:text-gold transition-colors">Review</button>
               </div>
