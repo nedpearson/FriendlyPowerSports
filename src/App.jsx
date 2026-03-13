@@ -1356,31 +1356,49 @@ const App = () => {
       {/* SIDEBAR */}
       <div className="w-64 bg-charcoal border-r border-border flex flex-col hidden md:flex">
         <div className="p-4 border-b border-border flex flex-col items-center py-6">
-           <img src="https://friendlyyamaha.com/wp-content/uploads/2025/10/new-logo.png" alt="Logo" className="h-6 object-contain mb-2" onError={(e) => { e.target.style.display='none'; }}/>
+           <img 
+             src={activeCompany === "Used Bikes Direct" ? "https://www.usedbikesdirect.com/images/UsedBikesDirect_logo2.svg" : "https://friendlyyamaha.com/wp-content/uploads/2025/10/new-logo.png"} 
+             alt={`${activeCompany} Logo`} 
+             className={activeCompany === "Used Bikes Direct" ? "h-6 object-contain mb-2" : "h-12 object-contain mb-2"} 
+             onError={(e) => { e.target.style.display='none'; }}
+           />
            <div className="text-gold font-playfair font-bold text-xl tracking-wider">DealerCommand™</div>
            
-           <div className="mt-4 w-full">
+           <div className="mt-4 w-full flex flex-col gap-2">
              <select 
                className="w-full bg-black border border-border rounded px-2 py-2 text-sm text-white focus:outline-none focus:border-gold cursor-pointer"
-               value={`${activeCompany}|${activeLocation}`}
+               value={activeCompany}
                onChange={(e) => {
-                 const [comp, loc] = e.target.value.split('|');
-                 setActiveCompany(comp);
-                 setActiveLocation(loc);
+                 setActiveCompany(e.target.value);
+                 setActiveLocation("All Locations");
                }}
              >
-               <optgroup label="Friendly Powersports">
-                 <option value="Friendly Powersports|All Locations">All Locations</option>
-                 <option value="Friendly Powersports|Baton Rouge, LA">Baton Rouge, LA</option>
-                 <option value="Friendly Powersports|Slidell, LA">Slidell, LA</option>
-               </optgroup>
-               <optgroup label="Used Bikes Direct">
-                 <option value="Used Bikes Direct|All Locations">All Locations</option>
-                 <option value="Used Bikes Direct|Baton Rouge, LA">Baton Rouge, LA</option>
-                 <option value="Used Bikes Direct|Slidell, LA">Slidell, LA</option>
-                 <option value="Used Bikes Direct|Houston, TX">Houston, TX</option>
-                 <option value="Used Bikes Direct|Dallas, TX">Dallas, TX</option>
-               </optgroup>
+               <option value="Friendly Powersports">Friendly Powersports</option>
+               <option value="Used Bikes Direct">Used Bikes Direct</option>
+             </select>
+
+             <select 
+               className="w-full bg-black border border-border rounded px-2 py-2 text-sm text-white focus:outline-none focus:border-gold cursor-pointer"
+               value={activeLocation}
+               onChange={(e) => {
+                 setActiveLocation(e.target.value);
+               }}
+             >
+               {activeCompany === "Friendly Powersports" ? (
+                 <>
+                   <option value="All Locations">All Locations</option>
+                   <option value="Baton Rouge, LA">Baton Rouge, LA</option>
+                   <option value="Slidell, LA">Slidell, LA</option>
+                 </>
+               ) : (
+                 <>
+                   <option value="All Locations">All Locations</option>
+                   <option value="Baton Rouge, LA">Baton Rouge, LA</option>
+                   <option value="Slidell, LA">Slidell, LA</option>
+                   <option value="Houston, TX">Houston, TX</option>
+                   <option value="Dallas, TX">Dallas, TX</option>
+                 </>
+               )}
              </select>
            </div>
         </div>

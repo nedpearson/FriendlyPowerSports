@@ -283,61 +283,76 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
       case 'Financials':
         return (
           <div className="space-y-6">
-            <h3 className="text-2xl font-playfair text-gold border-b border-border pb-2 flex items-center gap-3"><DollarSign className="w-6 h-6"/> {item.data.metric} Assessment</h3>
+            <h3 className="text-2xl font-playfair text-gold border-b border-border pb-2 flex items-center justify-between">
+               <span className="flex items-center gap-3"><DollarSign className="w-6 h-6"/> {item.data.metric || 'Financial'} Assessment</span>
+               <div className="flex gap-2">
+                 <span className="text-[10px] font-mono bg-green-900/10 border border-green-500/30 px-3 py-1.5 rounded tracking-widest text-green-500 shadow-[0_0_10px_rgba(34,197,94,0.15)] flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> GL RECONCILED</span>
+               </div>
+            </h3>
             
             {userRole === 'Employee' ? (
-              <div className="bg-black p-8 rounded border border-border text-center">
-                 <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                 <h4 className="text-red-500 font-bold text-xl mb-2">Access Denied</h4>
-                 <p className="text-text-muted text-sm">You do not have the required permissions to view underlying global general ledger (GL) data. If you require this report for an active deal, please contact the General Manager.</p>
-              </div>
+               <div className="bg-black p-8 rounded-lg border border-red-900/50 shadow-[0_0_30px_rgba(239,68,68,0.1)] text-center relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-3xl translate-x-12 -translate-y-12"></div>
+                  <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4 relative z-10" />
+                  <h4 className="text-red-500 font-bold text-2xl mb-2 font-playfair relative z-10">Restricted Access</h4>
+                  <p className="text-text-muted text-sm max-w-lg mx-auto relative z-10">You do not possess the necessary clearance to view unfiltered general ledger (GL) and macro-financial data matrices. All requests for temporary access must be authorized by a General Manager or higher.</p>
+               </div>
             ) : (
               <>
-                <div className="bg-charcoal p-8 rounded border border-border flex items-center justify-between overflow-hidden relative group">
-                  <div className="absolute inset-0 bg-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="relative z-10">
-                     <div className="text-xs text-text-muted uppercase tracking-widest mb-1">Reconciled Core Balance</div>
-                     <div className="text-5xl font-playfair text-white"><DrillDownValue value={item.data.value} label={item.data.metric} type="Report" onDrillDown={onDrillDown} /></div>
+                <div className="bg-charcoal p-8 rounded-lg border border-border flex items-center justify-between overflow-hidden relative group shadow-inner">
+                  <div className="absolute inset-0 bg-gradient-to-r from-black to-charcoal"></div>
+                  <div className="absolute right-0 top-0 w-64 h-64 bg-gold/10 rounded-full blur-[80px] translate-x-20 -translate-y-20"></div>
+                  
+                  <div className="relative z-10 flex-1 border-r border-border/50 pr-8">
+                     <div className="text-[10px] text-gold uppercase tracking-[0.2em] font-mono mb-2 flex items-center gap-2"><TrendingUp className="w-4 h-4"/> Certified Book Balance</div>
+                     <div className="text-5xl font-playfair text-white drop-shadow-md"><DrillDownValue value={item.data.value} label={item.data.metric || 'Book Balance'} type="Report" onDrillDown={onDrillDown} /></div>
                   </div>
-                  <div className="text-right relative z-10">
-                     <div className="text-xs text-text-muted uppercase tracking-widest mb-1">{userRole === 'Owner' ? 'Corporate Target YTD' : 'Store Quota YTD'}</div>
-                     <div className="text-2xl font-mono tracking-tighter text-text-dim line-through"><DrillDownValue value={userRole === 'Owner' ? "$1,500,000" : "$840,000"} label="YTD Quota Goal" type="Report" onDrillDown={onDrillDown} color="text-text-dim"/></div>
+                  <div className="relative z-10 flex-1 pl-8 text-right">
+                     <div className="text-[10px] text-text-muted uppercase tracking-[0.2em] font-mono mb-2">{userRole === 'Owner' ? 'Corporate Target YTD' : 'Store Quota YTD'}</div>
+                     <div className="text-3xl font-mono tracking-tighter text-text-dim"><DrillDownValue value={userRole === 'Owner' ? "$1,500,000" : "$840,000"} label="YTD Quota Goal" type="Report" onDrillDown={onDrillDown} color="text-text-dim"/></div>
+                     <div className="mt-4 w-full bg-black h-2 rounded-full border border-border overflow-hidden">
+                        <div className="bg-gold h-full rounded-full w-[65%] shadow-[0_0_10px_rgba(201,168,76,0.8)] relative">
+                           <div className="absolute inset-0 bg-white/20 w-1/2 rounded-full blur-[2px]"></div>
+                        </div>
+                     </div>
+                     <div className="text-xs text-gold mt-2 font-bold tracking-widest uppercase">65% to Quota</div>
                   </div>
                 </div>
                 
                 <div className="space-y-4">
-                   <div className="text-[11px] font-bold text-white uppercase tracking-widest flex justify-between items-center border-b border-border pb-2">
-                      <span>General Ledger Matrix Spread</span>
+                   <div className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] flex justify-between items-center border-b border-border/50 pb-2">
+                      <span>General Ledger Extraction</span>
                    </div>
-                   <div className="bg-black rounded border border-border shadow-inner">
+                   <div className="bg-black rounded-lg border border-border shadow-inner overflow-hidden">
                       <table className="w-full text-sm text-left">
-                         <thead className="text-text-muted text-[10px] uppercase font-mono bg-panel border-b border-border">
-                           <tr><th className="px-5 py-3 tracking-widest font-normal">Account Code</th><th className="px-5 py-3 tracking-widest font-normal">Journal Identity</th><th className="px-5 py-3 text-right tracking-widest font-normal">Posting Value</th></tr>
+                         <thead className="bg-panel border-b border-border/50 text-text-dim text-[10px] uppercase font-mono tracking-widest">
+                           <tr><th className="px-6 py-4 font-medium">Account Code</th><th className="px-6 py-4 font-medium">Journal Identity</th><th className="px-6 py-4 text-right font-medium">Posting Value</th></tr>
                          </thead>
-                         <tbody className="text-text divide-y divide-border/30">
+                         <tbody className="divide-y divide-border/30">
                            <tr className="hover:bg-charcoal transition-colors cursor-pointer group" onClick={() => onDrillDown('Action', { name: 'Audit GL Account 10100' })}>
-                              <td className="px-5 py-4 font-mono text-text-dim group-hover:text-gold transition-colors">10100</td>
-                              <td className="px-5 py-4 text-white font-medium">Operating Cash Accounts (BTR)</td>
-                              <td className="px-5 py-4 text-right font-bold"><DrillDownValue value="$842,000" label="Operating Cash (BTR)" type="Financials" onDrillDown={onDrillDown} /></td>
+                              <td className="px-6 py-5 font-mono text-text-muted group-hover:text-gold transition-colors">10100</td>
+                              <td className="px-6 py-5 text-white font-bold group-hover:text-gold transition-colors">Operating Cash Accounts (BTR)</td>
+                              <td className="px-6 py-5 text-right font-mono font-bold text-lg"><DrillDownValue value="$842,000" label="Operating Cash (BTR)" type="Financials" onDrillDown={onDrillDown} /></td>
                            </tr>
                            {userRole === 'Owner' && (
                              <tr className="hover:bg-charcoal transition-colors cursor-pointer group" onClick={() => onDrillDown('Action', { name: 'Audit GL Account 10200' })}>
-                                <td className="px-5 py-4 font-mono text-text-dim group-hover:text-gold transition-colors">10200</td>
-                                <td className="px-5 py-4 text-white font-medium">Operating Cash Accounts (SLD)</td>
-                                <td className="px-5 py-4 text-right font-bold"><DrillDownValue value="$198,000" label="Operating Cash (SLD)" type="Financials" onDrillDown={onDrillDown} /></td>
+                                <td className="px-6 py-5 font-mono text-text-muted group-hover:text-gold transition-colors">10200</td>
+                                <td className="px-6 py-5 text-white font-bold group-hover:text-gold transition-colors">Operating Cash Accounts (SLD)</td>
+                                <td className="px-6 py-5 text-right font-mono font-bold text-lg"><DrillDownValue value="$198,000" label="Operating Cash (SLD)" type="Financials" onDrillDown={onDrillDown} /></td>
                              </tr>
                            )}
                            <tr className="hover:bg-charcoal transition-colors cursor-pointer group" onClick={() => onDrillDown('Action', { name: 'Audit GL Account 11500' })}>
-                              <td className="px-5 py-4 font-mono text-text-dim group-hover:text-gold transition-colors">11500</td>
-                              <td className="px-5 py-4 text-white font-medium flex items-center gap-2">Contracts in Transit (CIT) <AlertCircle className="w-3 h-3 text-red-500" /></td>
-                              <td className="px-5 py-4 text-right font-bold text-amber-500"><DrillDownValue value="$200,000" label="Funding Hold CIT" type="Report" color="text-amber-500" onDrillDown={onDrillDown} /></td>
+                              <td className="px-6 py-5 font-mono text-text-muted group-hover:text-gold transition-colors">11500</td>
+                              <td className="px-6 py-5 text-white font-bold flex items-center gap-2 mt-0.5 group-hover:text-amber-400 transition-colors">Contracts in Transit (CIT) <AlertCircle className="w-4 h-4 text-amber-500 animate-pulse" /></td>
+                              <td className="px-6 py-5 text-right font-mono font-bold text-lg text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]"><DrillDownValue value="$200,000" label="Funding Hold CIT" type="Report" color="text-amber-500" onDrillDown={onDrillDown} /></td>
                            </tr>
                          </tbody>
                       </table>
                    </div>
                 </div>
-                <div className="flex gap-4 pt-2 mt-4">
-                    <button className="bg-panel font-bold border border-border text-white px-6 py-3 rounded text-sm hover:bg-black hover:border-gold transition-all w-full flex justify-center items-center gap-2" onClick={() => onDrillDown('Action', { name: 'Generate Financial Audit export', message: 'Pulling 90-day GL reconciliation block...' })}>Extract Certified GL Export</button>
+                <div className="flex flex-col sm:flex-row gap-4 pt-5 mt-4 border-t border-border">
+                    <button className="bg-gold text-black px-6 py-4 rounded-lg text-sm font-bold shadow-[0_0_20px_rgba(201,168,76,0.2)] hover:bg-gold-light hover:scale-[1.02] transition-all flex-[2] flex justify-center items-center gap-2 uppercase tracking-wide" onClick={() => onDrillDown('Action', { name: 'Generate Financial Audit export', message: 'Pulling 90-day GL reconciliation block...' })}><TrendingUp className="w-4 h-4"/> Extract Certified GL Export</button>
+                    <button className="bg-panel text-white hover:text-white border border-border hover:bg-black px-6 py-4 rounded-lg text-sm transition-colors font-bold shadow flex-1 items-center justify-center gap-2 uppercase tracking-wide" onClick={onClose}>Close Book</button>
                 </div>
               </>
             )}
@@ -348,63 +363,79 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
           <div className="space-y-6">
             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-2 flex justify-between items-center">
                <span>Deal Desk Jacket: <DrillDownValue value={item.data.unit || item.data.customer} label={`${item.data.customer} Profile`} type="Report" onDrillDown={onDrillDown} color="text-white hover:text-gold" /></span>
-               <div className="text-[10px] text-black bg-gold font-bold px-3 py-1 rounded tracking-widest font-mono uppercase">Status: DESKING</div>
+               <div className="flex items-center gap-3">
+                  <div className="text-[10px] text-green-500 bg-green-900/10 border border-green-500/30 font-bold px-3 py-1 rounded tracking-widest font-mono uppercase">Bank Approved</div>
+                  <div className="text-[10px] text-black bg-gold font-bold px-3 py-1 rounded tracking-widest font-mono uppercase shadow-[0_0_10px_rgba(201,168,76,0.3)]">Status: DESKING</div>
+               </div>
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-border">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6 border-b border-border">
                <div>
                   <h4 className="text-[10px] uppercase text-text-muted tracking-wide mb-3 flex items-center justify-between">
                      <span>Deal Structure Metrics</span>
-                     <span className="text-text-dim tracking-normal">Validated</span>
+                     <span className="text-text-dim text-[10px] font-mono tracking-widest bg-panel px-2 py-0.5 rounded border border-border">AI VALIDATED</span>
                   </h4>
-                  <div className="bg-black p-5 rounded border border-border space-y-4 text-sm font-medium">
+                  <div className="bg-charcoal p-5 rounded-lg border border-border shadow-inner space-y-4 text-sm font-medium relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gold/5 rounded-full blur-3xl translate-x-12 -translate-y-12"></div>
                     {/* OWNER sees full profit, Manager sees margins, Employee sees front gross */}
                     {Object.entries(item.data).map(([k,v]) => {
                       if (k === 'unit' || k === 'customer') return null;
                       if (userRole === 'Employee' && (k.toLowerCase().includes('profit') || k.toLowerCase().includes('backend') || k.toLowerCase().includes('holdback'))) return null;
                       
                       return (
-                       <div key={k} className="flex justify-between items-center border-b border-border/30 pb-3 last:border-0 last:pb-0 group">
+                       <div key={k} className="flex justify-between items-center border-b border-border/30 pb-3 last:border-0 last:pb-0 group relative z-10">
                          <span className="capitalize text-text-muted text-xs group-hover:text-white transition-colors">{k.replace(/([A-Z])/g, ' $1').trim()}</span>
-                         <span className="font-bold text-white text-base"><DrillDownValue value={v} label={`${k} detail`} type="Financials" onDrillDown={onDrillDown} /></span>
+                         <span className={`font-bold text-base ${k.toLowerCase().includes('profit') ? 'text-gold' : 'text-white'}`}><DrillDownValue value={v} label={`${k} detail`} type="Financials" onDrillDown={onDrillDown} color={k.toLowerCase().includes('profit') ? 'text-gold' : 'text-white'} /></span>
                        </div>
                     )})}
                   </div>
                </div>
                
-               {/* MANAGER and EMPLOYEE see Stipulations, OWNER skips */}
-               {userRole !== 'Owner' && (
-                 <div>
-                    <h4 className="text-[10px] uppercase text-text-muted tracking-widest mb-3">Required Stips & Documentation</h4>
-                    <div className="space-y-3 bg-charcoal p-5 rounded border border-border h-full box-border shadow-inner">
-                       <div className="flex justify-between items-center text-sm border-b border-border/50 pb-3">
-                          <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-green-500" /> <span className="text-white">Proof of Income</span></div>
-                          <span className="text-[10px] text-green-500 font-mono tracking-widest border border-green-500/30 bg-green-900/10 px-2 py-0.5 rounded">VERIFIED</span>
-                       </div>
-                       <div className="flex justify-between items-center text-sm border-b border-border/50 pb-3">
-                          <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-green-500" /> <span className="text-white">Driver's License (State ID)</span></div>
-                          <span className="text-[10px] text-green-500 font-mono tracking-widest border border-green-500/30 bg-green-900/10 px-2 py-0.5 rounded">VERIFIED</span>
-                       </div>
-                       <div className="flex justify-between items-center text-sm border-b border-border/50 pb-3 cursor-pointer hover:bg-panel p-2 -mx-2 rounded transition-colors group" onClick={() => onDrillDown('Action', { name: 'Upload Residence Stip', message: 'Opening document optical reader...' })}>
-                          <div className="flex items-center gap-3"><div className="w-5 h-5 border-2 border-red-500/50 rounded flex-shrink-0 animate-pulse bg-red-900/10"></div> <span className="text-text-muted group-hover:text-white transition-colors">Proof of Local Residence</span></div>
-                          <span className="text-[10px] text-red-500 font-mono tracking-widest border border-red-500/30 bg-red-900/10 px-2 py-0.5 rounded">PENDING UPLOAD</span>
-                       </div>
+               <div className="flex flex-col gap-6">
+                 {/* AI Deal Copilot Insight */}
+                 <div className="bg-black border border-border rounded-lg p-5 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-gold"></div>
+                    <strong className="text-xs text-white font-bold tracking-widest uppercase mb-2 flex items-center gap-2"><BrainCircuit className="w-4 h-4 text-gold"/> Deal Optimizer Copilot</strong>
+                    <div className="text-xs text-text-muted leading-relaxed">
+                       Adding a 48-month extended service contract to this deal lowers the LTV below the lender's 115% threshold, unlocking a <strong className="text-green-500">1.2% rate buy-down</strong> for the customer while preserving <strong className="text-gold">$420</strong> in back-end reserve.
                     </div>
+                    <button className="mt-3 text-[10px] text-black bg-gold hover:bg-gold-light transition-colors px-3 py-1.5 rounded font-bold uppercase tracking-widest" onClick={() => onDrillDown('Action', { name: "Apply Copilot Deal Structure" })}>Re-Pencil Deal</button>
                  </div>
-               )}
+
+                 {/* MANAGER and EMPLOYEE see Stipulations, OWNER skips */}
+                 {userRole !== 'Owner' && (
+                   <div>
+                      <h4 className="text-[10px] uppercase text-text-muted tracking-widest mb-3">Required Stips & Documentation</h4>
+                      <div className="space-y-3 bg-charcoal p-5 rounded-lg border border-border h-full box-border shadow-inner">
+                         <div className="flex justify-between items-center text-sm border-b border-border/50 pb-3">
+                            <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-green-500" /> <span className="text-white">Proof of Income</span></div>
+                            <span className="text-[10px] text-green-500 font-mono tracking-widest border border-green-500/30 bg-green-900/10 px-2 py-0.5 rounded">VERIFIED</span>
+                         </div>
+                         <div className="flex justify-between items-center text-sm border-b border-border/50 pb-3">
+                            <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-green-500" /> <span className="text-white">Driver's License (State ID)</span></div>
+                            <span className="text-[10px] text-green-500 font-mono tracking-widest border border-green-500/30 bg-green-900/10 px-2 py-0.5 rounded">VERIFIED</span>
+                         </div>
+                         <div className="flex justify-between items-center text-sm border-b border-border/50 pb-3 cursor-pointer hover:bg-panel p-2 -mx-2 rounded transition-colors group" onClick={() => onDrillDown('Action', { name: 'Upload Residence Stip', message: 'Opening document optical reader...' })}>
+                            <div className="flex items-center gap-3"><div className="w-5 h-5 border-2 border-red-500/50 rounded flex-shrink-0 animate-pulse bg-red-900/10"></div> <span className="text-text-muted group-hover:text-white transition-colors">Proof of Local Residence</span></div>
+                            <span className="text-[10px] text-red-500 font-mono tracking-widest border border-red-500/30 bg-red-900/10 px-2 py-0.5 rounded">PENDING UPLOAD</span>
+                         </div>
+                      </div>
+                   </div>
+                 )}
+               </div>
             </div>
             
             <div className="flex flex-col md:flex-row gap-4 justify-between items-center mt-2">
-                <div className="text-xs text-amber-500 leading-relaxed border-l-4 border-amber-500 pl-4 py-1 flex-[1.5] bg-amber-900/10 p-3 rounded-r font-mono">
-                   <AlertCircle className="inline w-4 h-4 mr-1 text-amber-500" /> COMPLIANCE HOLD: Ensure signatures and outstanding documentation are indexed into cloud vault prior to final F&I approval routing.
+                <div className="text-xs text-amber-500 leading-relaxed border-l-4 border-amber-500 pl-4 py-3 flex-[1.5] bg-amber-900/10 p-3 rounded-r font-mono">
+                   <AlertCircle className="inline w-4 h-4 mr-2 text-amber-500 -mt-0.5" /> COMPLIANCE HOLD: Ensure signatures and outstanding documentation are indexed into cloud vault prior to final F&I approval routing.
                 </div>
                 
                 {userRole === 'Employee' ? (
-                   <button className="w-full md:w-auto bg-gold hover:bg-gold-light text-black px-6 py-4 rounded font-bold shadow-lg shadow-gold/20 flex-1 text-sm border-2 border-gold uppercase tracking-wider transition-all" onClick={() => onDrillDown('Action', { name: 'Request e-Documents Securely', message: 'Dispatching Twilio tracking link to buyer...' })}>Trigger Secure Stip Link</button>
+                   <button className="w-full md:w-auto bg-gold hover:bg-gold-light text-black px-6 py-4 rounded-lg font-bold shadow-[0_0_20px_rgba(201,168,76,0.2)] flex-1 text-sm uppercase tracking-wider transition-all" onClick={() => onDrillDown('Action', { name: 'Request e-Documents Securely', message: 'Dispatching Twilio tracking link to buyer...' })}>Trigger Secure Stip Link</button>
                 ) : userRole === 'Manager' ? (
-                   <button className="w-full md:w-auto bg-panel hover:bg-green-900/40 text-green-500 border border-green-500/50 px-6 py-4 rounded font-bold shadow-lg flex-1 text-sm uppercase tracking-wider transition-all" onClick={() => onDrillDown('Action', { name: 'Override Stipulation Requirement', message: 'Logging manager exception code for deal funding...' })}>Override Stips (GM Override)</button>
+                   <button className="w-full md:w-auto bg-panel hover:bg-green-900/40 text-green-500 border border-green-500/50 px-6 py-4 rounded-lg font-bold shadow-lg flex-1 text-sm uppercase tracking-wider transition-all" onClick={() => onDrillDown('Action', { name: 'Override Stipulation Requirement', message: 'Logging manager exception code for deal funding...' })}>Override Stips (GM Override)</button>
                 ) : (
-                   <button className="w-full md:w-auto bg-charcoal hover:bg-black text-white border border-border px-6 py-4 rounded font-bold flex-1 text-sm transition-all" onClick={() => onDrillDown('Report', { name: 'View Desking Historical Spread' })}>View Desk History</button>
+                   <button className="w-full md:w-auto bg-charcoal hover:bg-black text-white border border-border px-6 py-4 rounded-lg font-bold flex-1 text-sm transition-all" onClick={() => onDrillDown('Report', { name: 'View Desking Historical Spread' })}>View Desk History</button>
                 )}
             </div>
           </div>
@@ -414,40 +445,50 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
           <div className="space-y-6">
             <div className="flex justify-between items-end border-b border-border pb-4">
                <h3 className="text-3xl font-playfair text-white">{item.data.unit || 'Inventory Deep Dive'}</h3>
-               <div className="text-xs font-mono text-text-muted bg-panel px-4 py-2 border border-border rounded flex flex-col items-center">
-                  <span className="text-[10px] text-gold tracking-widest uppercase mb-1">Stock Ledger</span>
-                  <span className="text-white text-base">#{item.data.stock || Math.floor(Math.random() * 90000) + 10000}</span>
+               <div className="flex items-center gap-3">
+                  <div className="text-[10px] font-mono font-bold tracking-widest border border-gold/50 bg-gold/10 text-gold px-3 py-1.5 rounded uppercase shadow-[0_0_10px_rgba(201,168,76,0.15)]">VIN: 1HD1MDK15NY{Math.floor(Math.random()*8999)+1000}</div>
+                  <div className="text-xs font-mono text-text-muted bg-panel px-4 py-2 border border-border rounded flex flex-col items-center shadow-inner">
+                     <span className="text-[10px] text-text-dim tracking-widest uppercase mb-1">Stock Ledger</span>
+                     <span className="text-white text-base">#{item.data.stock || Math.floor(Math.random() * 90000) + 10000}</span>
+                  </div>
                </div>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-               <div className="col-span-1 bg-black rounded border border-border aspect-square flex flex-col items-center justify-center text-text-muted group relative overflow-hidden cursor-pointer" onClick={() => onDrillDown('Action', { name: 'Full Photo Gallery Overlay', message: 'Spawning media viewer...' })}>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-black/20 flex items-end justify-center pb-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                     <span className="text-white text-xs font-bold bg-panel border border-border px-4 py-2 rounded-full backdrop-blur-md shadow-lg flex items-center gap-2"><Search className="w-4 h-4 text-gold"/> Analyze 18 Assets</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+               <div className="lg:col-span-1 bg-black rounded-lg border border-border aspect-square sm:aspect-auto flex flex-col items-center justify-center text-text-muted group relative overflow-hidden cursor-pointer shadow-inner" onClick={() => onDrillDown('Action', { name: 'Full Photo Gallery Overlay', message: 'Spawning media viewer...' })}>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10 flex items-end justify-center pb-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                     <span className="text-white text-xs font-bold bg-gold text-black border border-gold-light px-4 py-2 rounded-full shadow-[0_0_15px_rgba(201,168,76,0.5)] flex items-center gap-2"><Search className="w-4 h-4"/> Analyze 18 HD Assets</span>
                   </div>
-                  <Bike className="w-20 h-20 text-border group-hover:scale-[1.15] transition-transform duration-500 mb-2" />
-                  <span className="text-[10px] uppercase font-mono tracking-widest mt-2">No Visual File Mapped</span>
+                  <div className="absolute top-3 left-3 flex gap-2">
+                    <span className="bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow">WEBSITE</span>
+                    <span className="bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow">CYCLETRADER</span>
+                  </div>
+                  <Bike className="w-24 h-24 text-border group-hover:scale-[1.10] group-hover:text-text-muted transition-transform duration-500 mb-2" />
+                  <span className="text-[10px] uppercase font-mono tracking-widest mt-2 z-10 opacity-60">Visual Assets Present</span>
                </div>
-               <div className="col-span-2 space-y-4">
-                  <div className="grid grid-cols-2 gap-4 h-full">
-                     <div className="bg-panel p-5 rounded border border-border hover:border-gold-dim transition-colors flex flex-col justify-between">
-                        <div className="text-[10px] text-text-dim uppercase tracking-widest border-b border-border/50 pb-2">Unit Status Log</div>
-                        <div className="text-white font-bold text-xl mt-3"><DrillDownValue value={item.data.stage || 'Available Pipeline'} label="Status Matrix" type="Report" onDrillDown={onDrillDown} /></div>
+               <div className="lg:col-span-3 space-y-4 flex flex-col justify-between">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 flex-1">
+                     <div className="bg-charcoal p-5 rounded-lg border border-border hover:border-gold-dim transition-colors shadow-inner flex flex-col justify-between relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-12 h-12 bg-panel rounded-full blur-xl translate-x-4 -translate-y-4"></div>
+                        <div className="text-[10px] text-text-dim uppercase tracking-widest border-b border-border/50 pb-2 relative z-10">Unit Pipeline Status</div>
+                        <div className="text-white font-bold text-xl mt-3 relative z-10"><DrillDownValue value={item.data.stage || 'Available'} label="Status Matrix" type="Report" onDrillDown={onDrillDown} /></div>
                      </div>
-                     <div className="bg-panel p-5 rounded border border-border hover:border-gold-dim transition-colors flex flex-col justify-between relative overflow-hidden">
+                     <div className="bg-charcoal p-5 rounded-lg border border-border hover:border-gold-dim transition-colors shadow-inner flex flex-col justify-between relative overflow-hidden">
                         {(userRole === 'Owner' || userRole === 'Manager') && item.data.days > 90 && (
-                          <div className="absolute top-0 right-0 w-8 h-8 bg-red-500 -rotate-45 translate-x-4 -translate-y-4 shadow-lg"></div>
+                          <div className="absolute top-0 right-0 w-8 h-8 bg-red-500 -rotate-45 translate-x-4 -translate-y-4 shadow-[0_0_15px_rgba(239,68,68,0.5)]"></div>
                         )}
-                        <div className="text-[10px] text-text-dim uppercase tracking-widest border-b border-border/50 pb-2">Aging Liability</div>
-                        <div className={`font-bold text-2xl mt-3 ${(userRole !== 'Employee' && item.data.days > 90) ? 'text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.15)] bg-red-900/5 -mx-2 -mb-2 p-2 rounded' : 'text-green-500'}`}><DrillDownValue value={`${item.data.days || 14} Full Days`} label="Holding Time" type="Report" onDrillDown={onDrillDown} color={(userRole !== 'Employee' && item.data.days > 90) ? 'text-red-500' : 'text-green-500'} /></div>
+                        <div className="text-[10px] text-text-dim uppercase tracking-widest border-b border-border/50 pb-2 relative z-10">Aging Liability</div>
+                        <div className={`font-bold text-2xl mt-3 relative z-10 ${(userRole !== 'Employee' && item.data.days > 90) ? 'text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'text-green-500'}`}><DrillDownValue value={`${item.data.days || 14} Days`} label="Holding Time" type="Report" onDrillDown={onDrillDown} color={(userRole !== 'Employee' && item.data.days > 90) ? 'text-red-500' : 'text-green-500'} /></div>
                      </div>
-                     <div className="bg-panel p-5 rounded border border-border hover:border-gold-dim transition-colors flex flex-col justify-between">
-                        <div className="text-[10px] text-text-dim uppercase tracking-widest border-b border-border/50 pb-2">{userRole === 'Employee' ? 'Target Front Gross' : 'Base Cost Asset'}</div>
-                        <div className="text-white font-bold text-2xl mt-3"><DrillDownValue value={userRole === 'Employee' ? '$1,400 Tgt' : (item.data.cost || '$0 NMS')} label="Financial Basis" type="Financials" onDrillDown={onDrillDown} /></div>
+                     <div className="bg-charcoal p-5 rounded-lg border border-border hover:border-gold-dim transition-colors shadow-inner flex flex-col justify-between relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-12 h-12 bg-panel rounded-full blur-xl translate-x-4 -translate-y-4"></div>
+                        <div className="text-[10px] text-text-dim uppercase tracking-widest border-b border-border/50 pb-2 relative z-10">{userRole === 'Employee' ? 'Target Front Gross' : 'Base Cost Asset'}</div>
+                        <div className="text-white font-bold text-2xl mt-3 relative z-10"><DrillDownValue value={userRole === 'Employee' ? '$1,400 Tgt' : (item.data.cost || '$0 NMS')} label="Financial Basis" type="Financials" onDrillDown={onDrillDown} /></div>
                      </div>
-                     <div className="bg-panel p-5 rounded border border-gold-dim border-b-[3px] border-b-gold relative overflow-hidden group flex flex-col justify-between">
-                        <div className="absolute top-0 right-0 w-12 h-12 bg-gold -rotate-45 translate-x-6 -translate-y-6 shadow-xl"></div>
-                        <div className="text-[10px] text-gold uppercase tracking-widest border-b border-gold/20 pb-2 z-10">Internet List Price</div>
-                        <div className="text-gold font-bold text-3xl mt-3 z-10 relative drop-shadow-md"><DrillDownValue value={item.data.price || 'Market TBD'} label="Published Price" type="Financials" onDrillDown={onDrillDown} color="text-gold" /></div>
+                     <div className="bg-charcoal p-5 rounded-lg border border-gold-dim border-b-[4px] border-b-gold relative overflow-hidden group flex flex-col justify-between shadow-[0_4px_20px_rgba(201,168,76,0.08)] cursor-pointer" onClick={() => onDrillDown('Action', { name: "Audit Competitor Market Parity", message: "Fetching live localized TrueCar & CycleTrader averages..." })}>
+                        <div className="absolute inset-0 bg-gradient-to-br from-gold/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-gold -rotate-45 translate-x-8 -translate-y-8 shadow-[0_0_20px_rgba(201,168,76,0.6)]"></div>
+                        <div className="text-[10px] text-gold uppercase tracking-widest border-b border-gold/20 pb-2 z-10 flex items-center gap-1"><TrendingUp className="w-3 h-3"/> Internet Price</div>
+                        <div className="text-gold font-bold text-3xl mt-3 z-10 relative drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"><DrillDownValue value={item.data.price || 'Market TBD'} label="Published Price" type="Financials" onDrillDown={onDrillDown} color="text-gold" /></div>
                      </div>
                   </div>
                </div>
@@ -562,38 +603,62 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
       case 'Campaign':
       case 'Report':
       default:
-        // User-friendly plain text view for unmapped miscellaneous models
+        // Enhanced robust default view for unmapped or generic data points
         return (
           <div className="space-y-6">
-            <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center gap-3">
-               <FileBarChart className="w-7 h-7" /> {item.type} Details
+            <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
+               <div className="flex items-center gap-3"><FileBarChart className="w-7 h-7" /> {item.type} Insight & Analysis</div>
+               <div className="flex gap-2">
+                 <span className="text-[10px] font-mono bg-panel border border-border px-2 py-1 rounded text-text-muted">ID: {Math.floor(Math.random() * 89999) + 10000}</span>
+                 <span className="text-[10px] font-mono bg-green-900/10 border border-green-500/30 px-2 py-1 rounded text-green-500">SYNCED</span>
+               </div>
             </h3>
             
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                {Object.entries(item.data).map(([k,v], idx) => (
-                  <div key={k} className={`bg-charcoal p-5 rounded border hover:border-border transition-all shadow-inner group ${idx === 0 ? 'border-gold shadow-[0_0_20px_rgba(201,168,76,0.1)] before:absolute before:inset-0 before:bg-gold/5 overflow-hidden relative' : 'border-border/50'}`}>
-                     <div className="text-[10px] text-text-dim uppercase tracking-[0.15em] mb-2 border-b border-border/50 pb-2 flex justify-between group-hover:text-white transition-colors relative z-10">
+                  <div key={k} className={`bg-charcoal p-4 rounded-lg border hover:border-gold-dim transition-all shadow-inner group relative overflow-hidden ${idx === 0 ? 'border-gold shadow-[0_0_20px_rgba(201,168,76,0.1)] lg:col-span-2' : 'border-border/50'}`}>
+                     {idx === 0 && <div className="absolute top-0 right-0 w-16 h-16 bg-gold/5 rounded-full blur-xl translate-x-4 -translate-y-4"></div>}
+                     <div className="text-[10px] text-text-dim uppercase tracking-[0.1em] font-mono mb-2 border-b border-border/50 pb-2 group-hover:text-white transition-colors relative z-10 flex justify-between items-center">
                         <span>{k.replace(/([A-Z])/g, ' $1').trim()}</span>
+                        {idx === 0 && <AlertCircle className="w-3 h-3 text-gold" />}
                      </div>
-                     <div className={`font-bold relative z-10 break-words ${idx === 0 ? 'text-2xl text-gold drop-shadow-md' : 'text-xl text-white'}`}><DrillDownValue value={String(v)} label={k} type="Report" onDrillDown={onDrillDown} color={idx === 0 ? 'text-gold' : 'text-white'} /></div>
+                     <div className={`font-bold relative z-10 break-words ${idx === 0 ? 'text-4xl text-gold font-playfair drop-shadow-md' : 'text-xl text-white'}`}><DrillDownValue value={String(v)} label={k} type="Report" onDrillDown={onDrillDown} color={idx === 0 ? 'text-gold' : 'text-white'} /></div>
                   </div>
                ))}
             </div>
             
-            <div className="bg-black p-6 rounded-lg border border-border shadow-inner mt-4">
-               <strong className="text-gold text-[10px] uppercase tracking-[0.2em] mb-3 block border-b border-border/50 pb-2 font-mono flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-500" /> Simplified Explanation
-               </strong>
-               <p className="text-text-muted text-sm leading-relaxed">
-                  This summary provides the verified specifics regarding this <strong className="text-white inline-block lowercase">{item.type}</strong> item. 
-                  The metrics above display the core data points associated with this record. If you need to make changes, 
-                  you can edit the record securely below.
-               </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+              <div className="bg-black p-6 rounded-lg border border-border shadow-inner relative overflow-hidden group">
+                 <div className="absolute inset-0 bg-gradient-to-br from-gold/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                 <strong className="text-gold text-[10px] uppercase tracking-[0.15em] mb-4 block border-b border-border/50 pb-2 font-mono flex items-center gap-2">
+                    <BrainCircuit className="w-4 h-4 text-gold" /> AI Contextual Synthesis
+                 </strong>
+                 <p className="text-text-muted text-sm leading-relaxed mb-4">
+                    The data metrics supplied for this <strong className="text-white inline-block lowercase mx-1">{item.type}</strong> array indicate a variance from standard baseline models. The system recommends correlating this data set against previous 90-day structural trends to identify root anomalies or validate performance surges.
+                 </p>
+                 <button className="text-[10px] text-gold uppercase tracking-widest border border-gold/30 hover:bg-gold/10 px-3 py-1.5 rounded transition-all font-bold w-max" onClick={() => onDrillDown('Action', { name: "Run Deep-Dive Anomaly Detection Analysis" })}>Run Variance Check →</button>
+              </div>
+
+              <div className="bg-charcoal p-6 rounded-lg border border-border shadow-inner">
+                 <strong className="text-white text-[10px] uppercase tracking-[0.15em] mb-4 block border-b border-border/50 pb-2 font-mono flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-500" /> Administrative Controls
+                 </strong>
+                 <div className="space-y-2">
+                    <button className="w-full text-left bg-panel hover:bg-black border border-border px-4 py-3 rounded text-sm transition-colors text-white font-bold flex justify-between items-center group" onClick={() => onDrillDown('Action', { name: `Update Record Details`, message: `Opening secure edit form...` })}>
+                      <span>Edit Source Record</span>
+                      <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-gold transition-colors" />
+                    </button>
+                    <button className="w-full text-left bg-panel hover:bg-black border border-border px-4 py-3 rounded text-sm transition-colors text-white font-bold flex justify-between items-center group" onClick={() => onDrillDown('Report', { name: `Audit Log History for ${item.type}` })}>
+                      <span>View Historical Audit Log</span>
+                      <Clock className="w-4 h-4 text-text-muted group-hover:text-gold transition-colors" />
+                    </button>
+                 </div>
+              </div>
             </div>
             
-            <div className="flex gap-4 pt-5 border-t border-border mt-4">
-                <button className="bg-gold text-black px-6 py-3 rounded text-sm font-bold shadow-lg shadow-gold/20 hover:bg-gold-light transition-transform hover:-translate-y-0.5 flex-1" onClick={() => onDrillDown('Action', { name: `Update Record`, message: `Opening secure edit form...` })}>Edit This Information</button>
-                <button className="bg-charcoal text-white hover:text-white border border-border hover:border-text-muted px-6 py-3 rounded text-sm transition-all shadow flex items-center justify-center gap-2 flex-1" onClick={() => onDrillDown('Action', { name: `Review Audit Logs`, message: `Loading past changes for this item...` })}><Search className="w-4 h-4"/> See History</button>
+            <div className="flex flex-col sm:flex-row gap-4 pt-5 border-t border-border mt-4">
+                <button className="bg-gold text-black px-6 py-4 rounded text-sm font-bold shadow-[0_0_15px_rgba(201,168,76,0.2)] hover:bg-gold-light hover:scale-[1.02] transition-all flex-[2] flex justify-center items-center gap-2 uppercase tracking-wide" onClick={() => onDrillDown('Action', { name: `Export ${item.type} Bundle`, message: `Generating comprehensive data package for external use...` })}><TrendingUp className="w-4 h-4" /> Export & Share Data Package</button>
+                <button className="bg-panel text-white hover:text-white border border-border hover:bg-black px-6 py-4 rounded text-sm transition-colors font-bold shadow flex-1 items-center justify-center gap-2" onClick={onClose}>Close Context</button>
             </div>
           </div>
         );
