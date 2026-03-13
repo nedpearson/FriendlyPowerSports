@@ -328,11 +328,11 @@ export const DrillDownModal = ({ item, onClose, onDrillDown }) => {
       case 'Campaign':
       case 'Report':
       default:
-        // Absolute premium generic view ensuring unmapped data still looks incredible.
+        // User-friendly plain text view for unmapped miscellaneous models
         return (
           <div className="space-y-6">
             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center gap-3">
-               <FileBarChart className="w-7 h-7" /> {item.type} Inspector Grid
+               <FileBarChart className="w-7 h-7" /> {item.type} Details
             </h3>
             
             <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
@@ -341,25 +341,25 @@ export const DrillDownModal = ({ item, onClose, onDrillDown }) => {
                      <div className="text-[10px] text-text-dim uppercase tracking-[0.15em] mb-2 border-b border-border/50 pb-2 flex justify-between group-hover:text-white transition-colors relative z-10">
                         <span>{k.replace(/([A-Z])/g, ' $1').trim()}</span>
                      </div>
-                     <div className={`font-bold relative z-10 ${idx === 0 ? 'text-3xl text-gold drop-shadow-md' : 'text-xl text-white'}`}><DrillDownValue value={String(v)} label={`Inspector Data: ${k}`} type="Report" onDrillDown={onDrillDown} color={idx === 0 ? 'text-gold' : 'text-white'} /></div>
+                     <div className={`font-bold relative z-10 break-words ${idx === 0 ? 'text-2xl text-gold drop-shadow-md' : 'text-xl text-white'}`}><DrillDownValue value={String(v)} label={k} type="Report" onDrillDown={onDrillDown} color={idx === 0 ? 'text-gold' : 'text-white'} /></div>
                   </div>
                ))}
             </div>
             
-            <div className="mt-6 bg-black p-6 rounded-lg border border-border text-sm shadow-inner overflow-hidden relative">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl -translate-y-10 translate-x-10 pointer-events-none"></div>
-               <div className="text-gold mb-4 font-mono tracking-[0.2em] text-[10px] uppercase border-b border-border/50 pb-2 flex justify-between">
-                  <span>Structured Payload Capture</span>
-                  <span className="text-blue-400 bg-blue-900/10 px-2 rounded border border-blue-500/20">OS VALIDATED ✓</span>
-               </div>
-               <pre className="whitespace-pre-wrap font-mono text-xs leading-[1.8] text-blue-200/80 overflow-x-auto">
-                  {JSON.stringify(item.data, null, 2)}
-               </pre>
+            <div className="bg-black p-6 rounded-lg border border-border shadow-inner mt-4">
+               <strong className="text-gold text-[10px] uppercase tracking-[0.2em] mb-3 block border-b border-border/50 pb-2 font-mono flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" /> Simplified Explanation
+               </strong>
+               <p className="text-text-muted text-sm leading-relaxed">
+                  This summary provides the verified specifics regarding this <strong className="text-white inline-block lowercase">{item.type}</strong> item. 
+                  The metrics above display the core data points associated with this record. If you need to make changes, 
+                  you can edit the record securely below.
+               </p>
             </div>
             
             <div className="flex gap-4 pt-5 border-t border-border mt-4">
-                <button className="bg-gold text-black px-6 py-3 rounded text-sm font-bold shadow-lg shadow-gold/20 hover:bg-gold-light transition-transform hover:-translate-y-0.5" onClick={() => onDrillDown('Action', { name: `Execute write operation on backend object`, message: `Authorizing remote edit lock for ${item.type} structure...` })}>Edit Platform Record</button>
-                <button className="bg-charcoal text-white hover:text-white border border-border hover:border-text-muted px-6 py-3 rounded text-sm transition-all shadow flex items-center justify-center gap-2" onClick={() => onDrillDown('Report', { name: `Global Event Audit Hash Table` })}><Search className="w-4 h-4"/> Trace Forensic Log</button>
+                <button className="bg-gold text-black px-6 py-3 rounded text-sm font-bold shadow-lg shadow-gold/20 hover:bg-gold-light transition-transform hover:-translate-y-0.5 flex-1" onClick={() => onDrillDown('Action', { name: `Update Record`, message: `Opening secure edit form...` })}>Edit This Information</button>
+                <button className="bg-charcoal text-white hover:text-white border border-border hover:border-text-muted px-6 py-3 rounded text-sm transition-all shadow flex items-center justify-center gap-2 flex-1" onClick={() => onDrillDown('Action', { name: `Review Audit Logs`, message: `Loading past changes for this item...` })}><Search className="w-4 h-4"/> See History</button>
             </div>
           </div>
         );
