@@ -375,7 +375,7 @@ const SalesModule = ({ onDrillDown }) => {
         <h2 className="text-2xl font-playfair text-white">Sales & Deal Pipeline</h2>
         <div className="flex gap-2">
           <button className="bg-charcoal border border-border px-3 py-1 rounded text-sm text-text-muted hover:text-white" onClick={() => onDrillDown('Action', { name: 'Filter Deals', message: 'Opening advanced filtering modal.' })}>Filter</button>
-          <button className="bg-gold text-black px-4 py-1 rounded text-sm font-bold shadow-[0_0_10px_rgba(201,168,76,0.2)]" onClick={() => onDrillDown('Action', { name: 'Write New Deal', message: 'Initializing new deal jacket...' })}>Write New Deal</button>
+          <button className="bg-gold text-black px-4 py-1 rounded text-sm font-bold shadow-[0_0_10px_rgba(201,168,76,0.2)]" onClick={() => onDrillDown('Agent', { intent: 'Cross-Database Deal Synthesis' })}>Write New Deal</button>
         </div>
       </div>
 

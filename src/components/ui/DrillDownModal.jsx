@@ -1,15 +1,158 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { DrillDownValue } from './DrillDownValue';
 import {
   CheckCircle2, TrendingUp, User, Bike, AlertCircle, Command,
-  DollarSign, Megaphone, Search, FileBarChart, ChevronRight, TrendingDown, Users as UsersIcon, Clock
+  DollarSign, Megaphone, Search, FileBarChart, ChevronRight, TrendingDown, Users as UsersIcon, Clock, Database, BrainCircuit, Wrench
 } from 'lucide-react';
 
 export const DrillDownModal = ({ item, onClose, onDrillDown }) => {
+  const [agentSearching, setAgentSearching] = useState(true);
+  const [searchStep, setSearchStep] = useState(0);
+
+  useEffect(() => {
+    if (item?.type === 'Agent') {
+      setAgentSearching(true);
+      setSearchStep(0);
+      
+      const intervals = [
+        setTimeout(() => setSearchStep(1), 600),
+        setTimeout(() => setSearchStep(2), 1200),
+        setTimeout(() => setSearchStep(3), 1800),
+        setTimeout(() => setSearchStep(4), 2400),
+        setTimeout(() => {
+          setAgentSearching(false);
+        }, 3000)
+      ];
+      
+      return () => intervals.forEach(clearTimeout);
+    }
+  }, [item]);
+
   if (!item) return null;
 
   const renderContent = () => {
     switch (item.type) {
+      case 'Agent':
+        if (agentSearching) {
+           const steps = [
+             "Initializing DealerCommand AI Synthesis...",
+             "Querying CRM for Customer Identity graph...",
+             "Routing cross-database check: Service ROs & Parts Invoices...",
+             "Executing soft-pull credit telemetry...",
+             "Compiling optimal inventory matrix & F&I structures..."
+           ];
+           return (
+             <div className="flex flex-col items-center justify-center min-h-[400px] space-y-8 animate-in fade-in duration-500">
+                <div className="relative flex items-center justify-center">
+                   <div className="w-32 h-32 border-4 border-gold/20 rounded-full animate-[spin_3s_linear_infinite]"></div>
+                   <div className="w-24 h-24 border-4 border-t-gold border-r-gold border-b-transparent border-l-transparent rounded-full animate-[spin_1s_linear_infinite] absolute"></div>
+                   <BrainCircuit className="w-10 h-10 text-gold absolute animate-pulse" />
+                </div>
+                <div className="text-center space-y-2 relative">
+                   <h3 className="text-2xl font-playfair text-white fade-in">Global Database Search Agent Active</h3>
+                   <div className="h-6 overflow-hidden">
+                      <div className="text-sm font-mono text-gold tracking-widest uppercase transition-all duration-300 transform">
+                         {steps[searchStep]}
+                      </div>
+                   </div>
+                   <div className="flex gap-2 justify-center mt-6">
+                      {[0,1,2,3,4].map(s => (
+                         <div key={s} className={`w-8 h-1 rounded-full ${s <= searchStep ? 'bg-gold shadow-[0_0_10px_rgba(201,168,76,0.8)]' : 'bg-border'}`}></div>
+                      ))}
+                   </div>
+                </div>
+             </div>
+           );
+        }
+        return (
+          <div className="space-y-6 animate-in zoom-in-95 duration-500">
+             <div className="flex justify-between items-end border-b border-border pb-4">
+               <div>
+                  <h3 className="text-3xl font-playfair text-white flex items-center gap-3"><BrainCircuit className="w-8 h-8 text-gold"/> Intelligent Deal Synthesis</h3>
+                  <p className="text-sm text-text-muted mt-2">The AI Agent has scoured all 11 modules and compiled a comprehensive global jacket for this interaction.</p>
+               </div>
+               <div className="bg-green-900/10 border border-green-500/30 px-4 py-2 rounded text-right">
+                  <div className="text-[10px] tracking-widest text-green-500 font-mono uppercase">Search Complete</div>
+                  <div className="text-white font-bold text-sm">4 Databases Cross-Referenced</div>
+               </div>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-charcoal border border-border rounded p-4 shadow-inner hover:border-gold-dim transition-colors group cursor-pointer" onClick={() => onDrillDown('Action', { name: 'View CRM Customer Graph', message: 'Opening full lifetime value matrix...' })}>
+                   <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><User className="w-4 h-4"/> CRM Identity</div>
+                   <div className="text-xl font-bold text-white mb-1"><DrillDownValue value="Michael R. Vance" label="Matched Customer" type="Report" onDrillDown={onDrillDown}/></div>
+                   <div className="text-xs text-text-muted mb-2">Confidence Match: <span className="text-green-500 font-bold">98.4%</span></div>
+                   <div className="text-[10px] text-text-dim leading-relaxed bg-black p-2 rounded">
+                      Previous buyer (2021). Has 3 active vehicle relationships in system. Prefers email comms.
+                   </div>
+                </div>
+
+                <div className="bg-charcoal border border-border rounded p-4 shadow-inner hover:border-gold-dim transition-colors group cursor-pointer" onClick={() => onDrillDown('Action', { name: 'Audit Global Financial Accounts', message: 'Pulling accounting ledger history for buyer...' })}>
+                   <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><DollarSign className="w-4 h-4"/> Accounting & Credit</div>
+                   <div className="text-xl font-bold text-white mb-1"><DrillDownValue value="Tier 1 Soft Pull" label="Credit Soft Pull" type="Financials" onDrillDown={onDrillDown} /></div>
+                   <div className="text-xs text-text-muted mb-2">Est. Score: <span className="text-green-500 font-bold">780-810</span></div>
+                   <div className="text-[10px] text-text-dim leading-relaxed bg-black p-2 rounded">
+                      Zero historical bad debt charge-offs in GL. Account 12050 (AR) shows perfect payment history on previous parts accounts.
+                   </div>
+                </div>
+
+                <div className="bg-charcoal border border-border rounded p-4 shadow-inner hover:border-gold-dim transition-colors group cursor-pointer" onClick={() => onDrillDown('Action', { name: 'Service RO Lookup', message: 'Fetching historical wrenches turned on customer assets...' })}>
+                   <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><Wrench className="w-4 h-4"/> Service / Parts History</div>
+                   <div className="text-xl font-bold text-white mb-1"><DrillDownValue value="High Loyalty" label="Customer CLV Retention" type="Report" onDrillDown={onDrillDown}/></div>
+                   <div className="text-xs text-text-muted mb-2">Lifetime Serv. Gross: <span className="text-white font-bold">$4,250</span></div>
+                   <div className="text-[10px] text-text-dim leading-relaxed bg-black p-2 rounded flex flex-col gap-1">
+                      <span><DrillDownValue value="RO #49122 (Current)" label="Open Repair Order" type="Action" onDrillDown={onDrillDown} color="text-amber-500"/></span>
+                      <span>14 total closed invoices.</span>
+                   </div>
+                </div>
+
+                <div className="bg-charcoal border border-border rounded-lg p-4 shadow-inner border-y-[3px] border-y-gold bg-gradient-to-b from-black to-charcoal relative">
+                   <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><Database className="w-4 h-4"/> Agent Recommendation</div>
+                   <div className="text-lg font-bold text-white leading-tight mb-2">Perfect match for trade-in upgrade program.</div>
+                   <div className="text-[10px] text-text-dim leading-relaxed">
+                      Vehicle currently in service bay is nearing warranty expiration. Customer equity is <span className="text-green-500 font-bold">positive $3,100</span> based on current NADA/Black Book integration fetch.
+                   </div>
+                </div>
+             </div>
+
+             <div className="bg-black border border-border rounded-lg p-6 shadow-2xl relative overflow-hidden">
+                <div className="absolute right-0 top-0 w-64 h-64 bg-green-500/5 rounded-full blur-3xl -translate-y-20 translate-x-20 pointer-events-none"></div>
+                <h4 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-6 border-b border-border/50 pb-2"><Bike className="w-5 h-5 text-gold"/> Intelligent Inventory Matches</h4>
+                
+                <div className="space-y-4">
+                   <div className="flex justify-between items-center bg-panel border border-gold/30 p-4 rounded-lg cursor-pointer hover:bg-charcoal transition-colors group relative overflow-hidden" onClick={() => onDrillDown('Inventory', { unit: '2024 Yamaha MT-09 SP', stock: 'Y33091', stage: 'In Stock', days: 12, cost: '$11,400', price: '$12,299' })}>
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gold"></div>
+                      <div>
+                         <div className="text-[10px] text-gold font-mono tracking-widest uppercase mb-1">99% Match - Prime Upgrade</div>
+                         <div className="text-lg font-bold text-white group-hover:text-gold transition-colors">2024 Yamaha MT-09 SP</div>
+                         <div className="text-xs text-text-muted mt-1">Stock #Y33091 • 12 Days in Stock</div>
+                      </div>
+                      <div className="text-right">
+                         <div className="text-xl font-bold text-white"><DrillDownValue value="$12,299" label="MSRP Listing" type="Financials" onDrillDown={onDrillDown} /></div>
+                         <div className="text-xs text-green-500 font-bold mt-1">Proj. Front-End: $899</div>
+                      </div>
+                   </div>
+
+                   <div className="flex justify-between items-center bg-black border border-border p-4 rounded-lg cursor-pointer hover:bg-panel transition-colors group" onClick={() => onDrillDown('Inventory', { unit: '2023 Yamaha XSR900', stock: 'Y29881', stage: 'In Stock', days: 85, cost: '$9,800', price: '$10,199' })}>
+                      <div>
+                         <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-1">85% Match - Aged Unit Alternative</div>
+                         <div className="text-lg font-bold text-white group-hover:text-gold transition-colors">2023 Yamaha XSR900</div>
+                         <div className="text-xs text-text-muted mt-1">Stock #Y29881 • <span className="text-red-500">85 Days in Stock</span></div>
+                      </div>
+                      <div className="text-right">
+                         <div className="text-xl font-bold text-white"><DrillDownValue value="$10,199" label="Discounted Internet Price" type="Financials" onDrillDown={onDrillDown} /></div>
+                         <div className="text-xs text-text-muted mt-1">Proj. Front-End: $399</div>
+                      </div>
+                   </div>
+                </div>
+             </div>
+
+             <div className="flex flex-col md:flex-row gap-4 pt-4 border-t border-border mt-6">
+                <button className="bg-gold text-black px-8 py-4 rounded text-sm font-bold shadow-[0_0_20px_rgba(201,168,76,0.25)] hover:bg-gold-light hover:scale-[1.02] transition-all flex-[2] flex justify-center items-center gap-2 uppercase tracking-widest" onClick={() => onDrillDown('Deal', { unit: '2024 Yamaha MT-09 SP', customer: 'Michael R. Vance', gross: '$1,298', status: 'Desking Started' })}><CheckCircle2 className="w-5 h-5"/> Launch Desking on Top Match</button>
+                <button className="bg-panel text-white border border-border px-8 py-4 rounded text-sm hover:bg-black hover:border-gold-dim transition-all flex-1 shadow font-bold tracking-wide" onClick={() => onDrillDown('Action', { name: 'Construct Blank Deal Jacket', message: 'Bypassing AI recommendations and loading blank CRM skeleton...' })}>Manual Deal Blank</button>
+             </div>
+          </div>
+        );
       case 'Action':
         return (
           <div className="space-y-6">
