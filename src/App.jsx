@@ -6,7 +6,7 @@ import {
 import {
   LayoutDashboard, TrendingUp, CreditCard, Package, Bike, Wrench,
   Clock, DollarSign, Megaphone, Award, FileBarChart, Users as UsersIcon, Settings,
-  Bell, Search, ChevronRight, CheckCircle2, ChevronDown, User, Play, Calendar, AlertCircle
+  Bell, Search, ChevronRight, CheckCircle2, ChevronDown, User, Play, Calendar, AlertCircle, Command
 } from 'lucide-react';
 
 import { KPICard } from './components/ui/KPICard';
@@ -1177,16 +1177,86 @@ const ClockInModule = ({ user, onDrillDown }) => {
   );
 }
 
+const CopilotModal = ({ isOpen, onClose, onDrillDown }) => {
+  const [query, setQuery] = useState("");
+  
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] bg-black/80 backdrop-blur-sm px-4" onClick={onClose}>
+      <div className="w-full max-w-2xl bg-charcoal border border-border rounded-xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center border-b border-border px-4 py-3 bg-panel/50">
+          <Search className="w-5 h-5 text-gold mr-3" />
+          <input 
+            autoFocus 
+            type="text" 
+            placeholder="Ask Copilot or search globally... (e.g. 'Show Yamaha aged over 90 days')" 
+            className="w-full bg-transparent text-white text-lg focus:outline-none placeholder-text-muted"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+          />
+          <div className="text-xs font-mono text-text-dim border border-border px-2 py-1 rounded ml-3">ESC</div>
+        </div>
+        
+        {query.length > 2 ? (
+          <div className="p-4 bg-charcoal">
+            <h3 className="text-xs font-mono text-text-muted uppercase tracking-wider mb-3">AI Copilot Analysis</h3>
+            <div className="p-4 bg-panel border-l-4 border-gold rounded text-white text-sm leading-relaxed mb-4">
+              <strong>Copilot:</strong> I found 4 Yamaha units currently on floorplan that have aged past 90 days. Their combined floorplan carry cost is currently $48/day. I recommend moving 2 of them to the Slidell location based on their faster turn rate for these specific models.
+            </div>
+            <h3 className="text-xs font-mono text-text-muted uppercase tracking-wider mb-3">Matching Results</h3>
+            <div className="space-y-2">
+              <div onClick={() => {onClose(); onDrillDown('Inventory', {stock: 'H8842', make: 'Yamaha'});}} className="p-3 bg-panel hover:bg-black border border-border rounded cursor-pointer transition-colors flex justify-between items-center text-sm text-white">
+                <div className="flex items-center gap-3"><Bike className="w-4 h-4 text-gold"/> <span>2024 Yamaha YZF-R1</span></div>
+                <StatusChip status="Aged" color="text-red" />
+              </div>
+              <div onClick={() => {onClose(); onDrillDown('Inventory', {stock: 'T9021', make: 'Yamaha'});}} className="p-3 bg-panel hover:bg-black border border-border rounded cursor-pointer transition-colors flex justify-between items-center text-sm text-white">
+                <div className="flex items-center gap-3"><Bike className="w-4 h-4 text-gold"/> <span>2024 Yamaha MT-09</span></div>
+                <StatusChip status="Aged" color="text-red" />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 bg-charcoal">
+            <h3 className="text-xs font-mono text-text-muted uppercase tracking-wider mb-3">Suggested Queries</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onClick={() => setQuery("Units to hit next OEM tier")} className="text-left p-3 hover:bg-panel rounded border border-transparent hover:border-border text-sm text-text transition-colors">"Units to hit next OEM tier"</button>
+              <button onClick={() => setQuery("Show unassigned internet leads")} className="text-left p-3 hover:bg-panel rounded border border-transparent hover:border-border text-sm text-text transition-colors">"Show unassigned internet leads"</button>
+              <button onClick={() => setQuery("Who has lowest F&I penetration?")} className="text-left p-3 hover:bg-panel rounded border border-transparent hover:border-border text-sm text-text transition-colors">"Who has lowest F&I penetration?"</button>
+              <button onClick={() => setQuery("Compare Baton Rouge vs Slidell")} className="text-left p-3 hover:bg-panel rounded border border-transparent hover:border-border text-sm text-text transition-colors">"Compare Baton Rouge vs Slidell"</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 /* --- APP SHELL --- */
 
 const App = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [drillDown, setDrillDown] = useState(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeCompany, setActiveCompany] = useState("Friendly Powersports");
   const [activeLocation, setActiveLocation] = useState("All Locations");
 
   const handleDrillDown = (type, data) => setDrillDown({ type, data });
+
+  useEffect(() => {
+    const down = (e) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setIsSearchOpen((open) => !open);
+      }
+      if (e.key === "Escape") {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
 
   if (!currentUser) {
     return <AuthGate onLogin={setCurrentUser} />;
@@ -1289,9 +1359,9 @@ const App = () => {
           </div>
           
           <div className="flex items-center space-x-6">
-            <div className="relative hidden lg:block">
+            <div className="relative hidden lg:block" onClick={() => setIsSearchOpen(true)}>
               <Search className="w-4 h-4 text-text-muted absolute left-3 top-2" />
-              <input type="text" placeholder="Search inventory, leads, ROs..." className="bg-black border border-border rounded-full py-1.5 pl-9 pr-4 text-sm w-64 focus:outline-none focus:border-gold text-white" />
+              <input type="text" placeholder="Search Copilot... (Cmd+K)" className="bg-black border border-border rounded-full py-1.5 pl-9 pr-4 text-sm w-64 focus:outline-none focus:border-gold text-white cursor-pointer" readOnly />
             </div>
             
             <div className="relative cursor-pointer">
@@ -1337,6 +1407,7 @@ const App = () => {
         </div>
       </div>
       {drillDown && <DrillDownModal item={drillDown} onClose={() => setDrillDown(null)} />}
+      <CopilotModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onDrillDown={handleDrillDown} />
     </div>
   );
 };
