@@ -93,7 +93,8 @@ const AuthGate = ({ onLogin }) => {
             onClick={() => {
               const exactRole = role === "Manager" ? "General Manager" : role === "Employee" ? "Sales Associate" : role;
               const u = EMPLOYEES.find(x => x.role === exactRole);
-              onLogin(u);
+              // Pass the raw selected role string (Owner, Manager, Employee) alongside the user object
+              onLogin({ ...u, systemRole: role });
             }}
             className="w-full bg-gold hover:bg-gold-light text-black font-bold py-3 rounded transition-colors"
           >
@@ -1478,7 +1479,7 @@ const App = () => {
           </div>
         </div>
       </div>
-      {drillDown && <DrillDownModal item={drillDown} onClose={() => setDrillDown(null)} onDrillDown={handleDrillDown} />}
+      {drillDown && <DrillDownModal item={drillDown} userRole={currentUser?.systemRole || 'Owner'} onClose={() => setDrillDown(null)} onDrillDown={handleDrillDown} />}
       <CopilotModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onDrillDown={handleDrillDown} />
     </div>
   );

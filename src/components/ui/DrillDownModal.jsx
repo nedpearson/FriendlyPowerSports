@@ -5,7 +5,7 @@ import {
   DollarSign, Megaphone, Search, FileBarChart, ChevronRight, TrendingDown, Users as UsersIcon, Clock, Database, BrainCircuit, Wrench
 } from 'lucide-react';
 
-export const DrillDownModal = ({ item, onClose, onDrillDown }) => {
+export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown }) => {
   const [agentSearching, setAgentSearching] = useState(true);
   const [searchStep, setSearchStep] = useState(0);
 
@@ -65,91 +65,129 @@ export const DrillDownModal = ({ item, onClose, onDrillDown }) => {
            );
         }
         return (
-          <div className="space-y-6 animate-in zoom-in-95 duration-500">
+            <div className="space-y-6 animate-in zoom-in-95 duration-500">
              <div className="flex justify-between items-end border-b border-border pb-4">
                <div>
-                  <h3 className="text-3xl font-playfair text-white flex items-center gap-3"><BrainCircuit className="w-8 h-8 text-gold"/> Intelligent Deal Synthesis</h3>
-                  <p className="text-sm text-text-muted mt-2">The AI Agent has scoured all 11 modules and compiled a comprehensive global jacket for this interaction.</p>
+                  <h3 className="text-3xl font-playfair text-white flex items-center gap-3"><BrainCircuit className="w-8 h-8 text-gold"/> {userRole === 'Employee' ? 'Tactical Action Hub' : userRole === 'Manager' ? 'Operational Synthesis' : 'Enterprise Intelligence'}</h3>
+                  <p className="text-sm text-text-muted mt-2">
+                    {userRole === 'Owner' && 'Global macro-trends, financial exposure, and cross-store performance.'}
+                    {userRole === 'Manager' && 'Store-level bottlenecks, aged inventory risk, and deal desk metrics.'}
+                    {userRole === 'Employee' && 'Live execution steps, hot leads, and pending customer stipulations.'}
+                  </p>
                </div>
                <div className="bg-green-900/10 border border-green-500/30 px-4 py-2 rounded text-right">
-                  <div className="text-[10px] tracking-widest text-green-500 font-mono uppercase">Search Complete</div>
-                  <div className="text-white font-bold text-sm">4 Databases Cross-Referenced</div>
+                  <div className="text-[10px] tracking-widest text-green-500 font-mono uppercase">Role Context</div>
+                  <div className="text-white font-bold text-sm uppercase">{userRole}</div>
                </div>
              </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-charcoal border border-border rounded p-4 shadow-inner hover:border-gold-dim transition-colors group cursor-pointer" onClick={() => onDrillDown('Action', { name: 'View CRM Customer Graph', message: 'Opening full lifetime value matrix...' })}>
-                   <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><User className="w-4 h-4"/> CRM Identity</div>
-                   <div className="text-xl font-bold text-white mb-1"><DrillDownValue value="Michael R. Vance" label="Matched Customer" type="Report" onDrillDown={onDrillDown}/></div>
-                   <div className="text-xs text-text-muted mb-2">Confidence Match: <span className="text-green-500 font-bold">98.4%</span></div>
-                   <div className="text-[10px] text-text-dim leading-relaxed bg-black p-2 rounded">
-                      Previous buyer (2021). Has 3 active vehicle relationships in system. Prefers email comms.
-                   </div>
-                </div>
+             {/* OWNER VIEW: Macro Financials, Cross-Store AI */}
+             {userRole === 'Owner' && (
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                 <div className="bg-charcoal border border-border rounded p-4 shadow-inner hover:border-gold-dim transition-colors group cursor-pointer" onClick={() => onDrillDown('Action', { name: 'Audit Global Financial Accounts' })}>
+                    <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><DollarSign className="w-4 h-4"/> Enterprise Capital</div>
+                    <div className="text-xl font-bold text-white mb-1"><DrillDownValue value="$5,087,000" label="Total Working Capital" type="Financials" onDrillDown={onDrillDown}/></div>
+                    <div className="text-xs text-text-muted mb-2">Exposure vs Assets: <span className="text-green-500 font-bold">Healthy</span></div>
+                    <div className="text-[10px] text-text-dim leading-relaxed bg-black p-2 rounded">
+                       Floorplan paydowns pace cleanly against CIT. Overall leverage ratio under 1.2.
+                    </div>
+                 </div>
 
-                <div className="bg-charcoal border border-border rounded p-4 shadow-inner hover:border-gold-dim transition-colors group cursor-pointer" onClick={() => onDrillDown('Action', { name: 'Audit Global Financial Accounts', message: 'Pulling accounting ledger history for buyer...' })}>
-                   <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><DollarSign className="w-4 h-4"/> Accounting & Credit</div>
-                   <div className="text-xl font-bold text-white mb-1"><DrillDownValue value="Tier 1 Soft Pull" label="Credit Soft Pull" type="Financials" onDrillDown={onDrillDown} /></div>
-                   <div className="text-xs text-text-muted mb-2">Est. Score: <span className="text-green-500 font-bold">780-810</span></div>
-                   <div className="text-[10px] text-text-dim leading-relaxed bg-black p-2 rounded">
-                      Zero historical bad debt charge-offs in GL. Account 12050 (AR) shows perfect payment history on previous parts accounts.
-                   </div>
-                </div>
+                 <div className="bg-charcoal border border-border rounded p-4 shadow-inner hover:border-gold-dim transition-colors group cursor-pointer" onClick={() => onDrillDown('Report', { name: 'Multi-store Franchise Overview' })}>
+                    <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><Database className="w-4 h-4"/> Store Comparison</div>
+                    <div className="text-xl font-bold text-white mb-1"><DrillDownValue value="BTR outperforming SLD" label="Net Profit Margin Delta" type="Report" onDrillDown={onDrillDown} /></div>
+                    <div className="text-xs text-text-muted mb-2">Profit Delta: <span className="text-gold font-bold">+$18,400</span></div>
+                    <div className="text-[10px] text-text-dim leading-relaxed bg-black p-2 rounded">
+                       Baton Rouge F&I backend is driving variance. Slidell leads in raw unit volume but lacks back-end depth.
+                    </div>
+                 </div>
 
-                <div className="bg-charcoal border border-border rounded p-4 shadow-inner hover:border-gold-dim transition-colors group cursor-pointer" onClick={() => onDrillDown('Action', { name: 'Service RO Lookup', message: 'Fetching historical wrenches turned on customer assets...' })}>
-                   <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><Wrench className="w-4 h-4"/> Service / Parts History</div>
-                   <div className="text-xl font-bold text-white mb-1"><DrillDownValue value="High Loyalty" label="Customer CLV Retention" type="Report" onDrillDown={onDrillDown}/></div>
-                   <div className="text-xs text-text-muted mb-2">Lifetime Serv. Gross: <span className="text-white font-bold">$4,250</span></div>
-                   <div className="text-[10px] text-text-dim leading-relaxed bg-black p-2 rounded flex flex-col gap-1">
-                      <span><DrillDownValue value="RO #49122 (Current)" label="Open Repair Order" type="Action" onDrillDown={onDrillDown} color="text-amber-500"/></span>
-                      <span>14 total closed invoices.</span>
-                   </div>
-                </div>
+                 <div className="bg-charcoal border border-border rounded-lg p-4 shadow-inner border-y-[3px] border-y-gold bg-gradient-to-b from-black to-charcoal relative lg:col-span-2">
+                    <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><BrainCircuit className="w-4 h-4"/> Owner Recommendation</div>
+                    <div className="text-lg font-bold text-white leading-tight mb-2">Re-allocate marketing spend towards Slidell F&I promotions.</div>
+                    <div className="text-xs text-text-dim leading-relaxed">
+                       Slidell is moving units but sacrificing gross. Injecting $2,000 into targeted warranty promotions for past customers at the Slidell location yields a projected <span className="text-green-500 font-bold">ROI of 640%</span>.
+                    </div>
+                 </div>
+               </div>
+             )}
 
-                <div className="bg-charcoal border border-border rounded-lg p-4 shadow-inner border-y-[3px] border-y-gold bg-gradient-to-b from-black to-charcoal relative">
-                   <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><Database className="w-4 h-4"/> Agent Recommendation</div>
-                   <div className="text-lg font-bold text-white leading-tight mb-2">Perfect match for trade-in upgrade program.</div>
-                   <div className="text-[10px] text-text-dim leading-relaxed">
-                      Vehicle currently in service bay is nearing warranty expiration. Customer equity is <span className="text-green-500 font-bold">positive $3,100</span> based on current NADA/Black Book integration fetch.
-                   </div>
-                </div>
-             </div>
+             {/* MANAGER VIEW: Store Bottlenecks, Deal Desk */}
+             {userRole === 'Manager' && (
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                 <div className="bg-charcoal border border-border rounded p-4 shadow-inner hover:border-gold-dim transition-colors group cursor-pointer" onClick={() => onDrillDown('Action', { name: 'Review Aged Inventory' })}>
+                    <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><AlertCircle className="w-4 h-4"/> Floorplan Risk</div>
+                    <div className="text-xl font-bold text-white mb-1"><DrillDownValue value="8 Units Aging > 120d" label="Aged Units Liability" type="Inventory" onDrillDown={onDrillDown}/></div>
+                    <div className="text-xs text-text-muted mb-2">Monthly Carry Cost: <span className="text-red-500 font-bold">$2,560</span></div>
+                    <div className="text-[10px] text-text-dim leading-relaxed bg-black p-2 rounded">
+                       Primarily heavyweight cruisers and off-brand trade-ins. Recommend aggressive markdown.
+                    </div>
+                 </div>
 
-             <div className="bg-black border border-border rounded-lg p-6 shadow-2xl relative overflow-hidden">
-                <div className="absolute right-0 top-0 w-64 h-64 bg-green-500/5 rounded-full blur-3xl -translate-y-20 translate-x-20 pointer-events-none"></div>
-                <h4 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-6 border-b border-border/50 pb-2"><Bike className="w-5 h-5 text-gold"/> Intelligent Inventory Matches</h4>
-                
-                <div className="space-y-4">
-                   <div className="flex justify-between items-center bg-panel border border-gold/30 p-4 rounded-lg cursor-pointer hover:bg-charcoal transition-colors group relative overflow-hidden" onClick={() => onDrillDown('Inventory', { unit: '2024 Yamaha MT-09 SP', stock: 'Y33091', stage: 'In Stock', days: 12, cost: '$11,400', price: '$12,299' })}>
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gold"></div>
-                      <div>
-                         <div className="text-[10px] text-gold font-mono tracking-widest uppercase mb-1">99% Match - Prime Upgrade</div>
-                         <div className="text-lg font-bold text-white group-hover:text-gold transition-colors">2024 Yamaha MT-09 SP</div>
-                         <div className="text-xs text-text-muted mt-1">Stock #Y33091 • 12 Days in Stock</div>
-                      </div>
-                      <div className="text-right">
-                         <div className="text-xl font-bold text-white"><DrillDownValue value="$12,299" label="MSRP Listing" type="Financials" onDrillDown={onDrillDown} /></div>
-                         <div className="text-xs text-green-500 font-bold mt-1">Proj. Front-End: $899</div>
-                      </div>
-                   </div>
+                 <div className="bg-charcoal border border-border rounded p-4 shadow-inner hover:border-gold-dim transition-colors group cursor-pointer" onClick={() => onDrillDown('Employee', { name: 'Alex' })}>
+                    <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><UsersIcon className="w-4 h-4"/> Team Performance</div>
+                    <div className="text-xl font-bold text-white mb-1"><DrillDownValue value="Sales Closing Ratio: 18%" label="Store Target Delta" type="Employee" onDrillDown={onDrillDown} /></div>
+                    <div className="text-xs text-text-muted mb-2">Lead Dropout: <span className="text-amber-500 font-bold">Needs Coaching</span></div>
+                    <div className="text-[10px] text-text-dim leading-relaxed bg-black p-2 rounded">
+                       Alex's internet lead closing ratio dropped 12% MTD. 8 untouched leads sitting in queue &gt; 24hrs.
+                    </div>
+                 </div>
 
-                   <div className="flex justify-between items-center bg-black border border-border p-4 rounded-lg cursor-pointer hover:bg-panel transition-colors group" onClick={() => onDrillDown('Inventory', { unit: '2023 Yamaha XSR900', stock: 'Y29881', stage: 'In Stock', days: 85, cost: '$9,800', price: '$10,199' })}>
-                      <div>
-                         <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-1">85% Match - Aged Unit Alternative</div>
-                         <div className="text-lg font-bold text-white group-hover:text-gold transition-colors">2023 Yamaha XSR900</div>
-                         <div className="text-xs text-text-muted mt-1">Stock #Y29881 • <span className="text-red-500">85 Days in Stock</span></div>
-                      </div>
-                      <div className="text-right">
-                         <div className="text-xl font-bold text-white"><DrillDownValue value="$10,199" label="Discounted Internet Price" type="Financials" onDrillDown={onDrillDown} /></div>
-                         <div className="text-xs text-text-muted mt-1">Proj. Front-End: $399</div>
-                      </div>
-                   </div>
-                </div>
-             </div>
+                 <div className="bg-charcoal border border-border rounded-lg p-4 shadow-inner border-y-[3px] border-y-gold bg-gradient-to-b from-black to-charcoal relative">
+                    <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><BrainCircuit className="w-4 h-4"/> Manager Recommendation</div>
+                    <div className="text-lg font-bold text-white leading-tight mb-2">Initiate Flash Sale & Reassign Leads.</div>
+                    <div className="text-[10px] text-text-dim leading-relaxed">
+                       Drop 8 aged unit prices by $500 each and assign them via Twilio blast directly to the top 3 reps to quickly clear floorplan liability before month-end cutoff.
+                    </div>
+                 </div>
+               </div>
+             )}
+
+             {/* EMPLOYEE VIEW: Actionable Tactical Steps */}
+             {userRole === 'Employee' && (
+               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                 <div className="bg-charcoal border border-border rounded p-4 shadow-inner lg:col-span-1 border-l-[3px] border-l-gold flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><DollarSign className="w-4 h-4"/> My Pacing</div>
+                      <div className="text-4xl font-playfair text-white mb-1"><DrillDownValue value="$4,200" label="Current Earned Commission" type="Employee" onDrillDown={onDrillDown}/></div>
+                      <div className="text-xs text-text-muted mb-2">Projected EOM: <span className="text-green-500 font-bold">$7,450</span></div>
+                    </div>
+                    <div className="text-sm text-text-dim font-mono bg-black p-3 rounded border border-border">
+                       2 Units away from next tier bump (+5% back-end share).
+                    </div>
+                 </div>
+
+                 <div className="bg-black border border-border rounded-lg p-6 shadow-2xl relative overflow-hidden lg:col-span-2">
+                    <h4 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-6 border-b border-border/50 pb-2"><Clock className="w-5 h-5 text-amber-500"/> Immediate Action Items</h4>
+                    
+                    <div className="space-y-4">
+                       <div className="flex justify-between items-center bg-panel border-l-4 border-amber-500 p-4 rounded-lg cursor-pointer hover:bg-charcoal transition-colors group">
+                          <div>
+                             <div className="text-[10px] text-amber-500 font-mono tracking-widest uppercase mb-1">Missing Deal Stipulation</div>
+                             <div className="text-lg font-bold text-white group-hover:text-gold transition-colors">Vance Deal - Needs Proof of Residence</div>
+                             <div className="text-xs text-text-muted mt-1">Finance approval pending this final doc.</div>
+                          </div>
+                          <button className="bg-black border border-border px-4 py-2 rounded text-xs text-white" onClick={() => onDrillDown('Action', { name: "Send SMS Doc Link to Vance" })}>Send Upload Link</button>
+                       </div>
+
+                       <div className="flex justify-between items-center bg-panel border-l-4 border-green-500 p-4 rounded-lg cursor-pointer hover:bg-charcoal transition-colors group">
+                          <div>
+                             <div className="text-[10px] text-green-500 font-mono tracking-widest uppercase mb-1">Hot Internet Lead</div>
+                             <div className="text-lg font-bold text-white group-hover:text-gold transition-colors">Emily White (2023 YZF-R7)</div>
+                             <div className="text-xs text-text-muted mt-1">Submitted "Get Best Price" 5 mins ago.</div>
+                          </div>
+                          <button className="bg-green-900/40 border border-green-500 text-green-500 px-4 py-2 rounded text-xs" onClick={() => onDrillDown('Action', { name: "Call Emily now" })}>Call Now</button>
+                       </div>
+                    </div>
+                 </div>
+               </div>
+             )}
 
              <div className="flex flex-col md:flex-row gap-4 pt-4 border-t border-border mt-6">
-                <button className="bg-gold text-black px-8 py-4 rounded text-sm font-bold shadow-[0_0_20px_rgba(201,168,76,0.25)] hover:bg-gold-light hover:scale-[1.02] transition-all flex-[2] flex justify-center items-center gap-2 uppercase tracking-widest" onClick={() => onDrillDown('Deal', { unit: '2024 Yamaha MT-09 SP', customer: 'Michael R. Vance', gross: '$1,298', status: 'Desking Started' })}><CheckCircle2 className="w-5 h-5"/> Launch Desking on Top Match</button>
-                <button className="bg-panel text-white border border-border px-8 py-4 rounded text-sm hover:bg-black hover:border-gold-dim transition-all flex-1 shadow font-bold tracking-wide" onClick={() => onDrillDown('Action', { name: 'Construct Blank Deal Jacket', message: 'Bypassing AI recommendations and loading blank CRM skeleton...' })}>Manual Deal Blank</button>
+                 {userRole !== 'Employee' && (
+                    <button className="bg-gold text-black px-8 py-4 rounded text-sm font-bold shadow-[0_0_20px_rgba(201,168,76,0.25)] hover:bg-gold-light hover:scale-[1.02] transition-all flex-[2] flex justify-center items-center gap-2 uppercase tracking-widest" onClick={() => onDrillDown('Action', { name: 'Generate AI Action Plan', message: 'Routing tailored execution strategy to team...' })}><CheckCircle2 className="w-5 h-5"/> Deploy Recommended Strategy</button>
+                 )}
+                 <button className="bg-panel text-white border border-border px-8 py-4 rounded text-sm hover:bg-black hover:border-gold-dim transition-all flex-1 shadow font-bold tracking-wide" onClick={onClose}>Acknowledge Briefing</button>
              </div>
           </div>
         );
@@ -246,50 +284,63 @@ export const DrillDownModal = ({ item, onClose, onDrillDown }) => {
         return (
           <div className="space-y-6">
             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-2 flex items-center gap-3"><DollarSign className="w-6 h-6"/> {item.data.metric} Assessment</h3>
-            <div className="bg-charcoal p-8 rounded border border-border flex items-center justify-between overflow-hidden relative group">
-              <div className="absolute inset-0 bg-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative z-10">
-                 <div className="text-xs text-text-muted uppercase tracking-widest mb-1">Reconciled Core Balance</div>
-                 <div className="text-5xl font-playfair text-white"><DrillDownValue value={item.data.value} label={item.data.metric} type="Report" onDrillDown={onDrillDown} /></div>
-              </div>
-              <div className="text-right relative z-10">
-                 <div className="text-xs text-text-muted uppercase tracking-widest mb-1">Corporate Target YTD</div>
-                 <div className="text-2xl font-mono tracking-tighter text-text-dim line-through"><DrillDownValue value="$1,500,000" label="YTD Quota Goal" type="Report" onDrillDown={onDrillDown} color="text-text-dim"/></div>
-              </div>
-            </div>
             
-            <div className="space-y-4">
-               <div className="text-[11px] font-bold text-white uppercase tracking-widest flex justify-between items-center border-b border-border pb-2">
-                  <span>General Ledger Matrix Spread</span>
-               </div>
-               <div className="bg-black rounded border border-border shadow-inner">
-                  <table className="w-full text-sm text-left">
-                     <thead className="text-text-muted text-[10px] uppercase font-mono bg-panel border-b border-border">
-                       <tr><th className="px-5 py-3 tracking-widest font-normal">Account Code</th><th className="px-5 py-3 tracking-widest font-normal">Journal Identity</th><th className="px-5 py-3 text-right tracking-widest font-normal">Posting Value</th></tr>
-                     </thead>
-                     <tbody className="text-text divide-y divide-border/30">
-                       <tr className="hover:bg-charcoal transition-colors cursor-pointer group" onClick={() => onDrillDown('Action', { name: 'Audit GL Account 10100' })}>
-                          <td className="px-5 py-4 font-mono text-text-dim group-hover:text-gold transition-colors">10100</td>
-                          <td className="px-5 py-4 text-white font-medium">Operating Cash Accounts (BTR)</td>
-                          <td className="px-5 py-4 text-right font-bold"><DrillDownValue value="$842,000" label="Operating Cash (BTR)" type="Financials" onDrillDown={onDrillDown} /></td>
-                       </tr>
-                       <tr className="hover:bg-charcoal transition-colors cursor-pointer group" onClick={() => onDrillDown('Action', { name: 'Audit GL Account 10200' })}>
-                          <td className="px-5 py-4 font-mono text-text-dim group-hover:text-gold transition-colors">10200</td>
-                          <td className="px-5 py-4 text-white font-medium">Operating Cash Accounts (SLD)</td>
-                          <td className="px-5 py-4 text-right font-bold"><DrillDownValue value="$198,000" label="Operating Cash (SLD)" type="Financials" onDrillDown={onDrillDown} /></td>
-                       </tr>
-                       <tr className="hover:bg-charcoal transition-colors cursor-pointer group" onClick={() => onDrillDown('Action', { name: 'Audit GL Account 11500' })}>
-                          <td className="px-5 py-4 font-mono text-text-dim group-hover:text-gold transition-colors">11500</td>
-                          <td className="px-5 py-4 text-white font-medium flex items-center gap-2">Contracts in Transit (CIT) <AlertCircle className="w-3 h-3 text-red-500" /></td>
-                          <td className="px-5 py-4 text-right font-bold text-amber-500"><DrillDownValue value="$200,000" label="Funding Hold CIT" type="Report" color="text-amber-500" onDrillDown={onDrillDown} /></td>
-                       </tr>
-                     </tbody>
-                  </table>
-               </div>
-            </div>
-            <div className="flex gap-4 pt-2 mt-4">
-                <button className="bg-panel font-bold border border-border text-white px-6 py-3 rounded text-sm hover:bg-black hover:border-gold transition-all w-full flex justify-center items-center gap-2" onClick={() => onDrillDown('Action', { name: 'Generate Financial Audit export', message: 'Pulling 90-day GL reconciliation block...' })}>Extract Certified GL Export</button>
-            </div>
+            {userRole === 'Employee' ? (
+              <div className="bg-black p-8 rounded border border-border text-center">
+                 <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                 <h4 className="text-red-500 font-bold text-xl mb-2">Access Denied</h4>
+                 <p className="text-text-muted text-sm">You do not have the required permissions to view underlying global general ledger (GL) data. If you require this report for an active deal, please contact the General Manager.</p>
+              </div>
+            ) : (
+              <>
+                <div className="bg-charcoal p-8 rounded border border-border flex items-center justify-between overflow-hidden relative group">
+                  <div className="absolute inset-0 bg-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="relative z-10">
+                     <div className="text-xs text-text-muted uppercase tracking-widest mb-1">Reconciled Core Balance</div>
+                     <div className="text-5xl font-playfair text-white"><DrillDownValue value={item.data.value} label={item.data.metric} type="Report" onDrillDown={onDrillDown} /></div>
+                  </div>
+                  <div className="text-right relative z-10">
+                     <div className="text-xs text-text-muted uppercase tracking-widest mb-1">{userRole === 'Owner' ? 'Corporate Target YTD' : 'Store Quota YTD'}</div>
+                     <div className="text-2xl font-mono tracking-tighter text-text-dim line-through"><DrillDownValue value={userRole === 'Owner' ? "$1,500,000" : "$840,000"} label="YTD Quota Goal" type="Report" onDrillDown={onDrillDown} color="text-text-dim"/></div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                   <div className="text-[11px] font-bold text-white uppercase tracking-widest flex justify-between items-center border-b border-border pb-2">
+                      <span>General Ledger Matrix Spread</span>
+                   </div>
+                   <div className="bg-black rounded border border-border shadow-inner">
+                      <table className="w-full text-sm text-left">
+                         <thead className="text-text-muted text-[10px] uppercase font-mono bg-panel border-b border-border">
+                           <tr><th className="px-5 py-3 tracking-widest font-normal">Account Code</th><th className="px-5 py-3 tracking-widest font-normal">Journal Identity</th><th className="px-5 py-3 text-right tracking-widest font-normal">Posting Value</th></tr>
+                         </thead>
+                         <tbody className="text-text divide-y divide-border/30">
+                           <tr className="hover:bg-charcoal transition-colors cursor-pointer group" onClick={() => onDrillDown('Action', { name: 'Audit GL Account 10100' })}>
+                              <td className="px-5 py-4 font-mono text-text-dim group-hover:text-gold transition-colors">10100</td>
+                              <td className="px-5 py-4 text-white font-medium">Operating Cash Accounts (BTR)</td>
+                              <td className="px-5 py-4 text-right font-bold"><DrillDownValue value="$842,000" label="Operating Cash (BTR)" type="Financials" onDrillDown={onDrillDown} /></td>
+                           </tr>
+                           {userRole === 'Owner' && (
+                             <tr className="hover:bg-charcoal transition-colors cursor-pointer group" onClick={() => onDrillDown('Action', { name: 'Audit GL Account 10200' })}>
+                                <td className="px-5 py-4 font-mono text-text-dim group-hover:text-gold transition-colors">10200</td>
+                                <td className="px-5 py-4 text-white font-medium">Operating Cash Accounts (SLD)</td>
+                                <td className="px-5 py-4 text-right font-bold"><DrillDownValue value="$198,000" label="Operating Cash (SLD)" type="Financials" onDrillDown={onDrillDown} /></td>
+                             </tr>
+                           )}
+                           <tr className="hover:bg-charcoal transition-colors cursor-pointer group" onClick={() => onDrillDown('Action', { name: 'Audit GL Account 11500' })}>
+                              <td className="px-5 py-4 font-mono text-text-dim group-hover:text-gold transition-colors">11500</td>
+                              <td className="px-5 py-4 text-white font-medium flex items-center gap-2">Contracts in Transit (CIT) <AlertCircle className="w-3 h-3 text-red-500" /></td>
+                              <td className="px-5 py-4 text-right font-bold text-amber-500"><DrillDownValue value="$200,000" label="Funding Hold CIT" type="Report" color="text-amber-500" onDrillDown={onDrillDown} /></td>
+                           </tr>
+                         </tbody>
+                      </table>
+                   </div>
+                </div>
+                <div className="flex gap-4 pt-2 mt-4">
+                    <button className="bg-panel font-bold border border-border text-white px-6 py-3 rounded text-sm hover:bg-black hover:border-gold transition-all w-full flex justify-center items-center gap-2" onClick={() => onDrillDown('Action', { name: 'Generate Financial Audit export', message: 'Pulling 90-day GL reconciliation block...' })}>Extract Certified GL Export</button>
+                </div>
+              </>
+            )}
           </div>
         );
       case 'Deal':
@@ -297,52 +348,64 @@ export const DrillDownModal = ({ item, onClose, onDrillDown }) => {
           <div className="space-y-6">
             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-2 flex justify-between items-center">
                <span>Deal Desk Jacket: <DrillDownValue value={item.data.unit || item.data.customer} label={`${item.data.customer} Profile`} type="Report" onDrillDown={onDrillDown} color="text-white hover:text-gold" /></span>
-               <div className="text-[10px] text-black bg-gold font-bold px-3 py-1 rounded tracking-widest font-mono uppercase">Sales Log Validated</div>
+               <div className="text-[10px] text-black bg-gold font-bold px-3 py-1 rounded tracking-widest font-mono uppercase">Status: DESKING</div>
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-border">
                <div>
                   <h4 className="text-[10px] uppercase text-text-muted tracking-wide mb-3 flex items-center justify-between">
                      <span>Deal Structure Metrics</span>
-                     <span className="text-text-dim tracking-normal">Status: DESKING</span>
+                     <span className="text-text-dim tracking-normal">Validated</span>
                   </h4>
                   <div className="bg-black p-5 rounded border border-border space-y-4 text-sm font-medium">
-                    {Object.entries(item.data).map(([k,v]) => k !== 'unit' && k !== 'customer' && (
+                    {/* OWNER sees full profit, Manager sees margins, Employee sees front gross */}
+                    {Object.entries(item.data).map(([k,v]) => {
+                      if (k === 'unit' || k === 'customer') return null;
+                      if (userRole === 'Employee' && (k.toLowerCase().includes('profit') || k.toLowerCase().includes('backend') || k.toLowerCase().includes('holdback'))) return null;
+                      
+                      return (
                        <div key={k} className="flex justify-between items-center border-b border-border/30 pb-3 last:border-0 last:pb-0 group">
                          <span className="capitalize text-text-muted text-xs group-hover:text-white transition-colors">{k.replace(/([A-Z])/g, ' $1').trim()}</span>
                          <span className="font-bold text-white text-base"><DrillDownValue value={v} label={`${k} detail`} type="Financials" onDrillDown={onDrillDown} /></span>
                        </div>
-                    ))}
+                    )})}
                   </div>
                </div>
-               <div>
-                  <h4 className="text-[10px] uppercase text-text-muted tracking-widest mb-3">Required Stips & Documentation</h4>
-                  <div className="space-y-3 bg-charcoal p-5 rounded border border-border h-full box-border pt-6 shadow-inner">
-                     <div className="flex justify-between items-center text-sm border-b border-border/50 pb-3">
-                        <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-green-500" /> <span className="text-white">Proof of Income</span></div>
-                        <span className="text-[10px] text-green-500 font-mono tracking-widest border border-green-500/30 bg-green-900/10 px-2 py-0.5 rounded">VERIFIED</span>
-                     </div>
-                     <div className="flex justify-between items-center text-sm border-b border-border/50 pb-3">
-                        <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-green-500" /> <span className="text-white">Driver's License (State ID)</span></div>
-                        <span className="text-[10px] text-green-500 font-mono tracking-widest border border-green-500/30 bg-green-900/10 px-2 py-0.5 rounded">VERIFIED</span>
-                     </div>
-                     <div className="flex justify-between items-center text-sm border-b border-border/50 pb-3 cursor-pointer hover:bg-panel p-2 -mx-2 rounded transition-colors group" onClick={() => onDrillDown('Action', { name: 'Upload Residence Stip', message: 'Opening document optical reader...' })}>
-                        <div className="flex items-center gap-3"><div className="w-5 h-5 border-2 border-red-500/50 rounded flex-shrink-0 animate-pulse bg-red-900/10"></div> <span className="text-text-muted group-hover:text-white transition-colors">Proof of Local Residence</span></div>
-                        <span className="text-[10px] text-red-500 font-mono tracking-widest border border-red-500/30 bg-red-900/10 px-2 py-0.5 rounded">PENDING UPLOAD</span>
-                     </div>
-                     <div className="flex justify-between items-center text-sm cursor-pointer hover:bg-panel p-2 -mx-2 rounded transition-colors group" onClick={() => onDrillDown('Action', { name: 'Upload Insurance Stip', message: 'Opening document optical reader...' })}>
-                        <div className="flex items-center gap-3"><div className="w-5 h-5 border-2 border-red-500/50 rounded flex-shrink-0 animate-pulse bg-red-900/10"></div> <span className="text-text-muted group-hover:text-white transition-colors">Full Coverage Ins. Binder</span></div>
-                        <span className="text-[10px] text-red-500 font-mono tracking-widest border border-red-500/30 bg-red-900/10 px-2 py-0.5 rounded">PENDING UPLOAD</span>
-                     </div>
-                  </div>
-               </div>
+               
+               {/* MANAGER and EMPLOYEE see Stipulations, OWNER skips */}
+               {userRole !== 'Owner' && (
+                 <div>
+                    <h4 className="text-[10px] uppercase text-text-muted tracking-widest mb-3">Required Stips & Documentation</h4>
+                    <div className="space-y-3 bg-charcoal p-5 rounded border border-border h-full box-border shadow-inner">
+                       <div className="flex justify-between items-center text-sm border-b border-border/50 pb-3">
+                          <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-green-500" /> <span className="text-white">Proof of Income</span></div>
+                          <span className="text-[10px] text-green-500 font-mono tracking-widest border border-green-500/30 bg-green-900/10 px-2 py-0.5 rounded">VERIFIED</span>
+                       </div>
+                       <div className="flex justify-between items-center text-sm border-b border-border/50 pb-3">
+                          <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-green-500" /> <span className="text-white">Driver's License (State ID)</span></div>
+                          <span className="text-[10px] text-green-500 font-mono tracking-widest border border-green-500/30 bg-green-900/10 px-2 py-0.5 rounded">VERIFIED</span>
+                       </div>
+                       <div className="flex justify-between items-center text-sm border-b border-border/50 pb-3 cursor-pointer hover:bg-panel p-2 -mx-2 rounded transition-colors group" onClick={() => onDrillDown('Action', { name: 'Upload Residence Stip', message: 'Opening document optical reader...' })}>
+                          <div className="flex items-center gap-3"><div className="w-5 h-5 border-2 border-red-500/50 rounded flex-shrink-0 animate-pulse bg-red-900/10"></div> <span className="text-text-muted group-hover:text-white transition-colors">Proof of Local Residence</span></div>
+                          <span className="text-[10px] text-red-500 font-mono tracking-widest border border-red-500/30 bg-red-900/10 px-2 py-0.5 rounded">PENDING UPLOAD</span>
+                       </div>
+                    </div>
+                 </div>
+               )}
             </div>
             
             <div className="flex flex-col md:flex-row gap-4 justify-between items-center mt-2">
                 <div className="text-xs text-amber-500 leading-relaxed border-l-4 border-amber-500 pl-4 py-1 flex-[1.5] bg-amber-900/10 p-3 rounded-r font-mono">
                    <AlertCircle className="inline w-4 h-4 mr-1 text-amber-500" /> COMPLIANCE HOLD: Ensure signatures and outstanding documentation are indexed into cloud vault prior to final F&I approval routing.
                 </div>
-                <button className="w-full md:w-auto bg-gold hover:bg-gold-light text-black px-6 py-4 rounded font-bold shadow-lg shadow-gold/20 flex-1 text-sm border-2 border-gold uppercase tracking-wider transition-all" onClick={() => onDrillDown('Action', { name: 'Request e-Documents Securely', message: 'Dispatching Twilio tracking link to buyer...' })}>Trigger Secure Stip Link</button>
+                
+                {userRole === 'Employee' ? (
+                   <button className="w-full md:w-auto bg-gold hover:bg-gold-light text-black px-6 py-4 rounded font-bold shadow-lg shadow-gold/20 flex-1 text-sm border-2 border-gold uppercase tracking-wider transition-all" onClick={() => onDrillDown('Action', { name: 'Request e-Documents Securely', message: 'Dispatching Twilio tracking link to buyer...' })}>Trigger Secure Stip Link</button>
+                ) : userRole === 'Manager' ? (
+                   <button className="w-full md:w-auto bg-panel hover:bg-green-900/40 text-green-500 border border-green-500/50 px-6 py-4 rounded font-bold shadow-lg flex-1 text-sm uppercase tracking-wider transition-all" onClick={() => onDrillDown('Action', { name: 'Override Stipulation Requirement', message: 'Logging manager exception code for deal funding...' })}>Override Stips (GM Override)</button>
+                ) : (
+                   <button className="w-full md:w-auto bg-charcoal hover:bg-black text-white border border-border px-6 py-4 rounded font-bold flex-1 text-sm transition-all" onClick={() => onDrillDown('Report', { name: 'View Desking Historical Spread' })}>View Desk History</button>
+                )}
             </div>
           </div>
         );
@@ -370,13 +433,16 @@ export const DrillDownModal = ({ item, onClose, onDrillDown }) => {
                         <div className="text-[10px] text-text-dim uppercase tracking-widest border-b border-border/50 pb-2">Unit Status Log</div>
                         <div className="text-white font-bold text-xl mt-3"><DrillDownValue value={item.data.stage || 'Available Pipeline'} label="Status Matrix" type="Report" onDrillDown={onDrillDown} /></div>
                      </div>
-                     <div className="bg-panel p-5 rounded border border-border hover:border-gold-dim transition-colors flex flex-col justify-between">
+                     <div className="bg-panel p-5 rounded border border-border hover:border-gold-dim transition-colors flex flex-col justify-between relative overflow-hidden">
+                        {(userRole === 'Owner' || userRole === 'Manager') && item.data.days > 90 && (
+                          <div className="absolute top-0 right-0 w-8 h-8 bg-red-500 -rotate-45 translate-x-4 -translate-y-4 shadow-lg"></div>
+                        )}
                         <div className="text-[10px] text-text-dim uppercase tracking-widest border-b border-border/50 pb-2">Aging Liability</div>
-                        <div className={`font-bold text-2xl mt-3 ${item.data.days > 90 ? 'text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.15)] bg-red-900/5 -mx-2 -mb-2 p-2 rounded' : 'text-green-500'}`}><DrillDownValue value={`${item.data.days || 14} Full Days`} label="Holding Time" type="Report" onDrillDown={onDrillDown} color={item.data.days > 90 ? 'text-red-500' : 'text-green-500'} /></div>
+                        <div className={`font-bold text-2xl mt-3 ${(userRole !== 'Employee' && item.data.days > 90) ? 'text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.15)] bg-red-900/5 -mx-2 -mb-2 p-2 rounded' : 'text-green-500'}`}><DrillDownValue value={`${item.data.days || 14} Full Days`} label="Holding Time" type="Report" onDrillDown={onDrillDown} color={(userRole !== 'Employee' && item.data.days > 90) ? 'text-red-500' : 'text-green-500'} /></div>
                      </div>
                      <div className="bg-panel p-5 rounded border border-border hover:border-gold-dim transition-colors flex flex-col justify-between">
-                        <div className="text-[10px] text-text-dim uppercase tracking-widest border-b border-border/50 pb-2">Base Cost Asset</div>
-                        <div className="text-white font-bold text-2xl mt-3"><DrillDownValue value={item.data.cost || '$0 NMS'} label="Invoice / Recon Net" type="Financials" onDrillDown={onDrillDown} /></div>
+                        <div className="text-[10px] text-text-dim uppercase tracking-widest border-b border-border/50 pb-2">{userRole === 'Employee' ? 'Target Front Gross' : 'Base Cost Asset'}</div>
+                        <div className="text-white font-bold text-2xl mt-3"><DrillDownValue value={userRole === 'Employee' ? '$1,400 Tgt' : (item.data.cost || '$0 NMS')} label="Financial Basis" type="Financials" onDrillDown={onDrillDown} /></div>
                      </div>
                      <div className="bg-panel p-5 rounded border border-gold-dim border-b-[3px] border-b-gold relative overflow-hidden group flex flex-col justify-between">
                         <div className="absolute top-0 right-0 w-12 h-12 bg-gold -rotate-45 translate-x-6 -translate-y-6 shadow-xl"></div>
@@ -387,31 +453,42 @@ export const DrillDownModal = ({ item, onClose, onDrillDown }) => {
                </div>
             </div>
             
-            <div className="bg-charcoal border border-border rounded p-6 shadow-inner">
-               <h4 className="text-[10px] text-text-muted font-bold tracking-widest border-b border-border pb-2 mb-5 uppercase flex justify-between items-center">
-                  <span>Unit Ledger Timeline</span>
-                  <span className="text-text-dim lowercase tracking-normal font-mono cursor-pointer hover:text-white transition-colors" onClick={() => onDrillDown('Report', { name: 'Full Unit Audit' })}>Expand entire history...</span>
-               </h4>
-               <div className="flex flex-col space-y-5 relative before:absolute before:inset-0 before:ml-[1.12rem] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-px before:bg-gradient-to-b before:from-gold before:via-border before:to-transparent pt-2">
-                  <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group flex-row-reverse md:even:flex-row">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full border border-gold bg-black text-gold shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-[0_0_15px_rgba(201,168,76,0.4)] z-10 transition-transform hover:scale-110 cursor-pointer">
-                          <CheckCircle2 className="w-4 h-4" />
-                      </div>
-                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-panel p-5 rounded-lg border border-border hover:border-gold-dim transition-colors cursor-pointer group-hover:shadow-[0_0_20px_rgba(201,168,76,0.1)]" onClick={() => onDrillDown('Action', { name: 'Inspect Receiving Manifest' })}>
-                          <div className="flex justify-between items-center mb-2">
-                             <div className="font-bold text-white text-sm">Unit Received at Dealership (Floorplan Open)</div>
-                             <div className="text-[10px] font-mono text-gold bg-gold/5 border border-gold/20 px-2 py-1 rounded">Oct 12, 09:14 AM</div>
-                          </div>
-                          <div className="text-xs text-text-muted mt-2 border-t border-border/30 pt-2">Bill of lading captured digitally. Initial curtailment mapped to CDF funding source.</div>
-                      </div>
-                  </div>
-               </div>
-            </div>
+            {userRole !== 'Employee' && (
+              <div className="bg-charcoal border border-border rounded p-6 shadow-inner">
+                 <h4 className="text-[10px] text-text-muted font-bold tracking-widest border-b border-border pb-2 mb-5 uppercase flex justify-between items-center">
+                    <span>Unit Ledger Timeline</span>
+                    <span className="text-text-dim lowercase tracking-normal font-mono cursor-pointer hover:text-white transition-colors" onClick={() => onDrillDown('Report', { name: 'Full Unit Audit' })}>Expand entire history...</span>
+                 </h4>
+                 <div className="flex flex-col space-y-5 relative before:absolute before:inset-0 before:ml-[1.12rem] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-px before:bg-gradient-to-b before:from-gold before:via-border before:to-transparent pt-2">
+                    <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group flex-row-reverse md:even:flex-row">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full border border-gold bg-black text-gold shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-[0_0_15px_rgba(201,168,76,0.4)] z-10 transition-transform hover:scale-110 cursor-pointer">
+                            <CheckCircle2 className="w-4 h-4" />
+                        </div>
+                        <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-panel p-5 rounded-lg border border-border hover:border-gold-dim transition-colors cursor-pointer group-hover:shadow-[0_0_20px_rgba(201,168,76,0.1)]" onClick={() => onDrillDown('Action', { name: 'Inspect Receiving Manifest' })}>
+                            <div className="flex justify-between items-center mb-2">
+                               <div className="font-bold text-white text-sm">Unit Received at Dealership (Floorplan Open)</div>
+                               <div className="text-[10px] font-mono text-gold bg-gold/5 border border-gold/20 px-2 py-1 rounded">Oct 12, 09:14 AM</div>
+                            </div>
+                            <div className="text-xs text-text-muted mt-2 border-t border-border/30 pt-2">Bill of lading captured digitally. Initial curtailment mapped to CDF funding source.</div>
+                        </div>
+                    </div>
+                 </div>
+              </div>
+            )}
 
             <div className="flex flex-wrap gap-4 pt-4 border-t border-border mt-2">
-                <button className="bg-gold text-black px-6 py-3 rounded text-sm font-bold shadow-lg shadow-gold/20 hover:bg-gold-light transition-all flex-[1.5] flex items-center justify-center gap-2 uppercase tracking-wide" onClick={() => onDrillDown('Action', { name: 'Force Immediate Markdown Approvals', message: 'Bypassing basic checks for Global Administrator protocol...' })}><TrendingDown className="w-4 h-4"/> Request GM Markdown</button>
-                <button className="bg-panel text-white border border-border px-6 py-3 rounded text-sm hover:bg-black hover:border-text-muted transition-all flex-1 shadow font-bold" onClick={() => onDrillDown('Action', { name: 'Store Ledger Transfer', message: 'Moving unit metadata to alternate branch...' })}>Transfer Store</button>
-                <button className="bg-panel text-white border border-border px-4 py-2 rounded text-sm hover:bg-text-muted transition-colors shadow" onClick={() => onDrillDown('Action', { name: 'Print Monroney Label', message: 'Sending label PDF to default local printer...' })}>Print Label</button>
+                {userRole === 'Manager' && (
+                  <button className="bg-gold text-black px-6 py-3 rounded text-sm font-bold shadow-lg shadow-gold/20 hover:bg-gold-light transition-all flex-[1.5] flex items-center justify-center gap-2 uppercase tracking-wide" onClick={() => onDrillDown('Action', { name: 'Force Immediate Markdown Approvals', message: 'Bypassing basic checks for Global Administrator protocol...' })}><TrendingDown className="w-4 h-4"/> Approve Markdown</button>
+                )}
+                {userRole === 'Owner' && (
+                  <button className="bg-gold text-black px-6 py-3 rounded text-sm font-bold shadow-lg shadow-gold/20 hover:bg-gold-light transition-all flex-[1.5] flex items-center justify-center gap-2 uppercase tracking-wide" onClick={() => onDrillDown('Action', { name: 'Store Ledger Transfer', message: 'Moving unit metadata to alternate branch...' })}><TrendingDown className="w-4 h-4"/> Transfer Inter-Store</button>
+                )}
+                
+                {userRole === 'Employee' && (
+                  <button className="bg-gold text-black px-6 py-3 rounded text-sm font-bold shadow-lg shadow-gold/20 hover:bg-gold-light transition-all flex-[1.5] flex items-center justify-center gap-2 uppercase tracking-wide" onClick={() => onDrillDown('Action', { name: 'Dispatch Digital BDC Pitch', message: 'Sending comprehensive specs to attached leads...' })}><Megaphone className="w-4 h-4"/> Pitch to Hot Leads</button>
+                )}
+                
+                <button className="bg-panel text-white border border-border px-4 py-3 rounded text-sm hover:bg-text-muted transition-colors shadow flex-1 font-bold" onClick={() => onDrillDown('Action', { name: 'Print Monroney Label', message: 'Sending label PDF to default local printer...' })}>Print Label</button>
             </div>
           </div>
         );
@@ -420,11 +497,13 @@ export const DrillDownModal = ({ item, onClose, onDrillDown }) => {
         return (
           <div className="space-y-6">
             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-4 flex items-center justify-between">
-               <span>Staff Dossier & Execution Profile</span>
-               <span className="text-[10px] font-mono text-green-500 border border-green-500 rounded bg-green-900/10 px-3 py-1.5 tracking-widest shadow-[0_0_10px_rgba(34,197,94,0.2)]"><DrillDownValue value="PERSONNEL ACTIVE" label="HR Status" type="Action" color="text-green-500" onDrillDown={onDrillDown} /></span>
+               <span>{userRole === 'Employee' ? 'My Performance Profile' : 'Staff Dossier & Execution Profile'}</span>
+               {userRole !== 'Employee' && (
+                 <span className="text-[10px] font-mono text-green-500 border border-green-500 rounded bg-green-900/10 px-3 py-1.5 tracking-widest shadow-[0_0_10px_rgba(34,197,94,0.2)]"><DrillDownValue value="PERSONNEL ACTIVE" label="HR Status" type="Action" color="text-green-500" onDrillDown={onDrillDown} /></span>
+               )}
             </h3>
             
-            <div className="flex items-center gap-6 mb-6 bg-black p-6 rounded-xl border border-border hover:border-gold-dim transition-all cursor-pointer shadow-inner relative overflow-hidden" onClick={() => onDrillDown('Report', { name: 'KPI and Performance Breakdown Grid' })}>
+            <div className={`flex items-center gap-6 mb-6 bg-black p-6 rounded-xl border border-border transition-all cursor-pointer shadow-inner relative overflow-hidden ${userRole === 'Owner' ? 'hover:border-gold-dim' : ''}`} onClick={() => { if (userRole !== 'Employee') onDrillDown('Report', { name: 'KPI and Performance Breakdown Grid' }); }}>
               <div className="absolute right-0 top-0 w-32 h-32 bg-gold/5 rounded-full blur-2xl translate-x-10 -translate-y-10"></div>
               <div className="w-24 h-24 rounded-full bg-panel border-[3px] border-gold flex items-center justify-center text-5xl font-playfair text-gold shadow-[0_0_25px_rgba(201,168,76,0.25)] relative z-10">
                 {item.data.name ? item.data.name[0] : 'U'}
@@ -435,7 +514,7 @@ export const DrillDownModal = ({ item, onClose, onDrillDown }) => {
                 <div className="flex items-center gap-3 text-sm text-text-muted bg-charcoal/50 w-max px-3 py-1.5 rounded-md border border-border/50">
                   <span className="flex items-center gap-1.5 font-bold"><CheckCircle2 className="w-3.5 h-3.5 text-green-500"/> Clocked In</span> 
                   <span className="text-border">|</span>
-                  <span className="cursor-pointer hover:text-white transition-colors flex items-center gap-1" onClick={(e) => { e.stopPropagation(); onDrillDown('Action', { name: 'Reassign Store Anchor' }); }}><Clock className="w-3.5 h-3.5"/> {item.data.location || 'BTR Corporate'}</span>
+                  <span className="cursor-pointer hover:text-white transition-colors flex items-center gap-1"><Clock className="w-3.5 h-3.5"/> {item.data.location || 'BTR Corporate'}</span>
                 </div>
               </div>
             </div>
@@ -449,20 +528,32 @@ export const DrillDownModal = ({ item, onClose, onDrillDown }) => {
                ))}
             </div>
 
-            <div className="bg-charcoal border border-border rounded p-6 text-sm leading-relaxed mt-4 shadow-inner">
-               <strong className="text-gold text-[10px] uppercase tracking-[0.2em] mb-3 block border-b border-border/50 pb-2 font-mono">Automated Management AI Copilot Summary</strong>
-               <DrillDownValue value={item.data.name || 'Resource'} label="Employee Identity" type="Employee" onDrillDown={onDrillDown} /> is pacing <span className="text-green-500 font-bold px-1 bg-green-900/20 rounded border border-green-500/20">ahead of baseline parameters</span> for the current commission period. Lead conversion velocity is extremely high this week. 
-               <div className="mt-4 pt-3 border-t border-border/50 flex justify-end">
-                  <span className="text-gold text-xs font-bold cursor-pointer hover:underline uppercase tracking-wide flex items-center gap-1" onClick={() => onDrillDown('Action', { name: 'Construct Disciplinary/Praise HR Ticket' })}>Draft Personnel File Note <ChevronRight className="w-3 h-3"/></span>
-               </div>
-            </div>
+            {userRole === 'Manager' && (
+              <div className="bg-charcoal border border-border rounded p-6 text-sm leading-relaxed mt-4 shadow-inner">
+                 <strong className="text-gold text-[10px] uppercase tracking-[0.2em] mb-3 block border-b border-border/50 pb-2 font-mono">Automated Management AI Copilot Summary</strong>
+                 <DrillDownValue value={item.data.name || 'Resource'} label="Employee Identity" type="Employee" onDrillDown={onDrillDown} /> is pacing <span className="text-green-500 font-bold px-1 bg-green-900/20 rounded border border-green-500/20">ahead of baseline parameters</span> for the current commission period. Lead conversion velocity is extremely high this week. 
+                 <div className="mt-4 pt-3 border-t border-border/50 flex justify-end">
+                    <span className="text-gold text-xs font-bold cursor-pointer hover:underline uppercase tracking-wide flex items-center gap-1" onClick={() => onDrillDown('Action', { name: 'Construct Disciplinary/Praise HR Ticket' })}>Draft Personnel File Note <ChevronRight className="w-3 h-3"/></span>
+                 </div>
+              </div>
+            )}
+            
+            {userRole === 'Owner' && (
+              <div className="bg-charcoal border border-border rounded p-6 text-sm leading-relaxed mt-4 shadow-inner">
+                 <strong className="text-gold text-[10px] uppercase tracking-[0.2em] mb-3 block border-b border-border/50 pb-2 font-mono">Owner ROI Matrix</strong>
+                 Total YTD Commission paid to {item.data.name || 'Resource'}: <strong className="text-white">$78,400</strong>. Front-end gross generated: <strong className="text-white">$312,000</strong>. 
+                 <span className="block mt-2 text-green-500 font-bold px-1 bg-green-900/20 rounded border border-green-500/20 w-fit">4.0x Return on Capital</span> 
+              </div>
+            )}
 
             <div className="flex flex-col md:flex-row gap-4 pt-4 border-t border-border mt-4">
-                <button className="bg-blue-600 hover:bg-blue-500 border border-blue-400/50 text-white px-6 py-4 rounded text-sm font-bold flex items-center justify-center gap-2 transition-transform hover:scale-[1.02] flex-1 shadow-[0_0_15px_rgba(37,99,235,0.4)]" onClick={() => onDrillDown('Action', { name: 'Ping employee asynchronously', message: 'Opening secure internal communications bridge...' })}>
-                  <UsersIcon className="w-4 h-4" /> Message Direct to App
-                </button>
+                {userRole !== 'Employee' && (
+                  <button className="bg-blue-600 hover:bg-blue-500 border border-blue-400/50 text-white px-6 py-4 rounded text-sm font-bold flex items-center justify-center gap-2 transition-transform hover:scale-[1.02] flex-1 shadow-[0_0_15px_rgba(37,99,235,0.4)]" onClick={() => onDrillDown('Action', { name: 'Ping employee asynchronously', message: 'Opening secure internal communications bridge...' })}>
+                    <UsersIcon className="w-4 h-4" /> Direct Message
+                  </button>
+                )}
                 <button className="bg-black text-white hover:text-gold border border-border hover:border-gold-dim px-6 py-4 rounded text-sm transition-colors flex-1 shadow font-bold tracking-wide" onClick={() => onDrillDown('Report', { name: 'Chronological timesheet event logs' })}>
-                  Audit Time & Punch Records
+                  {userRole === 'Employee' ? 'View My Punches' : 'Audit Time & Punch Records'}
                 </button>
             </div>
           </div>
