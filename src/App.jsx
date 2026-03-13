@@ -797,11 +797,6 @@ const OEMIncentivesModule = ({ onDrillDown }) => {
 const MarketingModule = ({ onDrillDown }) => {
   return (
     <div className="space-y-6">
-       <div className="flex justify-between items-center">
-         <h1 className="text-2xl font-playfair text-white">Marketing Analytics</h1>
-      </div>
-      
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-charcoal border border-border rounded p-6">
            <h2 className="text-gold font-playfair text-xl mb-6">Cost Per Sold Unit (MTD)</h2>
            <div className="space-y-3">
@@ -827,7 +822,7 @@ const MarketingModule = ({ onDrillDown }) => {
         <div className="bg-charcoal border border-border rounded p-6">
            <h2 className="text-gold font-playfair text-xl mb-6">Campaign Performance</h2>
            <div className="space-y-3">
-             {[
+              {[
                { name: 'Fall Yamaha Push', spend: '$2,400', leads: 42, sold: 4, roas: '2.8x', status: 'Good' },
                { name: 'Retargeting (General)', spend: '$800', leads: 15, sold: 1, roas: '1.2x', status: 'Watch' },
                { name: 'Facebook Used Inventory', spend: '$1,200', leads: 88, sold: 12, roas: '8.4x', status: 'Excellent' }
@@ -843,39 +838,9 @@ const MarketingModule = ({ onDrillDown }) => {
                    <span>Sold: {c.sold}</span>
                  </div>
                </div>
-             ))}
-           </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const ReportsModule = ({ onDrillDown }) => {
-  return (
-    <div className="space-y-6">
-       <div className="flex justify-between items-center">
-         <h1 className="text-2xl font-playfair text-white">Reports & Exports</h1>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-         {[{ cat: 'Financial', reps: ['Monthly Gross Profit', 'Total Economic Profit', 'Working Capital', 'Payroll Liability'] },
-           { cat: 'Sales', reps: ['Salesperson Rankings', 'Deal Log', 'Lead Attribution', 'OEM Volume'] },
-           { cat: 'Operations', reps: ['Inventory Aging', 'Recon Pipeline', 'Trade Appraisals', 'Tech Efficiency'] }
-         ].map(group => (
-            <div key={group.cat} className="bg-charcoal border border-border rounded p-4">
-               <h3 className="text-sm font-mono text-gold mb-4 tracking-wide uppercase border-b border-border pb-2">{group.cat} Reports</h3>
-               <div className="space-y-2">
-                 {group.reps.map(r => (
-                   <div key={r} onClick={() => onDrillDown('Report', {category: group.cat, name: r})} className="flex justify-between items-center bg-black p-2 rounded hover:bg-panel transition-colors cursor-pointer group">
-                      <span className="text-sm text-text group-hover:text-white">{r}</span>
-                      <button className="text-xs text-text-muted group-hover:text-gold uppercase font-bold tracking-wide">Export .CSV</button>
-                   </div>
-                 ))}
-               </div>
+              ))}
             </div>
-         ))}
-      </div>
+         </div>
     </div>
   );
 };
@@ -1394,6 +1359,80 @@ const ClockInModule = ({ user, onDrillDown }) => {
     </div>
   );
 }
+
+const ReportsModule = ({ onDrillDown }) => {
+  return (
+    <div className="max-w-6xl mx-auto space-y-6">
+       <div className="flex items-center justify-between border-b border-border pb-4 mb-6">
+         <h1 className="text-3xl font-playfair text-white flex items-center gap-3">
+           <FileBarChart className="w-8 h-8 text-gold" /> Dealership Analytics Hub
+         </h1>
+         <div className="flex gap-2">
+            <button className="bg-charcoal hover:bg-black text-white font-bold py-2 px-4 rounded border border-border transition-colors">
+               Schedule Report
+            </button>
+            <button className="bg-gold hover:bg-gold-light text-black font-bold py-2 px-4 rounded transition-colors shadow-lg shadow-gold/20 flex items-center gap-2">
+               + Create Custom Query
+            </button>
+         </div>
+       </div>
+
+       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="md:col-span-1 space-y-2">
+             <div className="text-xs font-mono text-text-muted uppercase tracking-wider mb-2">Saved Views</div>
+             <button className="w-full text-left p-3 rounded bg-panel border-l-2 border-gold text-white font-bold text-sm">Month-End Executive Summary</button>
+             <button className="w-full text-left p-3 rounded hover:bg-charcoal text-text-muted hover:text-white transition-colors text-sm">Aged Inventory Liability (90+)</button>
+             <button className="w-full text-left p-3 rounded hover:bg-charcoal text-text-muted hover:text-white transition-colors text-sm">F&I Penetration by Product</button>
+             <button className="w-full text-left p-3 rounded hover:bg-charcoal text-text-muted hover:text-white transition-colors text-sm">Service Tech Efficiency YTD</button>
+             <button className="w-full text-left p-3 rounded hover:bg-charcoal text-text-muted hover:text-white transition-colors text-sm">Lost Marketing Leads</button>
+          </div>
+          
+          <div className="md:col-span-3 space-y-6">
+             <div className="bg-charcoal border border-border rounded p-6">
+               <div className="flex justify-between items-center mb-6">
+                 <div>
+                    <h2 className="text-xl font-playfair text-white">Month-End Executive Summary</h2>
+                    <div className="text-sm text-text-muted">Generated by Dealership OS AI Copilot • 2 mins ago</div>
+                 </div>
+                 <button className="text-gold text-sm border border-gold px-3 py-1 rounded hover:bg-gold hover:text-black transition-colors">Export PDF</button>
+               </div>
+               
+               <div className="p-4 bg-black border border-border rounded mb-6 text-sm text-text leading-relaxed">
+                 <span className="font-bold text-white block mb-2 font-mono uppercase tracking-wider text-xs">AI Synthesis:</span>
+                 Overall gross profitability is up <span className="text-green-500 font-bold">14.2%</span> compared to the same period last year, driven entirely by F&I back-end products attached to used non-current inventory. However, service department labor gross has dropped <span className="text-amber-500 font-bold">6%</span> due to an increase in unbilled warranty diagnosis time at the Slidell location. Immediate attention to service writing processes is recommended.
+               </div>
+
+               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                   <div className="bg-panel border border-border p-4 rounded text-center cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Report', {metric: 'Front-End Gross'})}>
+                      <div className="text-xs text-text-dim uppercase tracking-wider mb-1">Front-End Gross</div>
+                      <div className="text-2xl font-bold text-white">$412,850</div>
+                   </div>
+                   <div className="bg-panel border border-border p-4 rounded text-center cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Report', {metric: 'Back-End Gross'})}>
+                      <div className="text-xs text-text-dim uppercase tracking-wider mb-1">Back-End Gross</div>
+                      <div className="text-2xl font-bold text-green-500">$218,440</div>
+                   </div>
+                   <div className="bg-panel border border-border p-4 rounded text-center cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Report', {metric: 'Fixed Operations'})}>
+                      <div className="text-xs text-text-dim uppercase tracking-wider mb-1">Fixed Ops Gross</div>
+                      <div className="text-2xl font-bold text-red-500">$188,200</div>
+                   </div>
+                   <div className="bg-panel border border-border p-4 rounded text-center cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Report', {metric: 'Total Net Dealership'})}>
+                      <div className="text-xs text-text-dim uppercase tracking-wider mb-1">Total Dealership Net</div>
+                      <div className="text-2xl font-bold text-gold">$124,105</div>
+                   </div>
+               </div>
+             </div>
+
+             <div className="bg-charcoal border border-border rounded p-6 h-64 flex items-center justify-center">
+                <div className="text-center">
+                   <div className="text-text-muted italic mb-2">[Interactive Business Intelligence Graph Rendered Here]</div>
+                   <div className="text-xs text-text-dim">Using Live React/Recharts bindings to dynamic SQL views</div>
+                </div>
+             </div>
+          </div>
+       </div>
+    </div>
+  );
+};
 
 const CopilotModal = ({ isOpen, onClose, onDrillDown }) => {
   const [query, setQuery] = useState("");
