@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertCircle, TrendingDown, Lightbulb, ArrowRight, Zap } from 'lucide-react';
+import { DrillDownValue } from './DrillDownValue';
 
 export const AutomatedInsights = ({ insights, onDrillDown }) => {
   if (!insights || insights.length === 0) return null;
@@ -18,7 +19,7 @@ export const AutomatedInsights = ({ insights, onDrillDown }) => {
     <div className="mb-6">
       <h3 className="text-xs font-mono text-text-dim uppercase tracking-widest mb-3 flex items-center gap-2">
         <div className="w-2 h-2 rounded-full bg-gold animate-pulse"></div>
-        Automated Intelligence
+        <DrillDownValue value="Automated Intelligence" label="AI Insight Group" type="Report" onDrillDown={onDrillDown} color="text-text-dim" />
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         {insights.map((insight, idx) => (

@@ -113,13 +113,13 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
       {/* Location Toggle */}
       <div className="flex flex-col sm:flex-row justify-between items-center bg-charcoal p-4 rounded border border-border">
         <div className="flex space-x-2 items-center cursor-pointer hover:opacity-80 transition-opacity" onClick={() => onDrillDown('Report', { name: 'Multi-store Franchise Overview' })}>
-           <span className="text-white font-bold">{company || "Friendly Powersports"}</span>
+           <span className="text-white font-bold"><DrillDownValue value={company || "Friendly Powersports"} label="Company Context" type="Report" onDrillDown={onDrillDown} color="text-white" /></span>
            <span className="text-text-muted px-2">/</span>
-           <span className="text-gold">{location || "All Locations"}</span>
+           <span className="text-gold"><DrillDownValue value={location || "All Locations"} label="Location Context" type="Report" onDrillDown={onDrillDown} color="text-gold" /></span>
         </div>
         <div className="flex items-center space-x-4 mt-4 sm:mt-0">
-          <span className="text-text-dim text-sm cursor-pointer hover:text-white transition-colors" onClick={() => onDrillDown('Action', { name: 'Change Dashboard Date Parameters' })}>
-             MTD: Sep 1 - Sep 18, 2025
+          <span className="text-text-dim text-sm flex items-center cursor-pointer hover:text-white transition-colors">
+             <DrillDownValue value="MTD: Sep 1 - Sep 18, 2025" label="Date Parameters" type="Action" onDrillDown={onDrillDown} color="text-text-dim hover:text-white" />
           </span>
           <button className="text-gold text-sm border border-gold px-3 py-1 rounded hover:bg-gold hover:text-black transition-colors" onClick={() => onDrillDown('Action', { name: 'Export Global OS State', message: 'Extracting comprehensive CSV data sheet...' })}>Export Report</button>
         </div>
@@ -148,7 +148,7 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="lg:col-span-2 bg-charcoal p-4 rounded border border-border">
-          <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase">Total Gross by Week</h3>
+          <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase"><DrillDownValue value="Total Gross by Week" label="Chart Context" type="Report" onDrillDown={onDrillDown} color="text-text-muted" /></h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={WEEKLY_GROSS} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
@@ -174,7 +174,7 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
         </div>
 
         <div className="bg-charcoal p-4 rounded border border-border">
-          <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase">Gross Mix</h3>
+          <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase"><DrillDownValue value="Gross Mix" label="Chart Context" type="Report" onDrillDown={onDrillDown} color="text-text-muted" /></h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -188,7 +188,7 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
         </div>
 
         <div className="bg-charcoal p-4 rounded border border-border flex flex-col">
-          <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase">OEM Tier Progress</h3>
+          <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase"><DrillDownValue value="OEM Tier Progress" label="Chart Context" type="Report" onDrillDown={onDrillDown} color="text-text-muted" /></h3>
           <div className="flex-1 flex flex-col justify-between">
             {OEM_TIERS.map((tier, i) => (
               <div key={i} className="mb-2 cursor-pointer hover:bg-panel p-1 rounded" onClick={() => onNavigate('OEM Incentives')}>
@@ -229,8 +229,8 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-charcoal p-4 rounded border border-border cursor-pointer" onClick={() => onNavigate("Inventory")}>
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-sm font-mono text-text-muted tracking-wide uppercase">Inventory Aging</h3>
-            <span className="text-xs text-gold">View All →</span>
+            <h3 className="text-sm font-mono text-text-muted tracking-wide uppercase"><DrillDownValue value="Inventory Aging" label="Chart Context" type="Report" onDrillDown={onDrillDown} color="text-text-muted" /></h3>
+            <span className="text-xs text-gold"><DrillDownValue value="View All →" label="All Inventory" type="Inventory" onDrillDown={onDrillDown} color="text-gold" /></span>
           </div>
           <div className="space-y-3">
             {[
@@ -259,8 +259,8 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
 
         <div className="bg-charcoal p-4 rounded border border-border cursor-pointer hover:border-gold-dim transition-colors group" onClick={() => onNavigate("Sales")}>
           <div className="flex justify-between items-center mb-4 border-b border-border/50 pb-2">
-            <h3 className="text-sm font-mono text-text-muted tracking-wide uppercase group-hover:text-gold transition-colors">Live Lead Feed</h3>
-            <span className="text-xs text-gold">View All →</span>
+            <h3 className="text-sm font-mono text-text-muted tracking-wide uppercase group-hover:text-gold transition-colors"><DrillDownValue value="Live Lead Feed" label="Lead Context" type="Report" onDrillDown={onDrillDown} color="inherit" /></h3>
+            <span className="text-xs text-gold"><DrillDownValue value="View All →" label="All Leads" type="Lead" onDrillDown={onDrillDown} color="text-gold" /></span>
           </div>
           <div className="space-y-0">
             {getLiveLeads().map((l, i) => (
@@ -291,7 +291,7 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
       {/* Top Performers */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-charcoal p-4 rounded border border-border">
-          <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase">Top Performers MTD</h3>
+          <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase"><DrillDownValue value="Top Performers MTD" label="Chart Context" type="Report" onDrillDown={onDrillDown} color="text-text-muted" /></h3>
           <div className="space-y-3">
             {getTopPerformers().map((p, i) => (
               <div key={i} onClick={() => onDrillDown('Employee', p)} className="flex items-center justify-between bg-panel p-3 rounded cursor-pointer hover:border-gold border border-transparent transition-colors group/perf">
@@ -318,7 +318,7 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
         </div>
 
         <div className="bg-charcoal p-4 rounded border border-border">
-          <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase">Watch List</h3>
+          <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase"><DrillDownValue value="Watch List" label="Chart Context" type="Report" onDrillDown={onDrillDown} color="text-text-muted" /></h3>
           <div className="space-y-3">
               <div className="flex items-center justify-between bg-black p-3 rounded border-l-2 border-red-500 cursor-pointer hover:bg-panel transition-colors group/watch" onClick={() => onDrillDown('Employee', {name: 'Devon Arceneaux', role: 'Sales', alert: 'Close rate dropped 12% MTD'})}>
                 <div>
@@ -349,20 +349,20 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
       {/* Financial Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         <div className="bg-panel border border-border p-3 rounded text-center cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Financials', { metric: 'Working Capital', value: '$1,240,000' })}>
-          <div className="text-xs text-text-muted font-mono tracking-wide">WORKING CAPITAL</div>
-          <div className="text-lg font-bold text-white mt-1">$1,240,000</div>
+          <div className="text-xs text-text-muted font-mono tracking-wide"><DrillDownValue value="WORKING CAPITAL" label="Financial Metric" type="Financials" onDrillDown={onDrillDown} color="text-text-muted" /></div>
+          <div className="text-lg font-bold text-white mt-1"><DrillDownValue value="$1,240,000" label="Working Capital" type="Financials" onDrillDown={onDrillDown} color="text-white" /></div>
         </div>
         <div className="bg-panel border border-border p-3 rounded text-center cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Financials', { metric: 'Floorplan Balance', value: '$3,847,000' })}>
-          <div className="text-xs text-text-muted font-mono tracking-wide">FLOORPLAN BAL</div>
-          <div className="text-lg font-bold text-white mt-1">$3,847,000</div>
+          <div className="text-xs text-text-muted font-mono tracking-wide"><DrillDownValue value="FLOORPLAN BAL" label="Financial Metric" type="Financials" onDrillDown={onDrillDown} color="text-text-muted" /></div>
+          <div className="text-lg font-bold text-white mt-1"><DrillDownValue value="$3,847,000" label="Floorplan Balance" type="Financials" onDrillDown={onDrillDown} color="text-white" /></div>
         </div>
         <div className="bg-panel border border-border p-3 rounded text-center cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Financials', { metric: 'Daily FP Cost', value: '$740/day' })}>
-          <div className="text-xs text-text-muted font-mono tracking-wide">DAILY FP COST</div>
-          <div className="text-lg font-bold text-red-400 mt-1">$740/day</div>
+          <div className="text-xs text-text-muted font-mono tracking-wide"><DrillDownValue value="DAILY FP COST" label="Financial Metric" type="Financials" onDrillDown={onDrillDown} color="text-text-muted" /></div>
+          <div className="text-lg font-bold text-red-400 mt-1"><DrillDownValue value="$740/day" label="Daily FP Cost" type="Financials" onDrillDown={onDrillDown} color="text-red-400" /></div>
         </div>
         <div className="bg-panel border border-border p-3 rounded text-center border-b-2 border-b-gold cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Financials', { metric: 'Proj M-E Gross', value: '$562,000' })}>
-          <div className="text-xs text-text-muted font-mono tracking-wide">PROJ M-E GROSS</div>
-          <div className="text-lg font-bold text-gold mt-1">$562,000</div>
+          <div className="text-xs text-text-muted font-mono tracking-wide"><DrillDownValue value="PROJ M-E GROSS" label="Financial Metric" type="Financials" onDrillDown={onDrillDown} color="text-text-muted" /></div>
+          <div className="text-lg font-bold text-gold mt-1"><DrillDownValue value="$562,000" label="Proj M-E Gross" type="Financials" onDrillDown={onDrillDown} color="text-gold" /></div>
         </div>
       </div>
     </div>
