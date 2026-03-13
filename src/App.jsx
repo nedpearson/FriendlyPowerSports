@@ -13,6 +13,7 @@ import { KPICard } from './components/ui/KPICard';
 import { SectionHeader } from './components/ui/SectionHeader';
 import { StatusChip } from './components/ui/StatusChip';
 import { TrendBadge } from './components/ui/TrendBadge';
+import { AutomatedInsights } from './components/ui/AutomatedInsights';
 
 import { EMPLOYEES } from './data/mockDatabase';
 import { 
@@ -119,6 +120,12 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
           <button className="text-gold text-sm border border-gold px-3 py-1 rounded hover:bg-gold hover:text-black transition-colors">Export Report</button>
         </div>
       </div>
+
+      <AutomatedInsights insights={[
+        { type: "warning", message: "Yamaha Q3 Volume Tier: You are 4 units away from unlocking the $74,000 retroactive bonus. Tier expires in 6 days.", actionText: "View Eligible Pipeline" },
+        { type: "opportunity", message: "Baton Rouge F&I backend is pacing $315 per unit higher than Slidell MTD. Reviewing Rachel Tran's pitch structure with the Slidell team is recommended.", actionText: "Compare F&I Scorecards" },
+        { type: "action", message: "There are exactly 8 units across both locations aging past 120 days. Current floorplan carry cost for these units is $640/week.", actionText: "Review Aged Inventory" }
+      ]} />
 
       {/* KPI Mega Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -348,15 +355,19 @@ const SalesModule = ({ onDrillDown }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-         <h1 className="text-2xl font-playfair text-white">Sales & Pipeline</h1>
-         <div className="flex gap-2">
-            <button className="bg-gold hover:bg-gold-light text-black px-4 py-2 rounded text-sm font-bold flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" /> New Deal
-            </button>
-         </div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-playfair text-white">Sales & Deal Pipeline</h2>
+        <div className="flex gap-2">
+          <button className="bg-charcoal border border-border px-3 py-1 rounded text-sm text-text-muted hover:text-white">Filter</button>
+          <button className="bg-gold text-black px-4 py-1 rounded text-sm font-bold shadow-[0_0_10px_rgba(201,168,76,0.2)]">Write New Deal</button>
+        </div>
       </div>
-      
+
+      <AutomatedInsights insights={[
+        { type: "warning", message: "Alex in Baton Rouge has a 12% closing ratio on web leads this week (Benchmark: 25%). 8 leads went unresponsive.", actionText: "Review Lost Leads" },
+        { type: "opportunity", message: "A deal penciled by Jake for a 2024 MT-07 has $0 back-end gross. Adding GAP and Tire/Wheel brings this deal to standard profitability.", actionText: "Review Deal Structure" }
+      ]} />
+
       {/* Deal Desk Calculator */}
       <div className="bg-charcoal border border-border rounded p-6">
         <h2 className="text-gold font-playfair text-xl mb-4 flex items-center gap-2">
@@ -498,9 +509,18 @@ const FIModule = ({ onDrillDown }) => {
 const InventoryModule = ({ onDrillDown }) => {
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-         <h1 className="text-2xl font-playfair text-white">Inventory Management</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-playfair text-white">Inventory Intelligence</h2>
+        <div className="flex space-x-2">
+          <button className="bg-charcoal border border-border text-text px-4 py-2 rounded text-sm">Add Unit</button>
+          <button className="bg-gold text-black px-4 py-2 rounded text-sm font-bold shadow-lg shadow-gold/20">Print Labels</button>
+        </div>
       </div>
+
+      <AutomatedInsights insights={[
+        { type: "action", message: "3 Polaris RZRs in Slidell have been in stock for 115 days. Baton Rouge has turned the same model 4 times in the last 60 days.", actionText: "Initiate Transfer" },
+        { type: "negative", message: "Floorplan interest for 'Used Bikes Direct' inventory is currently pacing 14% higher than last month due to aged Harley-Davidson units.", actionText: "View Markdown Recommendations" }
+      ]} />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="bg-charcoal p-4 rounded border border-border flex flex-col items-center justify-center">
@@ -861,51 +881,87 @@ const ReportsModule = ({ onDrillDown }) => {
 };
 
 const EmployeeHubModule = ({ user, onDrillDown }) => {
+  const leaderboard = [
+    { name: "Jake Fontenot", units: 24, target: 30, gross: "$104k", curTier: "Gold", nextTier: "Platinum" },
+    { name: user?.name || "CurrentUser", units: 18, target: 20, gross: "$82k", curTier: "Silver", nextTier: "Gold", isMe: true },
+    { name: "Marcus Broussard", units: 14, target: 20, gross: "$61k", curTier: "Bronze", nextTier: "Silver" },
+    { name: "Tony Guillory", units: 9, target: 15, gross: "$38k", curTier: "Base", nextTier: "Bronze" }
+  ];
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-       <div className="flex items-center gap-6 bg-charcoal p-6 rounded border border-border">
-          <div className="w-24 h-24 rounded-full bg-panel border-4 border-gold-dim flex items-center justify-center text-4xl font-bold text-gold">
-            {user?.avatar}
-          </div>
-          <div>
-            <h1 className="text-3xl font-playfair text-white mb-1">{user?.name}</h1>
-            <div className="text-text-muted mb-3">{user?.role} · {user?.location}</div>
-            <div className="flex gap-4">
-              <span className="bg-black border border-border text-xs px-3 py-1 rounded text-green-500 font-bold flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> Active</span>
-              <span className="bg-black border border-border text-xs px-3 py-1 rounded text-gold font-bold">YTD Rank: #2</span>
+       <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-charcoal p-6 rounded border border-border">
+          <div className="flex items-center gap-6">
+            <div className="w-20 h-20 rounded-full bg-panel border-4 border-gold-dim flex items-center justify-center text-3xl font-bold text-gold">
+              {user?.avatar || "U"}
             </div>
+            <div>
+              <h1 className="text-3xl font-playfair text-white mb-1">{user?.name}</h1>
+              <div className="flex items-center gap-3 text-sm">
+                <span className="text-text-muted uppercase tracking-wider">{user?.role} · {user?.location}</span>
+                <span className="bg-black border border-border px-2 py-0.5 rounded text-green-500 font-bold flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> Active</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-4">
+             <div className="bg-black p-4 rounded border border-border text-center min-w-[120px]">
+               <div className="text-3xl font-bold text-white mb-1">#2</div>
+               <div className="text-xs text-text-muted font-mono uppercase tracking-wider">Store Rank</div>
+             </div>
+             <div className="bg-black p-4 rounded border border-border border-b-2 border-b-gold text-center min-w-[120px]">
+               <div className="text-3xl font-bold text-gold mb-1">18</div>
+               <div className="text-xs text-text-muted font-mono uppercase tracking-wider">Units MTD</div>
+             </div>
           </div>
        </div>
 
        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
          <div className="md:col-span-2 space-y-6">
            <div className="bg-charcoal border border-border rounded p-6">
-             <h2 className="text-gold font-playfair text-xl mb-6">My Performance (MTD)</h2>
-              <div className="grid grid-cols-3 gap-4" onClick={() => onDrillDown('Employee', {name: user?.name, role: user?.role, loc: user?.location, metrics: 'MTD Units, Close Rate, Commission'})}>
-                <div className="text-center bg-black p-4 rounded border border-border cursor-pointer hover:border-gold transition-colors">
-                  <div className="text-3xl text-white font-bold mb-1">24</div>
-                  <div className="text-xs text-text-muted font-mono uppercase">Units Sold</div>
-                </div>
-                <div className="text-center bg-black p-4 rounded border border-border">
-                  <div className="text-3xl text-white font-bold mb-1">18%</div>
-                  <div className="text-xs text-text-muted font-mono uppercase">Close Rate</div>
-                </div>
-                <div className="text-center bg-black p-4 rounded border border-border border-b-2 border-b-gold">
-                  <div className="text-3xl text-gold font-bold mb-1">$8,400</div>
-                  <div className="text-xs text-text-muted font-mono uppercase">Commission</div>
-                </div>
+             <div className="flex justify-between items-center mb-6">
+               <h2 className="text-gold font-playfair text-xl flex items-center gap-2"><Award className="w-5 h-5"/> Regional Leaderboard</h2>
+               <div className="text-xs border border-border px-2 py-1 rounded text-text-muted">MTD: Sep 1 - Sep 18</div>
+             </div>
+             
+             <div className="space-y-4">
+                {leaderboard.map((rep, idx) => (
+                   <div key={idx} className={`bg-black p-4 rounded border ${rep.isMe ? 'border-gold shadow-[0_0_15px_rgba(201,168,76,0.15)]' : 'border-border'} flex flex-col gap-3 relative overflow-hidden hover:border-gold-dim transition-colors cursor-pointer`} onClick={() => onDrillDown('Employee', {name: rep.name, role: 'Sales', location: 'Baton Rouge'})}>
+                      {rep.isMe && <div className="absolute top-0 right-0 bg-gold text-black text-[10px] font-bold px-2 py-0.5 rounded-bl">YOU</div>}
+                      <div className="flex justify-between items-center">
+                         <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${idx === 0 ? 'bg-amber-500 text-black' : idx === 1 ? 'bg-slate-300 text-black' : idx === 2 ? 'bg-amber-700 text-white' : 'bg-panel text-white'}`}>
+                              #{idx + 1}
+                            </div>
+                            <span className="font-bold text-white text-lg">{rep.name}</span>
+                         </div>
+                         <div className="text-right">
+                            <div className="font-bold text-white text-xl">{rep.units} <span className="text-sm font-normal text-text-muted">Units</span></div>
+                         </div>
+                      </div>
+                      
+                      <div>
+                         <div className="flex justify-between text-xs mb-1">
+                            <span className="text-text-muted">Current: <span className="text-white">{rep.curTier}</span></span>
+                            <span className="text-gold font-bold">{rep.target - rep.units} units to {rep.nextTier} Bonus</span>
+                         </div>
+                         <div className="w-full bg-panel h-2 rounded-full overflow-hidden">
+                            <div className="bg-gradient-to-r from-gold-dim to-gold h-full rounded-full" style={{ width: `${(rep.units / rep.target) * 100}%`}}></div>
+                         </div>
+                      </div>
+                   </div>
+                ))}
              </div>
            </div>
          </div>
          
          <div className="space-y-6">
            <div className="bg-charcoal border border-border rounded p-6">
-             <h2 className="text-gold font-playfair text-xl mb-4">My Schedule</h2>
-             <div className="space-y-3 text-sm">
-                <div className="flex justify-between bg-black p-2 rounded border-l-2 border-gold"><span className="text-white font-bold">Today</span> <span className="text-text-muted">9:00 AM - 6:00 PM</span></div>
-                <div className="flex justify-between"><span className="text-white">Tomorrow</span> <span className="text-text-muted">Off</span></div>
-                <div className="flex justify-between"><span className="text-white">Saturday</span> <span className="text-text-muted">8:00 AM - 5:00 PM</span></div>
+             <h2 className="text-gold font-playfair text-xl mb-4 text-center">Commission Pacing</h2>
+             <div className="text-center mb-6">
+                <div className="text-5xl font-bold text-white mb-2">$8,400</div>
+                <div className="text-sm text-green-500 flex items-center justify-center gap-1"><TrendingUp className="w-4 h-4"/> +$1,200 vs Last Month</div>
              </div>
+             <button className="w-full bg-panel border border-border hover:bg-black hover:border-gold transition-colors text-white py-2 rounded text-sm font-bold">View Commission Statement</button>
            </div>
          </div>
        </div>
@@ -1067,10 +1123,51 @@ const DrillDownModal = ({ item, onClose }) => {
                   </div>
                </div>
             </div>
+
+            <div className="flex gap-4 pt-4 border-t border-border mt-6">
+                <button className="bg-gold text-black px-4 py-2 rounded text-sm font-bold shadow-lg shadow-gold/20 hover:bg-gold-light transition-colors">Approve $500 Markdown</button>
+                <button className="bg-panel text-white border border-border px-4 py-2 rounded text-sm hover:bg-black transition-colors">Transfer to Slidell</button>
+            </div>
           </div>
         );
       case 'RO':
       case 'Employee':
+        return (
+          <div className="space-y-6">
+            <h3 className="text-2xl font-playfair text-gold border-b border-border pb-2">Employee Record: {item.data.name}</h3>
+            
+            <div className="flex items-center gap-6 mb-6">
+              <div className="w-24 h-24 rounded bg-panel border-2 border-gold flex items-center justify-center text-4xl font-bold text-gold">
+                {item.data.name ? item.data.name[0] : 'E'}
+              </div>
+              <div>
+                <div className="text-sm text-text-muted uppercase tracking-wider">{item.data.role}</div>
+                <div className="text-3xl font-bold text-white mb-1">{item.data.name}</div>
+                <div className="flex items-center gap-2 text-sm text-text-muted">
+                  <span className="w-2 h-2 rounded-full bg-green-500"></span> Active · {item.data.location || 'All Locations'}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+               {Object.entries(item.data).filter(([k]) => !['name', 'role', 'avatar', 'location'].includes(k)).map(([k,v]) => (
+                  <div key={k} className="bg-panel p-4 rounded border border-border">
+                     <div className="text-xs text-text-dim uppercase tracking-wider mb-1">{k}</div>
+                     <div className="text-lg font-bold text-white">{String(v)}</div>
+                  </div>
+               ))}
+            </div>
+
+            <div className="flex gap-4 pt-4 border-t border-border mt-6">
+                <button className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 transition-colors">
+                  <User className="w-4 h-4" /> Send Teams Message
+                </button>
+                <button className="bg-panel text-white border border-border px-4 py-2 rounded text-sm hover:bg-black transition-colors">
+                  Review Timesheet
+                </button>
+            </div>
+          </div>
+        );
       case 'OEM':
       case 'Campaign':
       case 'Report':
@@ -1131,6 +1228,127 @@ const PlaceholderModule = ({ title, desc }) => (
     <p className="text-text-muted max-w-md">{desc || "Module fully connected into navigation shell. Full data view will render here."}</p>
   </div>
 );
+
+const SettingsModule = () => {
+  return (
+    <div className="max-w-5xl mx-auto space-y-6">
+       <div className="flex items-center justify-between border-b border-border pb-4 mb-6">
+         <h1 className="text-3xl font-playfair text-white flex items-center gap-3">
+           <Settings className="w-8 h-8 text-gold" /> Enterprise Configuration & Rules
+         </h1>
+         <button className="bg-gold hover:bg-gold-light text-black font-bold py-2 px-4 rounded transition-colors shadow-lg shadow-gold/20 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4" /> Save Global Policy
+         </button>
+       </div>
+       
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-charcoal p-6 rounded border border-border">
+             <h2 className="text-xl font-bold text-white mb-4 border-b border-border pb-2">Deal Approval Thresholds</h2>
+             <div className="space-y-4">
+                <div className="flex justify-between items-center bg-black p-3 rounded border border-border">
+                   <div>
+                      <div className="text-sm font-bold text-white flex items-center gap-2"><TrendingDown className="w-4 h-4 text-amber-500"/> Margin Floor Override</div>
+                      <div className="text-xs text-text-muted">Deals below this % require GM pin</div>
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <input type="number" defaultValue={12} className="bg-panel border border-border rounded text-center w-16 py-1 text-white focus:border-gold outline-none" />
+                     <span className="text-text-muted text-sm">%</span>
+                   </div>
+                </div>
+                <div className="flex justify-between items-center bg-black p-3 rounded border border-border">
+                   <div>
+                      <div className="text-sm font-bold text-white flex items-center gap-2"><DollarSign className="w-4 h-4 text-red-500"/> Max Allowed Discount ($)</div>
+                      <div className="text-xs text-text-muted">Hard cap on rep discounting without approval</div>
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <span className="text-text-muted text-sm">$</span>
+                     <input type="number" defaultValue={500} className="bg-panel border border-border rounded text-center w-20 py-1 text-white focus:border-gold outline-none" />
+                   </div>
+                </div>
+             </div>
+          </div>
+
+          <div className="bg-charcoal p-6 rounded border border-border">
+             <h2 className="text-xl font-bold text-white mb-4 border-b border-border pb-2">Inventory Aging Actions</h2>
+             <div className="space-y-4">
+                <div className="flex justify-between items-center bg-black p-3 rounded border border-border">
+                   <div>
+                      <div className="text-sm font-bold text-white flex items-center gap-2"><AlertCircle className="w-4 h-4 text-amber-500"/> Warning Threshold</div>
+                      <div className="text-xs text-text-muted">Triggers dashboard alerts and copilot suggestions</div>
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <input type="number" defaultValue={90} className="bg-panel border border-border rounded text-center w-16 py-1 text-white focus:border-gold outline-none" />
+                     <span className="text-text-muted text-sm">Days</span>
+                   </div>
+                </div>
+                <div className="flex justify-between items-center bg-black p-3 rounded border border-border">
+                   <div>
+                      <div className="text-sm font-bold text-white flex items-center gap-2"><AlertCircle className="w-4 h-4 text-red-500"/> Critical Flag</div>
+                      <div className="text-xs text-text-muted">Pushes automated markdown request to GM</div>
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <input type="number" defaultValue={120} className="bg-panel border border-border rounded text-center w-16 py-1 text-white focus:border-gold outline-none" />
+                     <span className="text-text-muted text-sm">Days</span>
+                   </div>
+                </div>
+             </div>
+          </div>
+
+          <div className="bg-charcoal p-6 rounded border border-border md:col-span-2">
+             <div className="flex justify-between items-center border-b border-border pb-2 mb-4">
+               <h2 className="text-xl font-bold text-white">Automated Copilot Escalations</h2>
+               <div className="bg-panel text-gold border border-gold-dim px-2 py-0.5 rounded text-xs font-mono tracking-widest uppercase">Active Agents</div>
+             </div>
+             
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 xl:gap-6">
+               <div className="bg-black p-4 rounded border border-border relative overflow-hidden group hover:border-gold-dim transition-colors">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-sm font-bold text-white text-wrap">Unanswered Web Lead</span>
+                    <input type="checkbox" defaultChecked className="accent-gold w-4 h-4 cursor-pointer mt-1" />
+                  </div>
+                  <div className="text-xs text-text-muted mb-4 opacity-80">Trigger: No comms in 15+ mins</div>
+                  <strong className="text-xs text-text-dim block mb-1">ACTION:</strong>
+                  <select className="w-full bg-panel border border-border text-xs text-white p-2 text-wrap rounded outline-none focus:border-gold">
+                    <option>SMS General Manager</option>
+                    <option>Reassign to Next Round-Robin Rep</option>
+                    <option>Fire Auto-Responder Bot</option>
+                  </select>
+               </div>
+               
+               <div className="bg-black p-4 rounded border border-border relative overflow-hidden group hover:border-gold-dim transition-colors">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-purple-500"></div>
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-sm font-bold text-white">F&I Penetration Drop</span>
+                    <input type="checkbox" defaultChecked className="accent-gold w-4 h-4 cursor-pointer mt-1" />
+                  </div>
+                  <div className="text-xs text-text-muted mb-4 opacity-80">Trigger: WTD pacing {"<"} 40%</div>
+                  <strong className="text-xs text-text-dim block mb-1">ACTION:</strong>
+                  <select className="w-full bg-panel border border-border text-xs text-white p-2 rounded outline-none focus:border-gold">
+                     <option>Alert Global F&I Director</option>
+                     <option>Require Desk Review on Cash Deals</option>
+                  </select>
+               </div>
+
+               <div className="bg-black p-4 rounded border border-border relative overflow-hidden group hover:border-gold-dim transition-colors">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-sm font-bold text-white text-wrap">Service Bay Blockage</span>
+                    <input type="checkbox" defaultChecked className="accent-gold w-4 h-4 cursor-pointer mt-1" />
+                  </div>
+                  <div className="text-xs text-text-muted mb-4 opacity-80">Trigger: 90% Bay Capacity</div>
+                  <strong className="text-xs text-text-dim block mb-1">ACTION:</strong>
+                  <select className="w-full bg-panel border border-border text-xs text-white p-2 rounded outline-none focus:border-gold text-wrap">
+                    <option>Throttle Online Appointment Scheduler</option>
+                    <option>Alert Service Manager to Block Walk-Ins</option>
+                  </select>
+               </div>
+             </div>
+          </div>
+       </div>
+    </div>
+  );
+};
 
 const ClockInModule = ({ user, onDrillDown }) => {
   const [clockedIn, setClockedIn] = useState(false);
@@ -1392,7 +1610,7 @@ const App = () => {
             {activeTab === "Marketing" && <MarketingModule onDrillDown={handleDrillDown} />}
             {activeTab === "Reports" && <ReportsModule onDrillDown={handleDrillDown} />}
             {activeTab === "Employee Hub" && <EmployeeHubModule user={currentUser} onDrillDown={handleDrillDown} />}
-            {activeTab === "Settings" && <PlaceholderModule title="Settings" desc="Global dealer configuration goes here." />}
+            {activeTab === "Settings" && <SettingsModule />}
             {activeTab === "Clock In / HR" && <ClockInModule user={currentUser} onDrillDown={handleDrillDown} />}
             {![ "Dashboard", "Sales", "F&I / Finance", "Inventory", "Used Bikes / UBD", "Service & Parts", "Payroll", "OEM Incentives", "Marketing", "Reports", "Employee Hub", "Settings", "Clock In / HR" ].includes(activeTab) && (
               <PlaceholderModule title={`${activeTab} Module`} desc={`Select Dashboard, Sales, or Clock In to see full interactive builds. Or ask the agent to render ${activeTab} fully.`} />
