@@ -206,9 +206,15 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
         {SCORECARDS.map((sc, i) => (
           <div key={i} className="bg-charcoal p-3 rounded border border-border hover:border-gold cursor-pointer transition-colors" onClick={(e) => { e.stopPropagation(); onDrillDown('Report', { category: 'Department Performance', name: sc.dept, summary: `${sc.v1} | ${sc.v2}`, goalTrend: sc.goal }); }}>
             <h4 className="text-white font-bold mb-1">{sc.dept}</h4>
-            <div className="text-sm text-text-muted">{sc.v1}</div>
-            <div className="text-sm text-text-muted">{sc.v2}</div>
-            <div className={`text-xs font-bold mt-2 ${sc.tColor}`}>{sc.goal}</div>
+            <div className="text-sm text-text-muted">
+               <DrillDownValue value={sc.v1} label={`${sc.dept} Metric 1`} type="Report" onDrillDown={onDrillDown} />
+            </div>
+            <div className="text-sm text-text-muted">
+               <DrillDownValue value={sc.v2} label={`${sc.dept} Metric 2`} type="Report" onDrillDown={onDrillDown} />
+            </div>
+            <div className={`text-xs font-bold mt-2 ${sc.tColor}`}>
+               <DrillDownValue value={sc.goal} label={`${sc.dept} Goal Tracker`} type="Report" onDrillDown={onDrillDown} color={sc.tColor} />
+            </div>
           </div>
         ))}
       </div>
@@ -230,7 +236,9 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
               <div key={b.label} className="relative cursor-pointer hover:opacity-80 transition-opacity" onClick={(e) => { e.stopPropagation(); onDrillDown('Inventory', { view: 'Aging Bucket', bucket: b.label, count: b.count }); }}>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-text">{b.label}</span>
-                  <span className="text-text-muted">{b.count} units</span>
+                  <span className="text-text-muted">
+                     <DrillDownValue value={`${b.count} units`} label={`Aging: ${b.label}`} type="Inventory" onDrillDown={onDrillDown} />
+                  </span>
                 </div>
                 <div className="w-full bg-black h-2 rounded-full overflow-hidden">
                   <div className={`h-full ${b.color}`} style={{ width: b.pct }}></div>
@@ -287,8 +295,12 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-bold text-gold">{p.units} units</div>
-                  <div className="text-xs text-text-muted">{p.comm} comm</div>
+                  <div className="text-sm font-bold text-gold">
+                     <DrillDownValue value={`${p.units} units`} label={`${p.name} Units Sold MTD`} type="Employee" onDrillDown={onDrillDown} color="text-gold" />
+                  </div>
+                  <div className="text-xs text-text-muted mt-1">
+                     <DrillDownValue value={`${p.comm} comm`} label={`${p.name} Commission MTD`} type="Employee" onDrillDown={onDrillDown} />
+                  </div>
                 </div>
               </div>
             ))}
@@ -405,15 +417,25 @@ const SalesModule = ({ onDrillDown }) => {
           </div>
           <div className="bg-black border border-border rounded p-6 flex flex-col justify-between cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Deal', { unit: dealDeskUnit, salePrice, cost, pack, recon, holdback, backend, fpCost, totalEcoProfit })}>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-text-muted">Front-End Gross:</span> <span className="text-white">${frontEnd.toLocaleString()}</span></div>
-              <div className="flex justify-between"><span className="text-text-muted">OEM Holdback:</span> <span className="text-green-500">+${holdback.toLocaleString()}</span></div>
-              <div className="flex justify-between"><span className="text-text-muted">Floorplan Cost:</span> <span className="text-red-400">-${fpCost.toLocaleString()}</span></div>
-              <div className="flex justify-between"><span className="text-text-muted">Est F&I Backend:</span> <span className="text-gold">+${backend.toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-text-muted">Front-End Gross:</span> 
+                <span className="text-white"><DrillDownValue value={`$${frontEnd.toLocaleString()}`} label="Front-End Gross" type="Deal" onDrillDown={onDrillDown} /></span>
+              </div>
+              <div className="flex justify-between"><span className="text-text-muted">OEM Holdback:</span> 
+                <span className="text-green-500"><DrillDownValue value={`+$${holdback.toLocaleString()}`} label="OEM Holdback" type="Deal" onDrillDown={onDrillDown} color="text-green-500" /></span>
+              </div>
+              <div className="flex justify-between"><span className="text-text-muted">Floorplan Cost:</span> 
+                <span className="text-red-400"><DrillDownValue value={`-$${fpCost.toLocaleString()}`} label="Floorplan Cost" type="Deal" onDrillDown={onDrillDown} color="text-red-400" /></span>
+              </div>
+              <div className="flex justify-between"><span className="text-text-muted">Est F&I Backend:</span> 
+                <span className="text-gold"><DrillDownValue value={`+$${backend.toLocaleString()}`} label="Estimated F&I Backend" type="Deal" onDrillDown={onDrillDown} color="text-gold" /></span>
+              </div>
               <div className="border-t border-border my-2"></div>
             </div>
             <div>
               <div className="text-xs text-text-muted font-mono mb-1">TOTAL ECONOMIC PROFIT</div>
-              <div className="text-4xl font-playfair text-gold mb-4">${totalEcoProfit.toLocaleString()}</div>
+              <div className="text-4xl font-playfair text-gold mb-4">
+                 <DrillDownValue value={`$${totalEcoProfit.toLocaleString()}`} label="Total Economic Profit" type="Deal" onDrillDown={onDrillDown} color="text-gold" />
+              </div>
               
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-xs bg-green-900/40 text-green-400 px-2 py-1 rounded font-bold border border-green-800">EXCELLENT RANK</span>
@@ -449,8 +471,12 @@ const FIModule = ({ onDrillDown }) => {
         ].map((m,i) => (
           <div key={i} className="bg-charcoal p-4 rounded border border-border">
             <div className="text-xs text-text-muted font-mono mb-1 uppercase tracking-wider">{m.label}</div>
-            <div className={`text-2xl font-bold ${m.label.includes('Reserve') ? 'text-white' : 'text-gold'}`}>{m.value}</div>
-            <div className={`text-xs mt-1 ${m.color} bg-black inline-block px-1 rounded`}>{m.delta}</div>
+            <div className={`text-2xl font-bold ${m.label.includes('Reserve') ? 'text-white' : 'text-gold'}`}>
+               <DrillDownValue value={m.value} label={m.label} type="Financials" onDrillDown={onDrillDown} />
+            </div>
+            <div className={`text-xs mt-1 ${m.color} bg-black inline-block px-1 rounded`}>
+               <DrillDownValue value={m.delta} label={`${m.label} Trend`} type="Financials" onDrillDown={onDrillDown} color={m.color} />
+            </div>
           </div>
         ))}
       </div>
@@ -524,11 +550,17 @@ const InventoryModule = ({ onDrillDown }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="bg-charcoal p-4 rounded border border-border flex flex-col items-center justify-center">
-          <div className="font-playfair text-5xl text-gold">830</div>
+          <div className="font-playfair text-5xl text-gold">
+             <DrillDownValue value="830" label="Total Active Units" type="Inventory" onDrillDown={onDrillDown} />
+          </div>
           <div className="text-text-muted font-mono mt-2">TOTAL UNITS</div>
           <div className="flex gap-4 mt-4 text-sm">
-             <div className="text-green-500 font-bold">520 New</div>
-             <div className="text-white">310 Used</div>
+             <div className="text-green-500 font-bold">
+               <DrillDownValue value="520 New" label="New Inventory" type="Inventory" onDrillDown={onDrillDown} color="text-green-500" />
+             </div>
+             <div className="text-white">
+               <DrillDownValue value="310 Used" label="Used Inventory" type="Inventory" onDrillDown={onDrillDown} />
+             </div>
           </div>
         </div>
 
@@ -653,7 +685,9 @@ const ServicePartsModule = ({ onDrillDown }) => {
                    <div className="text-white font-bold">{t.name}</div>
                    <div className="text-xs text-text-muted">{t.flagged} flagged hrs / {t.actual} clock hrs</div>
                  </div>
-                 <div className={`text-xl font-bold ${t.status}`}>{t.eff}%</div>
+                 <div className={`text-xl font-bold ${t.status}`}>
+                    <DrillDownValue value={`${t.eff}%`} label={`${t.name} Efficiency`} type="Employee" onDrillDown={onDrillDown} color={t.status} />
+                 </div>
                </div>
              ))}
           </div>
@@ -702,7 +736,9 @@ const PayrollModule = ({ onDrillDown }) => {
           </div>
           <div className="text-center px-8 border-x border-border">
             <div className="text-xs text-text-muted font-mono tracking-wide">TOTAL LIABILITY</div>
-            <div className="text-3xl text-gold font-playfair mt-1">$142,500</div>
+            <div className="text-3xl font-playfair mt-1">
+               <DrillDownValue value="$142,500" label="Total Payroll Liability" type="Financials" onDrillDown={onDrillDown} color="text-gold" />
+            </div>
           </div>
           <div className="text-center">
             <div className="text-xs text-text-muted font-mono tracking-wide">STATUS</div>
@@ -809,7 +845,9 @@ const MarketingModule = ({ onDrillDown }) => {
                <div key={m.chan} className="relative">
                  <div className="flex justify-between text-xs mb-1">
                    <span className="text-white">{m.chan}</span>
-                   <span className={`font-bold ${m.color}`}>${m.cost}/sold</span>
+                   <span className={`font-bold ${m.color}`}>
+                      <DrillDownValue value={`$${m.cost}/sold`} label={`${m.chan} Acquisition Cost`} type="Financials" onDrillDown={onDrillDown} color={m.color} />
+                   </span>
                  </div>
                  <div className="w-full bg-black h-2 rounded-full overflow-hidden">
                    <div className={`h-full ${m.bg}`} style={{width: m.width}}></div>
@@ -923,8 +961,12 @@ const EmployeeHubModule = ({ user, onDrillDown }) => {
            <div className="bg-charcoal border border-border rounded p-6">
              <h2 className="text-gold font-playfair text-xl mb-4 text-center">Commission Pacing</h2>
              <div className="text-center mb-6">
-                <div className="text-5xl font-bold text-white mb-2">$8,400</div>
-                <div className="text-sm text-green-500 flex items-center justify-center gap-1"><TrendingUp className="w-4 h-4"/> +$1,200 vs Last Month</div>
+                <div className="text-5xl font-bold text-white mb-2">
+                   <DrillDownValue value="$8,400" label="Projected Commission" type="Employee" onDrillDown={onDrillDown} />
+                </div>
+                <div className="text-sm text-green-500 flex items-center justify-center gap-1"><TrendingUp className="w-4 h-4"/> 
+                   <DrillDownValue value="+$1,200 vs Last Month" label="Commission Delta" type="Employee" onDrillDown={onDrillDown} color="text-green-500" />
+                </div>
              </div>
              <button className="w-full bg-panel border border-border hover:bg-black hover:border-gold transition-colors text-white py-2 rounded text-sm font-bold">View Commission Statement</button>
            </div>
@@ -1405,15 +1447,21 @@ const ReportsModule = ({ onDrillDown }) => {
                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                    <div className="bg-panel border border-border p-4 rounded text-center cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Report', {metric: 'Front-End Gross'})}>
                       <div className="text-xs text-text-dim uppercase tracking-wider mb-1">Front-End Gross</div>
-                      <div className="text-2xl font-bold text-white">$412,850</div>
+                      <div className="text-2xl font-bold text-white">
+                         <DrillDownValue value="$412,850" label="Front-End Gross" type="Report" onDrillDown={onDrillDown} />
+                      </div>
                    </div>
                    <div className="bg-panel border border-border p-4 rounded text-center cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Report', {metric: 'Back-End Gross'})}>
                       <div className="text-xs text-text-dim uppercase tracking-wider mb-1">Back-End Gross</div>
-                      <div className="text-2xl font-bold text-green-500">$218,440</div>
+                      <div className="text-2xl font-bold text-green-500">
+                         <DrillDownValue value="$218,440" label="Back-End Gross" type="Report" onDrillDown={onDrillDown} color="text-green-500" />
+                      </div>
                    </div>
                    <div className="bg-panel border border-border p-4 rounded text-center cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Report', {metric: 'Fixed Operations'})}>
                       <div className="text-xs text-text-dim uppercase tracking-wider mb-1">Fixed Ops Gross</div>
-                      <div className="text-2xl font-bold text-red-500">$188,200</div>
+                      <div className="text-2xl font-bold text-red-500">
+                         <DrillDownValue value="$188,200" label="Fixed Ops Gross" type="Report" onDrillDown={onDrillDown} color="text-red-500" />
+                      </div>
                    </div>
                    <div className="bg-panel border border-border p-4 rounded text-center cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Report', {metric: 'Total Net Dealership'})}>
                       <div className="text-xs text-text-dim uppercase tracking-wider mb-1">Total Dealership Net</div>
