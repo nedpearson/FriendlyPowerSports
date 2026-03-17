@@ -2,7 +2,7 @@ import {
   DEALS, LENDERS, INVENTORY, APPRAISALS, BRANDS, CAMPAIGNS,
   CUSTOMERS, DEPARTMENTS, EMPLOYEES, LEADS, LOCATIONS, SERVICE_ORDERS, TASKS_AND_ALERTS,
   CRM_ACTIVITIES, CRM_APPOINTMENTS, CRM_COMMUNICATIONS, CRM_HOUSEHOLDS, CRM_OPPORTUNITIES,
-  CRM_QUOTES, CRM_QUOTE_SCENARIOS, CRM_TAGS, CRM_TRADE_INS, CRM_PREQUAL_APPLICATIONS, CRM_PREQUAL_RESULTS, CRM_PREQUAL_CONSENTS
+  CRM_QUOTES, CRM_QUOTE_SCENARIOS, CRM_TAGS, CRM_TRADE_INS, CRM_PREQUAL_APPLICATIONS, CRM_PREQUAL_RESULTS, CRM_PREQUAL_CONSENTS, CRM_AUDIT_LOGS
 } from './mockDatabase';
 import { LeadScoringService, NextBestActionService } from './crmAdapters';
 
@@ -486,4 +486,17 @@ export const getRetentionDashboardData = (filters) => {
 
 export const getAutomationEngineRules = () => {
    return window.CRM_AUTOMATION_RULES || []; // For dynamic updates later if we mutate global mock
+};
+
+export const getAuditLogs = () => {
+   return CRM_AUDIT_LOGS.map(log => {
+      const user = EMPLOYEES.find(e => e.id === log.userId) || { name: 'System', role: 'Automation' };
+      return {
+         title: log.action,
+         subtitle: `${user.name} (${user.role}) - ${new Date(log.timestamp).toLocaleString()}`,
+         value: log.targetId,
+         type: 'Action',
+         data: { name: 'Audit Global Financial Accounts' }
+      };
+   }).reverse(); // Display newest first
 };

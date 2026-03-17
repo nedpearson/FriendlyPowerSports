@@ -21,6 +21,7 @@ import { TrendBadge } from './components/ui/TrendBadge';
 import { AutomatedInsights } from './components/ui/AutomatedInsights';
 import { DrillDownValue } from './components/ui/DrillDownValue';
 import { DrillDownModal } from './components/ui/DrillDownModal';
+import dealerLogo from './assets/logo.png';
 
 import { EMPLOYEES } from './data/mockDatabase';
 import { 
@@ -74,8 +75,8 @@ const AuthGate = ({ onLogin }) => {
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
       <div className="max-w-md w-full bg-charcoal p-8 rounded border border-border">
-        <div className="flex justify-center mb-6">
-          <img src="https://friendlyyamaha.com/wp-content/uploads/2025/10/new-logo.png" alt="Logo" className="h-12 object-contain" onError={(e) => { e.target.style.display='none'; }}/>
+        <div className="flex justify-center items-center w-full mb-6">
+          <img src={dealerLogo} alt="Logo" className="h-14 w-full object-contain mx-auto" onError={(e) => { e.target.style.display='none'; }}/>
         </div>
         <h1 className="text-3xl font-playfair text-gold text-center mb-1">DealerCommand™</h1>
         <p className="text-text-muted text-center text-sm mb-8">Profit Intelligence · Operational Command</p>
@@ -2155,12 +2156,12 @@ const App = () => {
       <div className="w-64 bg-charcoal border-r border-border flex flex-col hidden md:flex">
         <div className="p-4 border-b border-border flex flex-col items-center py-6">
            <img 
-             src={activeCompany === "Used Bikes Direct" ? "https://www.usedbikesdirect.com/images/UsedBikesDirect_logo2.svg" : "https://friendlyyamaha.com/wp-content/uploads/2025/10/new-logo.png"} 
+             src={dealerLogo} 
              alt={`${activeCompany} Logo`} 
-             className={activeCompany === "Used Bikes Direct" ? "h-6 object-contain mb-2" : "h-12 object-contain mb-2"} 
+             className="h-10 w-full object-contain mb-2 mx-auto" 
              onError={(e) => { e.target.style.display='none'; }}
            />
-           <div className="text-gold font-playfair font-bold text-xl tracking-wider">DealerCommand™</div>
+           <div className="text-gold font-playfair font-bold text-xl tracking-wider mt-2">DealerCommand™</div>
            
            <div className="mt-4 w-full flex flex-col gap-2">
              <select 
@@ -2304,4 +2305,36 @@ const App = () => {
   );
 };
 
-export default App;
+class GlobalErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, info: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, info) {
+    this.setState({ info });
+    console.error("Caught by Error Boundary:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '20px', color: 'red', backgroundColor: '#ffdcd1' }}>
+          <h2>Application Crashed!</h2>
+          <pre>{this.state.error?.toString()}</pre>
+          <pre>{this.state.info?.componentStack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const AppWrapper = () => (
+   <GlobalErrorBoundary>
+      <App />
+   </GlobalErrorBoundary>
+);
+
+export default AppWrapper;

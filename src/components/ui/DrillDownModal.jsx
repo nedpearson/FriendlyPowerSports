@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { DrillDownValue } from './DrillDownValue';
-import { getCustomer360Data, getInventoryMatches, getQuoteWorkbenchData } from '../../data/selectors';
+import { getCustomer360Data, getInventoryMatches, getQuoteWorkbenchData, getAuditLogs } from '../../data/selectors';
 import { CreditPrequalAdapter } from '../../data/crmAdapters';
 import {
   CheckCircle2, TrendingUp, User, Bike, AlertCircle, Command,
-  DollarSign, Megaphone, Search, FileBarChart, ChevronRight, TrendingDown, Users as UsersIcon, Clock, Database, BrainCircuit, Wrench, Package, Calculator, Camera
+  DollarSign, Megaphone, Search, FileBarChart, ChevronRight, TrendingDown, Users as UsersIcon, Clock, Database, BrainCircuit, Wrench, Package, Calculator, Camera, Filter
 } from 'lucide-react';
 
 export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown }) => {
@@ -773,9 +773,10 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
          );
       }
       case 'Action':
+        const actionTitle = item.data.name || item.data.title || 'System Process';
         return (
           <div className="space-y-6">
-            <h3 className="text-2xl font-playfair text-gold border-b border-border pb-2 flex items-center gap-3"><Command className="w-6 h-6"/> System Action: {item.data.name}</h3>
+            <h3 className="text-2xl font-playfair text-gold border-b border-border pb-2 flex items-center gap-3"><Command className="w-6 h-6"/> System Action: {actionTitle}</h3>
             
             <div className={`bg-black p-6 rounded border ${actionProcessing ? 'border-gold-dim animate-pulse shadow-[0_0_15px_rgba(201,168,76,0.1)]' : 'border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.1)]'} min-h-[150px] font-mono`}>
                {actionProcessing ? (
@@ -796,34 +797,56 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
                     </div>
                     
                     <div className="text-white text-sm mb-4">
-                       {item.data.message || `EXECUTED PROTOCOL: ${item.data.name.toUpperCase()}`}
+                       {item.data.message || `EXECUTED PROTOCOL: ${(item.data.name || item.data.title || 'SYS_ACTION').toUpperCase()}`}
                     </div>
                     
-                    {item.data.records && item.data.records.length > 0 && (
-                       <div className="mt-4 pt-4 border-t border-border/30">
-                          <div className="text-[10px] uppercase text-gold tracking-widest mb-3">Retrieved Array Payload:</div>
-                          <div className="bg-charcoal border border-border rounded p-3 text-xs overflow-auto max-h-48 custom-scrollbar">
-                             <pre className="text-text-muted font-mono leading-relaxed">{JSON.stringify(item.data.records.slice(0, 15), null, 2)}</pre>
-                             {item.data.records.length > 15 && <div className="text-gold mt-2">...and {item.data.records.length - 15} more records hidden from console view.</div>}
-                          </div>
+                    <div className="mt-4 pt-4 border-t border-border/30">
+                       <div className="text-[10px] uppercase text-gold tracking-widest mb-3">Retrieved Context Payload:</div>
+                       <div className="bg-charcoal border border-border rounded p-3 text-xs overflow-auto max-h-48 custom-scrollbar">
+                          <pre className="text-text-muted font-mono leading-relaxed">
+                             {JSON.stringify(
+                                item.data.records && (Array.isArray(item.data.records) ? item.data.records.length > 0 : Object.keys(item.data.records).length > 0)
+                                  ? (Array.isArray(item.data.records) ? item.data.records.slice(0, 15) : item.data.records)
+                                  : {
+                                      status: "200_OK",
+                                      transactionId: `TXN-${Math.floor(Math.random() * 90000) + 10000}`,
+                                      timestamp: new Date().toISOString(),
+                                      action: item.data.name || item.data.title || "SYSTEM_DISPATCH",
+                                      matrix_trace: "No additional payload properties supplied.",
+                                      context_bind: "Anonymous parameters safely ignored."
+                                    }, null, 2
+                             )}
+                          </pre>
+                          {Array.isArray(item.data.records) && item.data.records.length > 15 && <div className="text-gold mt-2">...and {item.data.records.length - 15} more records hidden from console view.</div>}
                        </div>
-                    )}
+                    </div>
                  </div>
                )}
             </div>
             <div className="flex gap-4 pt-4 border-t border-border mt-4">
                 <button className="bg-panel hover:bg-black text-white px-6 py-3 rounded text-sm transition-colors flex-1 shadow font-bold border border-border" onClick={onClose}>Acknowledge & Close</button>
                 {!actionProcessing && (
-                  <button className="bg-gold hover:bg-gold-light text-black px-6 py-3 rounded text-sm font-bold flex-1 shadow animate-in fade-in" onClick={() => onDrillDown('Report', { 
-                     name: 'Action Audit Log', 
-                     actionId: item.data.name,
-                     records: [
+                  <button className="bg-gold hover:bg-gold-light text-black px-6 py-3 rounded text-sm font-bold flex-1 shadow animate-in fade-in" onClick={() => {
+                     const logs = [
                         { title: 'AUTH_VERIFY', subtitle: `Validate ${userRole} token`, value: '200 OK' },
-                        { title: 'API_DISPATCH', subtitle: `Route to ${String(item.data.name || 'SYS_ACTION').slice(0, 15)}...`, value: '202 ACCEPT' },
-                        { title: 'DB_COMMIT', subtitle: 'Transaction row locked', value: '1 ROW' },
-                        ...(Array.isArray(item.data.records) ? item.data.records.slice(0,5).map(r => ({ title: 'PAYLOAD_MAP', subtitle: r.title || 'Data Row', value: 'PARSED' })) : [])
-                     ]
-                  })}>View System Log Data</button>
+                        { title: 'API_DISPATCH', subtitle: `Route to ${String(item.data.name || item.data.title || 'SYS_ACTION').slice(0, 15)}...`, value: '202 ACCEPT' },
+                        { title: 'DB_COMMIT', subtitle: 'Transaction row locked', value: '1 ROW' }
+                     ];
+                     if (item.data.records && Array.isArray(item.data.records) && item.data.records.length > 0) {
+                        logs.push(...item.data.records.slice(0,5).map(r => ({ title: 'PAYLOAD_MAP', subtitle: r.title || r.name || 'Data Row', value: 'PARSED' })));
+                     } else if (item.data.records && Object.keys(item.data.records).length > 0) {
+                        logs.push(...Object.entries(item.data.records).slice(0,5).map(([k, v]) => ({ title: 'PAYLOAD_MAP', subtitle: `Object Key: ${k}`, value: 'PARSED' })));
+                     } else {
+                        logs.push({ title: 'PARAM_MAPPING', subtitle: 'Execution context validated', value: 'TRUE' });
+                        logs.push({ title: 'STATE_MUTATION', subtitle: 'Applying matrix transformations', value: 'SUCCESS' });
+                     }
+                     
+                     onDrillDown('Report', { 
+                       name: 'Action Audit Log', 
+                       actionId: item.data.name,
+                       records: logs
+                     });
+                  }}>View System Log Data</button>
                 )}
             </div>
           </div>
@@ -899,10 +922,12 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
           </div>
         );
       case 'Financials':
+        const finMetric = item.data.metric || item.data.label || item.data.name || 'Financial';
+        const finValue = item.data.value || '$0.00';
         return (
           <div className="space-y-6">
             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-2 flex items-center justify-between">
-               <span className="flex items-center gap-3"><DollarSign className="w-6 h-6"/> {item.data.metric || 'Financial'} Assessment</span>
+               <span className="flex items-center gap-3"><DollarSign className="w-6 h-6"/> {finMetric} Assessment</span>
                <div className="flex gap-2">
                  <span className="text-[10px] font-mono bg-green-900/10 border border-green-500/30 px-3 py-1.5 rounded tracking-widest text-green-500 shadow-[0_0_10px_rgba(34,197,94,0.15)] flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> GL RECONCILED</span>
                </div>
@@ -1219,14 +1244,31 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
         );
       case 'Report':
          // Render the Dashboard List drilldowns elegantly
+         const reportName = item.data.name || item.data.label || 'Data Analysis';
+         const isAuditLog = reportName.toLowerCase().includes('log') || reportName.toLowerCase().includes('audit');
+         
+         // Generate robust mock records for Audit logs that were passed without payload data
+         const displayRecords = (item.data.records && item.data.records.length > 0) 
+            ? item.data.records 
+            : isAuditLog 
+               ? getAuditLogs()
+               : null;
+
          return (
            <div className="space-y-6">
              <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
-                <div className="flex items-center gap-3"><FileBarChart className="w-7 h-7" /> Operational Report: {item.data.name}</div>
+                <div className="flex items-center gap-3"><FileBarChart className="w-7 h-7" /> Operational Report: {reportName}</div>
                 <div className="flex gap-2">
                   <span className="text-[10px] font-mono bg-panel border border-border px-2 py-1 rounded text-text-muted">ID: REPORT-{Math.floor(Math.random() * 89999) + 10000}</span>
                 </div>
              </h3>
+             
+             {item.data.value && (!item.data.records || item.data.records.length === 0) && (
+               <div className="bg-charcoal border border-gold-dim p-6 rounded shadow-inner mb-6 text-center">
+                  <div className="text-[10px] uppercase text-text-muted tracking-widest mb-2 font-mono">Isolated Metric Value</div>
+                  <div className="text-5xl font-playfair text-white">{item.data.value}</div>
+               </div>
+             )}
              
              <div className="bg-charcoal border border-border p-6 rounded shadow-inner">
                 <div className="flex items-center gap-3 mb-6 text-sm text-text-muted border-b border-border/50 pb-4">
@@ -1236,8 +1278,8 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   {item.data.records && item.data.records.length > 0 ? (
-                      item.data.records.slice(0, 50).map((rec, idx) => (
+                   {displayRecords && displayRecords.length > 0 ? (
+                      displayRecords.slice(0, 50).map((rec, idx) => (
                          <div key={idx} className="bg-black border border-border p-4 rounded hover:border-gold-dim transition-colors cursor-pointer group flex justify-between items-center" onClick={() => onDrillDown(rec.type || 'Action', rec)}>
                             <div className="flex-1 min-w-0 pr-4">
                                <div className="text-white font-bold mb-1 truncate">{rec.title || rec.name || `Record #${idx+1}`}</div>
@@ -1257,7 +1299,7 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
                 </div>
                 
                 <div className="mt-6 text-center text-xs text-text-dim">
-                   Showing {item.data.records?.length > 50 ? '50+' : (item.data.records?.length || 0)} records for "{item.data.name}"
+                   Showing {displayRecords?.length > 50 ? '50+' : (displayRecords?.length || 0)} records for "{reportName}"
                 </div>
              </div>
 
@@ -1270,10 +1312,11 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
       case 'Campaign':
       default:
         // Enhanced robust default view for unmapped or generic data points
+        const genericName = item.data.name || item.data.label || item.type;
         return (
           <div className="space-y-6">
             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
-               <div className="flex items-center gap-3"><FileBarChart className="w-7 h-7" /> {item.type} Insight & Analysis</div>
+               <div className="flex items-center gap-3"><FileBarChart className="w-7 h-7" /> {genericName} Insight & Analysis</div>
                <div className="flex gap-2">
                  <span className="text-[10px] font-mono bg-panel border border-border px-2 py-1 rounded text-text-muted">ID: {Math.floor(Math.random() * 89999) + 10000}</span>
                  <span className="text-[10px] font-mono bg-green-900/10 border border-green-500/30 px-2 py-1 rounded text-green-500">SYNCED</span>
