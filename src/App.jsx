@@ -21,7 +21,12 @@ import { TrendBadge } from './components/ui/TrendBadge';
 import { AutomatedInsights } from './components/ui/AutomatedInsights';
 import { DrillDownValue } from './components/ui/DrillDownValue';
 import { DrillDownModal } from './components/ui/DrillDownModal';
+import { AgentWidget } from './components/ui/AgentWidget';
 import dealerLogo from './assets/logo.png';
+
+// Boot up Super Agent Phase 1 Registry
+import './agents/services/index.js';
+import { AgentRegistry } from './agents/registry/AgentRegistry';
 
 import { EMPLOYEES } from './data/mockDatabase';
 import { 
@@ -115,6 +120,11 @@ const AuthGate = ({ onLogin }) => {
 /* --- MAIN MODULES --- */
 
 const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
+  useEffect(() => {
+    // Generate background insights via the Super Agent layer manually on boot
+    AgentRegistry.broadcastTrigger({ type: 'MANUAL', timestamp: new Date().toISOString() }, { userId: 'EMP-1', role: 'Owner', locationId: 'ALL' });
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Location Toggle */}
@@ -137,6 +147,8 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
         { type: "opportunity", message: <>Baton Rouge F&I backend is pacing <DrillDownValue value="$315 per unit" label="F&I Margin Delta" type="Report" onDrillDown={onDrillDown} color="text-gold" /> higher than Slidell MTD. Reviewing Rachel Tran's pitch structure with the Slidell team is recommended.</>, actionText: "Compare F&I Scorecards" },
         { type: "action", message: <>There are exactly <DrillDownValue value="8 units" label="Aged Units" type="Inventory" onDrillDown={onDrillDown} /> across both locations aging past 120 days. Current floorplan carry cost for these units is $640/week.</>, actionText: "Review Aged Inventory" }
       ]} />
+
+      <AgentWidget userContext={{ userId: 'EMP-1', role: 'Owner' }} />
 
       {/* KPI Mega Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
