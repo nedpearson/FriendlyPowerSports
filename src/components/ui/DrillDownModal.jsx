@@ -15,6 +15,10 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
   const [prequalStep, setPrequalStep] = useState('capture'); // 'capture', 'loading', 'result'
   const [prequalResult, setPrequalResult] = useState(null);
   const [prequalError, setPrequalError] = useState(null);
+  
+  // Action Processing States
+  const [actionProcessing, setActionProcessing] = useState(false);
+  const [actionStep, setActionStep] = useState(0);
 
   useEffect(() => {
     if (item?.type === 'Agent') {
@@ -30,8 +34,19 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
           setAgentSearching(false);
         }, 3000)
       ];
-      
       return () => intervals.forEach(clearTimeout);
+    }
+    
+    if (item?.type === 'Action') {
+       setActionProcessing(true);
+       setActionStep(0);
+       const actionIntervals = [
+          setTimeout(() => setActionStep(1), 500),
+          setTimeout(() => setActionStep(2), 1000),
+          setTimeout(() => setActionStep(3), 1500),
+          setTimeout(() => setActionProcessing(false), 2000)
+       ];
+       return () => actionIntervals.forEach(clearTimeout);
     }
   }, [item]);
 
@@ -761,18 +776,55 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
         return (
           <div className="space-y-6">
             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-2 flex items-center gap-3"><Command className="w-6 h-6"/> System Action: {item.data.name}</h3>
-            <div className="bg-black p-8 rounded border border-border flex items-center justify-center min-h-[150px]">
-               <div className="text-center">
-                  <div className="w-16 h-16 rounded-full bg-green-900/20 border-2 border-green-500 text-green-500 flex items-center justify-center mx-auto mb-4 scale-110">
-                     <CheckCircle2 className="w-8 h-8" />
-                  </div>
-                  <div className="text-xl text-white font-bold mb-2">{item.data.message || 'Processing Request...'}</div>
-                  <div className="text-sm text-text-muted">This action is routing through the DealerCommand core API network.</div>
-               </div>
+            
+            <div className={`bg-black p-6 rounded border ${actionProcessing ? 'border-gold-dim animate-pulse shadow-[0_0_15px_rgba(201,168,76,0.1)]' : 'border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.1)]'} min-h-[150px] font-mono`}>
+               {actionProcessing ? (
+                 <div className="text-xs text-text-muted space-y-2">
+                    <div className="text-gold">[{new Date().toISOString()}] INITIALIZING DEEP INSPECTOR: {item.data.name}</div>
+                    {actionStep > 0 && <div>[{new Date().toISOString()}] AUTHORIZED: <span className="text-white">{userRole} Credentials Validated.</span></div>}
+                    {actionStep > 1 && <div>[{new Date().toISOString()}] ROUTING: Core API Network... {item.data.message || 'Executing standard protocol.'}</div>}
+                    {actionStep > 2 && <div className="text-gold mt-4">FETCHING CONTEXTUAL PAYLOAD...</div>}
+                 </div>
+               ) : (
+                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="flex items-center gap-3 mb-4 border-b border-border/50 pb-4">
+                       <CheckCircle2 className="w-6 h-6 text-green-500" />
+                       <div>
+                          <div className="text-white font-bold text-sm">Action Successfully Processed</div>
+                          <div className="text-[10px] text-text-muted">Network latency: ~142ms. 100% Data Integrity.</div>
+                       </div>
+                    </div>
+                    
+                    <div className="text-white text-sm mb-4">
+                       {item.data.message || `EXECUTED PROTOCOL: ${item.data.name.toUpperCase()}`}
+                    </div>
+                    
+                    {item.data.records && item.data.records.length > 0 && (
+                       <div className="mt-4 pt-4 border-t border-border/30">
+                          <div className="text-[10px] uppercase text-gold tracking-widest mb-3">Retrieved Array Payload:</div>
+                          <div className="bg-charcoal border border-border rounded p-3 text-xs overflow-auto max-h-48 custom-scrollbar">
+                             <pre className="text-text-muted font-mono leading-relaxed">{JSON.stringify(item.data.records.slice(0, 15), null, 2)}</pre>
+                             {item.data.records.length > 15 && <div className="text-gold mt-2">...and {item.data.records.length - 15} more records hidden from console view.</div>}
+                          </div>
+                       </div>
+                    )}
+                 </div>
+               )}
             </div>
             <div className="flex gap-4 pt-4 border-t border-border mt-4">
                 <button className="bg-panel hover:bg-black text-white px-6 py-3 rounded text-sm transition-colors flex-1 shadow font-bold border border-border" onClick={onClose}>Acknowledge & Close</button>
-                <button className="bg-gold hover:bg-gold-light text-black px-6 py-3 rounded text-sm font-bold flex-1 shadow" onClick={() => onDrillDown('Report', { name: 'Action Audit Log', actionId: item.data.name })}>View System Log Data</button>
+                {!actionProcessing && (
+                  <button className="bg-gold hover:bg-gold-light text-black px-6 py-3 rounded text-sm font-bold flex-1 shadow animate-in fade-in" onClick={() => onDrillDown('Report', { 
+                     name: 'Action Audit Log', 
+                     actionId: item.data.name,
+                     records: [
+                        { title: 'AUTH_VERIFY', subtitle: `Validate ${userRole} token`, value: '200 OK' },
+                        { title: 'API_DISPATCH', subtitle: `Route to ${String(item.data.name || 'SYS_ACTION').slice(0, 15)}...`, value: '202 ACCEPT' },
+                        { title: 'DB_COMMIT', subtitle: 'Transaction row locked', value: '1 ROW' },
+                        ...(Array.isArray(item.data.records) ? item.data.records.slice(0,5).map(r => ({ title: 'PAYLOAD_MAP', subtitle: r.title || 'Data Row', value: 'PARSED' })) : [])
+                     ]
+                  })}>View System Log Data</button>
+                )}
             </div>
           </div>
         );

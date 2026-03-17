@@ -836,8 +836,8 @@ const OEMIncentivesModule = ({ onDrillDown }) => {
              </div>
              
              <div className="mb-2 flex justify-between text-sm">
-                <span className="text-white"><DrillDownValue value={`${oem.current} / ${oem.target}`} label={`${oem.brand} Unit Progress`} type="OEM" onDrillDown={onDrillDown} /></span>
-                <span className="font-bold text-gold text-xl"><DrillDownValue value={oem.bonus} label={`${oem.brand} Bonus Tier`} type="Financials" onDrillDown={onDrillDown} color="text-gold" /></span>
+                <DrillDownValue value={`${oem.current} / ${oem.target}`} label={`${oem.brand} Unit Progress`} type="OEM" onDrillDown={onDrillDown} color="text-white" />
+                <DrillDownValue value={oem.bonus} label={`${oem.brand} Bonus Tier`} type="Financials" onDrillDown={onDrillDown} color="font-bold text-gold text-xl" />
              </div>
              
              <div className="w-full bg-black rounded-full h-2 mb-4 overflow-hidden border border-border">
@@ -897,9 +897,9 @@ const MarketingModule = ({ onDrillDown }) => {
                    <span className={`text-xs px-2 py-1 rounded border border-current font-bold ${c.roas === '8.4x' ? 'text-green-500' : c.roas === '1.2x' ? 'text-amber-500' : 'text-gold'}`}>{c.roas} ROAS</span>
                  </div>
                  <div className="text-xs text-text-muted flex justify-between">
-                   <span>Spend: <DrillDownValue value={c.spend} label={`${c.name} Spend`} type="Financials" onDrillDown={onDrillDown} /></span>
-                   <span>Leads: <DrillDownValue value={c.leads} label={`${c.name} Leads`} type="Campaign" onDrillDown={onDrillDown} /></span>
-                   <span>Sold: <DrillDownValue value={c.sold} label={`${c.name} Sold Units`} type="Campaign" onDrillDown={onDrillDown} /></span>
+                   <span>Spend: <DrillDownValue value={c.spend} label={`${c.name} Spend`} type="Financials" onDrillDown={onDrillDown} color="text-white" /></span>
+                   <span>Leads: <DrillDownValue value={c.leads} label={`${c.name} Leads`} type="Campaign" onDrillDown={onDrillDown} color="text-white" /></span>
+                   <span>Sold: <DrillDownValue value={c.sold} label={`${c.name} Sold Units`} type="Campaign" onDrillDown={onDrillDown} color="text-white" /></span>
                  </div>
                </div>
               ))}
@@ -1033,7 +1033,7 @@ const SettingsModule = ({ onDrillDown }) => {
                       <div className="text-xs text-text-muted">Deals below this <DrillDownValue value="%" label="Margin Floor Explanation" type="Settings" onDrillDown={onDrillDown} color="text-text-muted hover:text-white" /> require GM pin</div>
                    </div>
                    <div className="flex items-center gap-2">
-                     <span className="text-white font-bold"><DrillDownValue value="12" label="Margin Override Threshold" type="Settings" onDrillDown={onDrillDown} color="text-white" /></span>
+                     <DrillDownValue value="12" label="Margin Override Threshold" type="Settings" onDrillDown={onDrillDown} color="text-white font-bold" />
                      <span className="text-text-muted text-sm">%</span>
                    </div>
                 </div>
