@@ -4,6 +4,8 @@ import { EntityLinker } from '../core/EntityLinker';
 
 import './ExecutiveCommandAgent.js';
 import './LeadIntelligenceAgent.js';
+import './BDCFollowupAgent.js';
+import './InventoryMatchmakingAgent.js';
 
 /**
  * Base template for registering an Agent.
@@ -40,12 +42,6 @@ function createDummyAgent(id, name, description, priority, actionTypeName, defau
 }
 
 // Real agents imported and auto-registered above.
-
-// 3. BDC Followup Agent
-createDummyAgent('bdc_followup_agent', 'BDC Follow-Up Agent', 'Automated cadence', 'MEDIUM', 'SCHEDULE_CALL', {type: 'Communication', id: 'COM-1', label: 'Recent Text Thread'});
-
-// 4. Inventory Matchmaking Agent
-createDummyAgent('inventory_matchmaking_agent', 'Inventory Matchmaking Agent', 'Pair aged units to buyers', 'HIGH', 'APPLY_DISCOUNT', {type: 'Inventory', id: 'INV-1002', label: 'YZF-R7 (92 Days)'});
 
 // 5. Sales Desk Agent
 createDummyAgent('sales_desk_agent', 'Sales Desk Agent', 'Active deal structuring', 'HIGH', 'ADJUST_GROSS', {type: 'Deal', id: 'DL-881', label: 'Pending Sale'});
