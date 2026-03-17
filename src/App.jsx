@@ -516,32 +516,32 @@ const FIModule = ({ onDrillDown }) => {
               </tr>
             </thead>
             <tbody>
-              <tr onClick={() => onDrillDown('Deal', {customer: 'John Davis', unit: '2024 Talon 1000R', lender: 'Sheffield', reserve: '$450', vsc: '$800', gap: 'No', total: '$1,250'})} className="border-b border-border/50 hover:bg-panel transition-colors cursor-pointer">
-                <td className="px-4 py-3 text-white font-bold">John Davis</td>
+              <tr onClick={() => onDrillDown('Deal', {customer: 'John Davis', unit: '2024 Talon 1000R', lender: 'Sheffield', reserve: '$450', vsc: '$800', gap: 'No', total: '$1,250'})} className="border-b border-border/50 hover:bg-panel transition-colors cursor-pointer group">
+                <td className="px-4 py-3 text-white font-bold group-hover:text-gold transition-colors">John Davis</td>
                 <td className="px-4 py-3">2024 Talon 1000R</td>
                 <td className="px-4 py-3">Sheffield</td>
-                <td className="px-4 py-3">$450</td>
-                <td className="px-4 py-3"><span className="text-green-500 font-bold">Yes ($800)</span></td>
+                <td className="px-4 py-3"><DrillDownValue value="$450" label="Reserve Split (Sheffield)" type="Financials" onDrillDown={onDrillDown} /></td>
+                <td className="px-4 py-3"><DrillDownValue value="Yes ($800)" label="VSC Contract Details" type="Financials" onDrillDown={onDrillDown} color="text-green-500 font-bold" /></td>
                 <td className="px-4 py-3"><span className="text-text-muted">No</span></td>
-                <td className="px-4 py-3 text-right font-bold text-gold">$1,250</td>
+                <td className="px-4 py-3 text-right font-bold text-gold"><DrillDownValue value="$1,250" label="John Davis Total Backend" type="Financials" onDrillDown={onDrillDown} color="text-gold" /></td>
               </tr>
-              <tr onClick={() => onDrillDown('Deal', {customer: 'Emily White', unit: '2023 YZF-R7', lender: 'Octane', reserve: '$320', vsc: '$600', gap: '$400', total: '$1,320'})} className="border-b border-border/50 hover:bg-panel transition-colors cursor-pointer">
-                <td className="px-4 py-3 text-white font-bold">Emily White</td>
+              <tr onClick={() => onDrillDown('Deal', {customer: 'Emily White', unit: '2023 YZF-R7', lender: 'Octane', reserve: '$320', vsc: '$600', gap: '$400', total: '$1,320'})} className="border-b border-border/50 hover:bg-panel transition-colors cursor-pointer group">
+                <td className="px-4 py-3 text-white font-bold group-hover:text-gold transition-colors">Emily White</td>
                 <td className="px-4 py-3">2023 YZF-R7</td>
                 <td className="px-4 py-3">Octane</td>
-                <td className="px-4 py-3">$320</td>
-                <td className="px-4 py-3"><span className="text-green-500 font-bold">Yes ($600)</span></td>
-                <td className="px-4 py-3"><span className="text-green-500 font-bold">Yes ($400)</span></td>
-                <td className="px-4 py-3 text-right font-bold text-gold">$1,320</td>
+                <td className="px-4 py-3"><DrillDownValue value="$320" label="Reserve Split (Octane)" type="Financials" onDrillDown={onDrillDown} /></td>
+                <td className="px-4 py-3"><DrillDownValue value="Yes ($600)" label="VSC Contract Details" type="Financials" onDrillDown={onDrillDown} color="text-green-500 font-bold" /></td>
+                <td className="px-4 py-3"><DrillDownValue value="Yes ($400)" label="GAP Contract Details" type="Financials" onDrillDown={onDrillDown} color="text-green-500 font-bold" /></td>
+                <td className="px-4 py-3 text-right font-bold text-gold"><DrillDownValue value="$1,320" label="Emily White Total Backend" type="Financials" onDrillDown={onDrillDown} color="text-gold" /></td>
               </tr>
-              <tr onClick={() => onDrillDown('Deal', {customer: 'Mark Allen', unit: '2024 Rzr Pro R', lender: 'Synchrony', reserve: '$800', vsc: 'No', gap: 'No', total: '$800'})} className="hover:bg-panel transition-colors cursor-pointer">
-                <td className="px-4 py-3 text-white font-bold">Mark Allen</td>
+              <tr onClick={() => onDrillDown('Deal', {customer: 'Mark Allen', unit: '2024 Rzr Pro R', lender: 'Synchrony', reserve: '$800', vsc: 'No', gap: 'No', total: '$800'})} className="hover:bg-panel transition-colors cursor-pointer group">
+                <td className="px-4 py-3 text-white font-bold group-hover:text-gold transition-colors">Mark Allen</td>
                 <td className="px-4 py-3">2024 Rzr Pro R</td>
                 <td className="px-4 py-3">Synchrony</td>
-                <td className="px-4 py-3">$800</td>
+                <td className="px-4 py-3"><DrillDownValue value="$800" label="Reserve Split (Synchrony)" type="Financials" onDrillDown={onDrillDown} /></td>
                 <td className="px-4 py-3"><span className="text-text-muted">No</span></td>
                 <td className="px-4 py-3"><span className="text-text-muted">No</span></td>
-                <td className="px-4 py-3 text-right font-bold text-gold">$800</td>
+                <td className="px-4 py-3 text-right font-bold text-gold"><DrillDownValue value="$800" label="Mark Allen Total Backend" type="Financials" onDrillDown={onDrillDown} color="text-gold" /></td>
               </tr>
             </tbody>
           </table>
@@ -663,17 +663,17 @@ const UsedBikesModule = ({ onDrillDown }) => {
              <div key={i} className="bg-black border border-border rounded p-3 min-h-[400px]">
                 <h3 className="text-xs text-text-muted font-mono mb-4 text-center border-b border-border pb-2">{stage}</h3>
                 {i === 1 && (
-                  <div onClick={() => onDrillDown('Inventory', {unit: '2021 Yamaha MT-07', cost: '$5,100', spend: '$340', days: 8, tech: 'Sam L.', stage: 'Recon In Progress'})} className="bg-panel rounded border-l-4 border-amber-500 p-3 shadow text-sm mb-3 cursor-pointer hover:border-gold transition-colors">
-                    <div className="font-bold text-white mb-1">2021 Yamaha MT-07</div>
-                    <div className="flex justify-between text-xs text-text-muted"><span>Cost: <DrillDownValue value="$5,100" label="Recon Cost Basis" type="Inventory" onDrillDown={onDrillDown} /></span> <span>Spend: <DrillDownValue value="$340" label="Recon Spend" type="Inventory" onDrillDown={onDrillDown} /></span></div>
-                    <div className="mt-2 text-xs flex justify-between"><span className="text-amber-500"><DrillDownValue value="Day 8" label="Recon Days" type="Inventory" onDrillDown={onDrillDown} color="text-amber-500"/></span> <span>Sam L.</span></div>
+                  <div onClick={() => onDrillDown('Inventory', {unit: '2021 Yamaha MT-07', cost: '$5,100', spend: '$340', days: 8, tech: 'Sam L.', stage: 'Recon In Progress'})} className="bg-panel rounded border-l-4 border-amber-500 p-3 shadow text-sm mb-3 cursor-pointer hover:border-gold transition-colors group">
+                    <div className="font-bold text-white mb-1 group-hover:text-gold transition-colors">2021 Yamaha MT-07</div>
+                    <div className="flex justify-between text-xs text-text-muted"><span>Cost: <DrillDownValue value="$5,100" label="Recon Cost Basis" type="Inventory" onDrillDown={onDrillDown} /></span> <span>Spend: <DrillDownValue value="$340" label="Recon Spend" type="Financials" onDrillDown={onDrillDown} /></span></div>
+                    <div className="mt-2 text-xs flex justify-between"><span className="text-amber-500"><DrillDownValue value="Day 8" label="Recon Days" type="Inventory" onDrillDown={onDrillDown} color="text-amber-500"/></span> <span><DrillDownValue value="Sam L." label="Tech: Sam L." type="Employee" onDrillDown={onDrillDown} color="text-text-muted group-hover:text-white" /></span></div>
                   </div>
                 )}
                 {i === 0 && (
-                  <div onClick={() => onDrillDown('Inventory', {unit: '2019 Honda Rebel 500', cost: '$3,200', spend: '$0', days: 2, tech: 'Tony G.', stage: 'Acquired / Insp.'})} className="bg-panel rounded border-l-4 border-green-500 p-3 shadow text-sm mb-3 cursor-pointer hover:border-gold transition-colors">
-                    <div className="font-bold text-white mb-1">2019 Honda Rebel 500</div>
-                    <div className="flex justify-between text-xs text-text-muted"><span>Cost: <DrillDownValue value="$3,200" label="Recon Cost Basis" type="Inventory" onDrillDown={onDrillDown} /></span> <span>Spend: <DrillDownValue value="$0" label="Recon Spend" type="Inventory" onDrillDown={onDrillDown} /></span></div>
-                    <div className="mt-2 text-xs flex justify-between"><span className="text-green-500"><DrillDownValue value="Day 2" label="Recon Days" type="Inventory" onDrillDown={onDrillDown} color="text-green-500"/></span> <span>Tony G.</span></div>
+                  <div onClick={() => onDrillDown('Inventory', {unit: '2019 Honda Rebel 500', cost: '$3,200', spend: '$0', days: 2, tech: 'Tony G.', stage: 'Acquired / Insp.'})} className="bg-panel rounded border-l-4 border-green-500 p-3 shadow text-sm mb-3 cursor-pointer hover:border-gold transition-colors group">
+                    <div className="font-bold text-white mb-1 group-hover:text-gold transition-colors">2019 Honda Rebel 500</div>
+                    <div className="flex justify-between text-xs text-text-muted"><span>Cost: <DrillDownValue value="$3,200" label="Recon Cost Basis" type="Inventory" onDrillDown={onDrillDown} /></span> <span>Spend: <DrillDownValue value="$0" label="Recon Spend" type="Financials" onDrillDown={onDrillDown} /></span></div>
+                    <div className="mt-2 text-xs flex justify-between"><span className="text-green-500"><DrillDownValue value="Day 2" label="Recon Days" type="Inventory" onDrillDown={onDrillDown} color="text-green-500"/></span> <span><DrillDownValue value="Tony G." label="Tech: Tony G." type="Employee" onDrillDown={onDrillDown} color="text-text-muted group-hover:text-white" /></span></div>
                   </div>
                 )}
              </div>
@@ -720,14 +720,16 @@ const ServicePartsModule = ({ onDrillDown }) => {
                { id: '1843', unit: '2022 Waverunner', status: 'Waiting Parts', tech: 'Unassigned' },
                { id: '1844', unit: '2023 Polaris Rzr', status: 'Quality Check', tech: 'Sam L.' }
              ].map(ro => (
-                <div key={ro.id} onClick={() => onDrillDown('RO', ro)} className="bg-black border border-border rounded p-3 flex justify-between cursor-pointer hover:border-gold transition-colors">
+                <div key={ro.id} onClick={() => onDrillDown('RO', ro)} className="bg-black border border-border rounded p-3 flex justify-between cursor-pointer hover:border-gold transition-colors group">
                   <div>
-                    <div className="text-xs text-text-dim font-mono">RO #{ro.id}</div>
-                    <div className="font-bold text-white text-sm">{ro.unit}</div>
+                    <div className="text-xs text-text-dim font-mono group-hover:text-gold transition-colors">RO #{ro.id}</div>
+                    <div className="font-bold text-white text-sm"><DrillDownValue value={ro.unit} label={`RO: ${ro.unit}`} type="Inventory" onDrillDown={onDrillDown} /></div>
                   </div>
-                  <div className="text-right">
-                     <div className={`text-xs font-bold ${ro.status === 'In Progress' ? 'text-green-500' : 'text-amber-500'}`}>{ro.status}</div>
-                     <div className="text-xs text-text-muted">{ro.tech}</div>
+                  <div className="text-right flex flex-col items-end">
+                     <div className={`text-xs font-bold ${ro.status === 'In Progress' ? 'text-green-500' : 'text-amber-500'}`}>
+                        <DrillDownValue value={ro.status} label={`RO Status`} type="RO" onDrillDown={onDrillDown} color={ro.status === 'In Progress' ? 'text-green-500' : 'text-amber-500'} />
+                     </div>
+                     <div className="text-xs text-text-muted mt-1"><DrillDownValue value={ro.tech} label={`Assigned: ${ro.tech}`} type="Employee" onDrillDown={onDrillDown} /></div>
                   </div>
                 </div>
              ))}
@@ -829,8 +831,8 @@ const OEMIncentivesModule = ({ onDrillDown }) => {
              </div>
              
              <div className="mb-2 flex justify-between text-sm">
-                <span className="text-white">{oem.current} / {oem.target}</span>
-                <span className="font-bold text-gold text-xl">{oem.bonus}</span>
+                <span className="text-white"><DrillDownValue value={`${oem.current} / ${oem.target}`} label={`${oem.brand} Unit Progress`} type="OEM" onDrillDown={onDrillDown} /></span>
+                <span className="font-bold text-gold text-xl"><DrillDownValue value={oem.bonus} label={`${oem.brand} Bonus Tier`} type="Financials" onDrillDown={onDrillDown} color="text-gold" /></span>
              </div>
              
              <div className="w-full bg-black rounded-full h-2 mb-4 overflow-hidden border border-border">
@@ -890,7 +892,7 @@ const MarketingModule = ({ onDrillDown }) => {
                    <span className={`text-xs px-2 py-1 rounded border border-current font-bold ${c.roas === '8.4x' ? 'text-green-500' : c.roas === '1.2x' ? 'text-amber-500' : 'text-gold'}`}>{c.roas} ROAS</span>
                  </div>
                  <div className="text-xs text-text-muted flex justify-between">
-                   <span>Spend: <DrillDownValue value={c.spend} label={`${c.name} Spend`} type="Campaign" onDrillDown={onDrillDown} /></span>
+                   <span>Spend: <DrillDownValue value={c.spend} label={`${c.name} Spend`} type="Financials" onDrillDown={onDrillDown} /></span>
                    <span>Leads: <DrillDownValue value={c.leads} label={`${c.name} Leads`} type="Campaign" onDrillDown={onDrillDown} /></span>
                    <span>Sold: <DrillDownValue value={c.sold} label={`${c.name} Sold Units`} type="Campaign" onDrillDown={onDrillDown} /></span>
                  </div>
@@ -1023,10 +1025,10 @@ const SettingsModule = ({ onDrillDown }) => {
                 <div className="flex justify-between items-center bg-black p-3 rounded border border-border">
                    <div>
                       <div className="text-sm font-bold text-white flex items-center gap-2"><TrendingDown className="w-4 h-4 text-amber-500"/> Margin Floor Override</div>
-                      <div className="text-xs text-text-muted">Deals below this % require GM pin</div>
+                      <div className="text-xs text-text-muted">Deals below this <DrillDownValue value="%" label="Margin Floor Explanation" type="Settings" onDrillDown={onDrillDown} color="text-text-muted hover:text-white" /> require GM pin</div>
                    </div>
                    <div className="flex items-center gap-2">
-                     <input type="number" defaultValue={12} className="bg-panel border border-border rounded text-center w-16 py-1 text-white focus:border-gold outline-none" />
+                     <span className="text-white font-bold"><DrillDownValue value="12" label="Margin Override Threshold" type="Settings" onDrillDown={onDrillDown} color="text-white" /></span>
                      <span className="text-text-muted text-sm">%</span>
                    </div>
                 </div>
@@ -1037,7 +1039,7 @@ const SettingsModule = ({ onDrillDown }) => {
                    </div>
                    <div className="flex items-center gap-2">
                      <span className="text-text-muted text-sm">$</span>
-                     <input type="number" defaultValue={500} className="bg-panel border border-border rounded text-center w-20 py-1 text-white focus:border-gold outline-none" />
+                     <span className="text-white font-bold"><DrillDownValue value="500" label="Max Discount Cap" type="Settings" onDrillDown={onDrillDown} color="text-white" /></span>
                    </div>
                 </div>
              </div>
@@ -1052,7 +1054,7 @@ const SettingsModule = ({ onDrillDown }) => {
                       <div className="text-xs text-text-muted">Triggers dashboard alerts and copilot suggestions</div>
                    </div>
                    <div className="flex items-center gap-2">
-                     <input type="number" defaultValue={90} className="bg-panel border border-border rounded text-center w-16 py-1 text-white focus:border-gold outline-none" />
+                     <span className="text-white font-bold"><DrillDownValue value="90" label="Aging Warning Flag" type="Settings" onDrillDown={onDrillDown} color="text-white" /></span>
                      <span className="text-text-muted text-sm">Days</span>
                    </div>
                 </div>
@@ -1062,7 +1064,7 @@ const SettingsModule = ({ onDrillDown }) => {
                       <div className="text-xs text-text-muted">Pushes automated markdown request to GM</div>
                    </div>
                    <div className="flex items-center gap-2">
-                     <input type="number" defaultValue={120} className="bg-panel border border-border rounded text-center w-16 py-1 text-white focus:border-gold outline-none" />
+                     <span className="text-white font-bold"><DrillDownValue value="120" label="Aging Critical Flag" type="Settings" onDrillDown={onDrillDown} color="text-white" /></span>
                      <span className="text-text-muted text-sm">Days</span>
                    </div>
                 </div>
