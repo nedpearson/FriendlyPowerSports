@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { DrillDownValue } from './DrillDownValue';
+import { getCustomer360Data, getInventoryMatches, getQuoteWorkbenchData } from '../../data/selectors';
+import { CreditPrequalAdapter } from '../../data/crmAdapters';
 import {
   CheckCircle2, TrendingUp, User, Bike, AlertCircle, Command,
-  DollarSign, Megaphone, Search, FileBarChart, ChevronRight, TrendingDown, Users as UsersIcon, Clock, Database, BrainCircuit, Wrench
+  DollarSign, Megaphone, Search, FileBarChart, ChevronRight, TrendingDown, Users as UsersIcon, Clock, Database, BrainCircuit, Wrench, Package, Calculator, Camera
 } from 'lucide-react';
 
 export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown }) => {
   const [agentSearching, setAgentSearching] = useState(true);
   const [searchStep, setSearchStep] = useState(0);
+  
+  // Finance Prequal States
+  const [prequalStep, setPrequalStep] = useState('capture'); // 'capture', 'loading', 'result'
+  const [prequalResult, setPrequalResult] = useState(null);
+  const [prequalError, setPrequalError] = useState(null);
 
   useEffect(() => {
     if (item?.type === 'Agent') {
@@ -191,6 +198,565 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
              </div>
           </div>
         );
+      case 'CRM_Customer360': {
+        const crmData = getCustomer360Data(item.data.customerId);
+        if (!crmData.customer) return <div className="text-white p-8">Customer not found.</div>;
+        const matches = getInventoryMatches(item.data.customerId);
+        
+        return (
+          <div className="space-y-6 animate-in zoom-in-95 duration-500">
+             <div className="flex justify-between items-end border-b border-border pb-4">
+               <div>
+                  <div className="text-text-muted uppercase text-[10px] font-mono tracking-widest flex items-center gap-2 mb-2">
+                     <UsersIcon className="w-3 h-3 text-gold"/> CUSTOMER 360 PROFILE
+                  </div>
+                  <h3 className="text-3xl font-playfair text-white flex items-center gap-3">
+                    {crmData.customer.name}
+                  </h3>
+                  <div className="flex items-center gap-4 mt-2 text-sm text-text-muted">
+                    <span className="flex items-center gap-1"><Command className="w-4 h-4"/> {crmData.customer.phone}</span>
+                    <span className="flex items-center gap-1"><Search className="w-4 h-4"/> {crmData.customer.email}</span>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                     {crmData.customer.tags?.map(t => (
+                        <span key={t} className="bg-charcoal border border-border px-2 py-0.5 rounded text-[10px] uppercase tracking-wider text-white">{t}</span>
+                     ))}
+                  </div>
+               </div>
+               <div className="text-right">
+                  <div className="text-[10px] tracking-widest text-text-muted font-mono uppercase mb-1">Lifetime Value</div>
+                  <div className="text-2xl font-bold text-green-500">${crmData.customer.LTV.toLocaleString()}</div>
+               </div>
+             </div>
+
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left Column - Details */}
+                <div className="space-y-6">
+                   <div className="bg-charcoal border border-border rounded p-5 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-2 opacity-10"><BrainCircuit className="w-16 h-16 text-gold"/></div>
+                      <h4 className="text-gold text-xs uppercase tracking-widest font-mono mb-4 border-b border-border/50 pb-2">Customer Memory Tiles</h4>
+                      <div className="space-y-3">
+                         <div className="bg-black border border-border p-3 rounded text-xs flex items-center justify-between">
+                            <span className="text-text-muted">Rider Persona</span>
+                            <span className="text-white font-bold bg-panel px-2 py-0.5 rounded border border-border">Weekend Cruiser</span>
+                         </div>
+                         <div className="bg-black border border-border p-3 rounded text-xs flex items-center justify-between">
+                            <span className="text-text-muted">Skill Level</span>
+                            <span className="text-white font-bold bg-panel px-2 py-0.5 rounded border border-border">Intermediate</span>
+                         </div>
+                         <div className="bg-black border border-border p-3 rounded text-xs flex flex-col gap-1">
+                            <span className="text-text-muted">Use Case / Constraints</span>
+                            <span className="text-white font-mono bg-panel px-2 py-1.5 rounded border border-border text-[10px] leading-relaxed">Needs passenger backrest, limited garage space. Prefers long-distance comfort over speed.</span>
+                         </div>
+                      </div>
+                   </div>
+
+                   <div className="bg-charcoal border border-border rounded p-5">
+                      <h4 className="text-gold text-xs uppercase tracking-widest font-mono mb-4 border-b border-border/50 pb-2">Relationships</h4>
+                      {crmData.household ? (
+                        <div className="text-sm">
+                           <div className="text-white font-bold mb-1">{crmData.household.name}</div>
+                           <div className="text-xs text-text-muted mb-2">{crmData.household.address}</div>
+                           <div className="text-[10px] bg-panel inline-block px-2 py-1 rounded text-text-muted">Household LTV: <span className="text-green-500 font-bold">${crmData.household.totalLTV.toLocaleString()}</span></div>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-text-muted">No household linkages found.</div>
+                      )}
+                   </div>
+
+                   <div className="bg-charcoal border border-border rounded p-5">
+                      <div className="flex justify-between items-center mb-4 border-b border-border/50 pb-2">
+                        <h4 className="text-gold text-xs uppercase tracking-widest font-mono">Recent Trade Appraisals</h4>
+                        <button className="text-[10px] bg-panel text-white border border-border px-2 py-0.5 rounded hover:bg-black transition-colors" onClick={() => onDrillDown('Trade_Capture', {customerId: crmData.customer.id})}>+ ADD TRADE</button>
+                      </div>
+                      {crmData.trades.length > 0 ? (
+                         <div className="space-y-3">
+                           {crmData.trades.map(t => (
+                             <div key={t.id} className="bg-black border border-border p-3 rounded text-sm cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Action', {name: 'View Trade Form'})}>
+                               <div className="text-white font-bold">{t.year} {t.make} {t.model}</div>
+                               <div className="flex justify-between items-center mt-2">
+                                 <div className="text-[10px] text-text-muted">{t.mileage.toLocaleString()} mi.</div>
+                                 <div className="text-green-500 font-bold text-xs">+${t.actualCashValue.toLocaleString()} ACV</div>
+                               </div>
+                             </div>
+                           ))}
+                         </div>
+                      ) : (
+                        <div className="text-xs text-text-muted">No trade-in history.</div>
+                      )}
+                   </div>
+
+                   <div className="bg-charcoal border border-border rounded p-5 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-900/10 to-transparent">
+                      <h4 className="text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2 flex items-center gap-2"><Wrench className="w-3 h-3 text-blue-500"/> Service Loyalty Flywheel</h4>
+                      <div className="text-sm">
+                         <div className="flex justify-between items-center mb-2">
+                            <span className="text-xs text-text-muted">RO Spend (12m)</span>
+                            <span className="text-white font-bold">$1,480</span>
+                         </div>
+                         <div className="bg-blue-900/20 text-blue-400 text-[10px] p-2 rounded border border-blue-900/50 leading-relaxed font-mono">
+                            <span className="font-bold uppercase tracking-widest block mb-1 text-blue-300">Upgrade Vector Detected</span>
+                            Customer spent $800+ on repairs in last 6 months on a 5+ yr old unit. Highly likely to convert to new purchase if presented with equity rollover options.
+                         </div>
+                         <button className="w-full mt-3 bg-blue-900/20 hover:bg-blue-900/40 text-blue-300 py-1.5 rounded text-xs font-bold transition-colors border border-blue-900/50" onClick={() => onDrillDown('Action', {name: "Build Equity Pitch"})}>Generate Equity Offer</button>
+                      </div>
+                   </div>
+                   
+                   <div className="bg-charcoal border border-border rounded p-5 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-2 opacity-10"><BrainCircuit className="w-16 h-16 text-gold"/></div>
+                      <h4 className="text-gold text-xs uppercase tracking-widest font-mono mb-4 border-b border-border/50 pb-2 flex items-center gap-2"><Package className="w-3 h-3"/> AI Inventory Matches</h4>
+                      
+                      <div className="space-y-4">
+                         {matches.exactMatches.length > 0 && matches.exactMatches.map(m => (
+                           <div key={m.id} className="bg-black border border-border p-3 rounded group cursor-pointer hover:border-gold transition-colors block" onClick={() => onDrillDown('Inventory', {stock: m.stock, make: m.brandId})}>
+                              <div className="flex justify-between items-start">
+                                 <div>
+                                   <div className="text-xs text-green-500 font-bold mb-1 uppercase tracking-wider">Exact Match</div>
+                                   <div className="text-white font-bold text-sm">{m.year} {m.model}</div>
+                                 </div>
+                                 <div className="text-right">
+                                    <div className="text-gold font-bold text-sm">${m.price?.toLocaleString()}</div>
+                                    <div className="text-[10px] text-text-muted">{m.stock}</div>
+                                 </div>
+                              </div>
+                           </div>
+                         ))}
+                         {matches.nearMatches.length > 0 && matches.nearMatches.map(m => (
+                           <div key={m.id} className="bg-black border border-border p-3 rounded group cursor-pointer hover:border-gold transition-colors opacity-80" onClick={() => onDrillDown('Inventory', {stock: m.stock, make: m.brandId})}>
+                              <div className="flex justify-between items-start">
+                                 <div>
+                                   <div className="text-[10px] text-amber-500 font-bold mb-1 uppercase tracking-wider flex items-center gap-1"><TrendingDown className="w-3 h-3"/> Aged Alternative</div>
+                                   <div className="text-white font-bold text-sm">{m.year} {m.model}</div>
+                                 </div>
+                                 <div className="text-right">
+                                    <div className="text-gold font-bold text-sm">${m.price?.toLocaleString()}</div>
+                                    <div className="text-[10px] text-text-muted">{m.ageDays} days old</div>
+                                 </div>
+                              </div>
+                           </div>
+                         ))}
+                      </div>
+                   </div>
+                   
+                   <div className="bg-charcoal border border-border rounded p-5">
+                      <h4 className="text-gold text-xs uppercase tracking-widest font-mono mb-4 border-b border-border/50 pb-2 flex justify-between">
+                         <span>Compliance Status</span>
+                      </h4>
+                      <div className="space-y-2">
+                         <div className="flex justify-between text-xs items-center bg-black border border-border p-2 rounded">
+                            <span className="text-text-muted">Credit Application</span>
+                            {crmData.prequals.length > 0 ? (
+                               <span className="text-green-500 font-bold text-[10px] uppercase border border-green-500/30 px-1 rounded">{crmData.prequals[0].status}</span>
+                            ) : (
+                               <span className="text-text-dim text-[10px] uppercase">None on file</span>
+                            )}
+                         </div>
+                         <div className="flex justify-between text-xs items-center bg-black border border-border p-2 rounded">
+                            <span className="text-text-muted">Communication Consent</span>
+                            <span className="text-green-500 font-bold text-[10px] uppercase flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> Active</span>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+
+                {/* Middle & Right Column - Timeline */}
+                <div className="lg:col-span-2 space-y-6">
+                   <div className="flex gap-2 border-b border-border pb-4">
+                     <button className="bg-gold text-black px-4 py-2 rounded text-xs font-bold shadow hover:bg-gold-light transition-colors" onClick={() => onDrillDown('Action', {name: 'Send SMS', message: 'Opening SMS composer...'})}>Send SMS / Email</button>
+                     <button className="bg-panel border border-border text-white px-4 py-2 rounded text-xs font-bold hover:bg-black transition-colors" onClick={() => onDrillDown('Action', {name: 'Log Call', message: 'Opening call log overlay...'})}>Log Call</button>
+                     <button className="bg-charcoal border border-border text-white px-4 py-2 rounded text-xs font-bold hover:border-gold transition-colors ml-auto flex items-center gap-1" onClick={() => onDrillDown('Quote_Workbench', {customerId: crmData.customer.id})}><FileBarChart className="w-3 h-3"/> Build Quote</button>
+                   </div>
+
+                   <div className="bg-charcoal border border-border rounded p-6 h-[400px] overflow-y-auto subtle-scrollbar relative">
+                      <h4 className="text-white font-bold mb-6 flex items-center gap-2 sticky top-0 bg-charcoal pb-4 border-b border-border z-10"><Clock className="w-4 h-4 text-gold"/> Activity Timeline</h4>
+                      
+                      <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-border before:to-transparent">
+                          {crmData.communications.map((c, i) => (
+                             <div key={c.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                                <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-charcoal bg-panel text-gold shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 transition-transform group-hover:scale-110">
+                                   {c.direction === 'in' ? <User className="w-4 h-4"/> : <Megaphone className="w-4 h-4"/>}
+                                </div>
+                                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-black border border-border p-4 rounded-xl shadow cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Action', {name: 'View Conversation'})}>
+                                   <div className="flex flex-col mb-1">
+                                      <div className="text-xs font-bold text-white mb-1 flex justify-between">
+                                         <span>{c.type} {c.direction === 'in' ? 'Received' : 'Sent'}</span>
+                                         <span className="text-[10px] text-text-dim font-normal">{new Date(c.timestamp).toLocaleDateString()} {new Date(c.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                      </div>
+                                   </div>
+                                   <div className="text-sm text-text-muted leading-relaxed">"{c.body}"</div>
+                                </div>
+                             </div>
+                          ))}
+                      </div>
+                   </div>
+                </div>
+             </div>
+          </div>
+        );
+      }
+      case 'Quote_Workbench': {
+        const wb = getQuoteWorkbenchData(item.data.customerId);
+        if (!wb.customer) return <div className="text-white p-8">Quote system error.</div>;
+        
+        const standardScenario = wb.scenarios.find(s => s.name === 'Standard Payment') || wb.scenarios[0];
+        const hasTrade = wb.currentTrade !== undefined;
+
+        return (
+           <div className="space-y-6 animate-in slide-in-from-right-8 duration-500">
+             <div className="flex justify-between items-center border-b border-border pb-4">
+                <div>
+                   <div className="text-text-muted uppercase text-[10px] font-mono tracking-widest flex items-center gap-2 mb-2">
+                     <Calculator className="w-3 h-3 text-gold"/> DESKING LITE & QUOTE WORKBENCH
+                   </div>
+                   <h3 className="text-2xl font-playfair text-white flex items-center gap-3">
+                     Deal Worksheet: {wb.customer.name}
+                   </h3>
+                </div>
+                <div className="flex gap-2">
+                   <button className="bg-charcoal border border-border text-white px-4 py-2 rounded text-xs font-bold hover:border-gold transition-colors block"><FileBarChart className="w-4 h-4 inline-block mr-2"/> PDF Proposal</button>
+                   <button className="bg-gold text-black px-4 py-2 rounded text-xs font-bold hover:bg-gold-light transition-colors shadow" onClick={() => onDrillDown('Action', {name: 'Send Quote', message: 'Dispatching via SMS & Email...'})}>Send to Customer</button>
+                </div>
+             </div>
+
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                   <div className="bg-charcoal border border-border rounded p-6">
+                      <h4 className="text-gold text-sm font-bold mb-4 border-b border-border/50 pb-2 flex justify-between items-center">
+                         Pricing Stack
+                         <button className="text-[10px] bg-panel text-white px-2 py-1 rounded border border-border hover:bg-black uppercase">Edit Setup</button>
+                      </h4>
+                      <div className="space-y-2 font-mono text-sm">
+                         <div className="flex justify-between text-text-muted">
+                            <span>Vehicle MSRP (2024 Honda Talon 1000R)</span>
+                            <span className="text-white">$23,699.00</span>
+                         </div>
+                         <div className="flex justify-between text-text-muted">
+                            <span>ADM / Freight / Prep</span>
+                            <span className="text-white">$1,195.00</span>
+                         </div>
+                         <div className="flex justify-between text-text-muted">
+                            <span>Accessory Package (Roof, Winch)</span>
+                            <span className="text-white">$2,450.00</span>
+                         </div>
+                         <div className="flex justify-between text-text-muted border-t border-border pt-2">
+                            <span>Total Selling Price</span>
+                            <span className="text-white font-bold">$27,344.00</span>
+                         </div>
+                         <div className="flex justify-between text-red-400">
+                            <span>Trade-In Allowance (2020 Kawasaki Z900)</span>
+                            <span>-${(wb.currentTrade?.actualCashValue || 4500).toLocaleString()}.00</span>
+                         </div>
+                         <div className="flex justify-between text-red-500">
+                            <span>Trade Payoff Amount</span>
+                            <span>+${(wb.currentTrade?.payOffAmount || 0).toLocaleString()}.00</span>
+                         </div>
+                         <div className="flex justify-between text-text-muted">
+                            <span>Doc Fee & State Fees</span>
+                            <span className="text-white">$325.00</span>
+                         </div>
+                         <div className="flex justify-between text-text-muted">
+                            <span>Estimated Taxes (LA - 9.45%)</span>
+                            <span className="text-white">$2,156.40</span>
+                         </div>
+                         <div className="flex justify-between items-center border-t border-gold mt-4 pt-4">
+                            <span className="text-gold font-bold text-lg uppercase">Amount Financed</span>
+                            <span className="text-2xl text-white font-bold">${(27344 - (wb.currentTrade?.actualCashValue||4500) + 325 + 2156.40).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                         </div>
+                      </div>
+                   </div>
+
+                   <div className="grid grid-cols-2 gap-4">
+                      {wb.scenarios.map(sc => (
+                         <div key={sc.id} className={`bg-black border p-4 rounded cursor-pointer transition-colors ${sc.isSelected ? 'border-gold shadow-[0_0_15px_rgba(201,168,76,0.2)]' : 'border-border hover:border-gold-dim'}`}>
+                            <div className="flex justify-between items-center mb-2">
+                               <div className="font-bold text-white text-sm">{sc.name}</div>
+                               {sc.isSelected && <CheckCircle2 className="w-4 h-4 text-gold"/>}
+                            </div>
+                            <div className="text-3xl text-gold font-bold mb-1">${sc.monthlyPayment.toFixed(2)}<span className="text-sm text-text-muted font-normal"> /mo</span></div>
+                            <div className="text-xs text-text-muted font-mono">{sc.termLength} months @ {sc.apr}% APR</div>
+                         </div>
+                      ))}
+                      <div className="bg-panel border border-dashed border-border p-4 rounded flex flex-col items-center justify-center text-text-muted hover:text-white hover:border-gold transition-colors cursor-pointer group" onClick={() => onDrillDown('Action', {name: 'Add Scenario'})}>
+                         <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center mb-2 group-hover:bg-gold group-hover:text-black transition-colors">+</div>
+                         <div className="text-xs font-bold uppercase tracking-wider">Add Scenario</div>
+                      </div>
+                   </div>
+                </div>
+                
+                <div className="space-y-6">
+                   <div className="bg-charcoal border border-border rounded p-5">
+                      <h4 className="text-gold text-xs uppercase tracking-widest font-mono mb-4 border-b border-border/50 pb-2 flex justify-between">
+                         Action Center
+                      </h4>
+                      <div className="space-y-3">
+                         <button className="w-full bg-black border border-border text-white p-3 rounded text-sm text-left hover:border-gold transition-colors" onClick={() => onDrillDown('Finance_Prequal', {customerId: wb.customer.id})}>
+                            <div className="font-bold mb-1 text-blue-400">Run Finance Prequal</div>
+                            <div className="text-[10px] text-text-muted">Trigger soft-pull or push to Octane/Synchrony.</div>
+                         </button>
+                         <button className="w-full bg-black border border-border text-white p-3 rounded text-sm text-left hover:border-gold transition-colors" onClick={() => onDrillDown('Action', {name: 'Manager Override'})}>
+                            <div className="font-bold mb-1 text-amber-500">Request Manager Override</div>
+                            <div className="text-[10px] text-text-muted">Unlock price limits and desk reserve margins.</div>
+                         </button>
+                      </div>
+                   </div>
+                   
+                   {!hasTrade && (
+                      <div className="bg-charcoal border border-border rounded p-5 border-l-4 border-l-red-500">
+                         <div className="flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-red-500 shrink-0"/>
+                            <div>
+                               <div className="text-sm text-white font-bold mb-1">Missing Trade-In</div>
+                               <div className="text-xs text-text-muted mb-3">AI Equity Scan indicates this customer likely owns a 2021 MT-07. Capture a trade appraisal to increase likelihood to close.</div>
+                               <button className="bg-red-500 text-white px-3 py-1.5 rounded text-xs font-bold" onClick={() => onDrillDown('Trade_Capture', {customerId: wb.customer.id})}>Start Appraisal</button>
+                            </div>
+                         </div>
+                      </div>
+                   )}
+                </div>
+             </div>
+           </div>
+        );
+      }
+      case 'Trade_Capture': {
+         const customerId = item.data.customerId;
+         return (
+            <div className="max-w-3xl mx-auto space-y-6 animate-in slide-in-from-bottom-8 duration-500">
+               <div className="flex items-center gap-3 border-b border-border pb-4">
+                  <Camera className="w-6 h-6 text-gold"/>
+                  <h3 className="text-2xl font-playfair text-white">Capture Trade-In Details</h3>
+               </div>
+               
+               <div className="bg-charcoal border border-border rounded p-6 space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                     <div>
+                        <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">VIN (17 Digits)</label>
+                        <input type="text" className="w-full bg-black border border-border rounded p-2 text-white focus:border-gold outline-none" placeholder="Scan or type VIN..." />
+                     </div>
+                     <div>
+                        <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Odometer / Hours</label>
+                        <input type="number" className="w-full bg-black border border-border rounded p-2 text-white focus:border-gold outline-none" placeholder="e.g. 12500" />
+                     </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-4 gap-4">
+                     <div>
+                        <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Year</label>
+                        <input type="text" className="w-full bg-black border border-border rounded p-2 text-white" />
+                     </div>
+                     <div>
+                        <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Make</label>
+                        <input type="text" className="w-full bg-black border border-border rounded p-2 text-white" />
+                     </div>
+                     <div className="col-span-2">
+                        <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Model / Trim</label>
+                        <input type="text" className="w-full bg-black border border-border rounded p-2 text-white" />
+                     </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-border">
+                     <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wider mb-2">Condition Grading & Recon</label>
+                     <div className="grid grid-cols-3 gap-3">
+                        <button className="bg-panel border border-border rounded p-3 text-sm text-white hover:border-gold text-center active:bg-gold active:text-black">Excellent<div className="text-[10px] text-text-muted mt-1 font-mono">Clean, no recon</div></button>
+                        <button className="bg-panel border border-border rounded p-3 text-sm text-white hover:border-gold text-center active:bg-gold active:text-black">Good<div className="text-[10px] text-text-muted mt-1 font-mono">Minor wear, &lt;$500 recon</div></button>
+                        <button className="bg-panel border border-border rounded p-3 text-sm text-white hover:border-gold text-center active:bg-gold active:text-black">Rough<div className="text-[10px] text-text-muted mt-1 font-mono">Damage, &gt;$1000 recon</div></button>
+                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
+                     <div>
+                        <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Estimated Lien Payoff</label>
+                        <div className="relative">
+                           <DollarSign className="w-4 h-4 text-text-muted absolute left-3 top-3"/>
+                           <input type="number" className="w-full bg-black border border-border rounded p-2 pl-9 text-white focus:border-red-500 outline-none" placeholder="0.00" />
+                        </div>
+                     </div>
+                     <div>
+                        <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Requested ACV (Appraisal Hold)</label>
+                        <div className="relative">
+                           <DollarSign className="w-4 h-4 text-text-muted absolute left-3 top-3"/>
+                           <input type="number" className="w-full bg-black border border-border rounded p-2 pl-9 text-gold font-bold focus:border-gold outline-none" placeholder="0.00" />
+                        </div>
+                     </div>
+                  </div>
+                  
+                  <div className="flex justify-end gap-3 pt-4">
+                     <button className="px-6 py-2 rounded border border-border text-white hover:bg-panel transition-colors" onClick={onClose}>Cancel</button>
+                     <button className="px-6 py-2 rounded bg-gold text-black font-bold hover:bg-gold-light transition-colors" onClick={() => onDrillDown('Action', {name: 'Submit Appraisal', message: 'Routing to Used Bike Manager desk for ACV approval...'})}>Submit for ACV Approval</button>
+                  </div>
+               </div>
+            </div>
+         );
+      }
+      case 'Finance_Prequal': {
+         const isSales = userRole === 'Sales Associate';
+
+         const handlePrequalSubmit = async (e) => {
+            e.preventDefault();
+            setPrequalStep('loading');
+            setPrequalError(null);
+            
+            const formData = new FormData(e.target);
+            const req = {
+               ssnRaw: formData.get('ssn'),
+               creditEstimate: formData.get('estimate'),
+               income: formData.get('income')
+            };
+
+            // Mock an active consent record
+            const mockConsent = formData.get('consent') === 'on' ? { ipAddress: '192.168.1.100' } : null;
+
+            try {
+               const res = await CreditPrequalAdapter.submitApplication({id: 'EMP-1', role: userRole, name: 'Active User'}, item.data.customerId, req, mockConsent);
+               if (res.success) {
+                  setPrequalResult(res);
+                  setPrequalStep('result');
+               } else {
+                  setPrequalError(res.error);
+                  if (res.needsAdverseAction) {
+                     setPrequalResult(res); // allows us to render the Adverse block
+                     setPrequalStep('result');
+                  } else {
+                     setPrequalStep('capture');
+                  }
+               }
+            } catch (err) {
+               setPrequalError(err.message);
+               setPrequalStep('capture');
+            }
+         };
+
+         return (
+            <div className="max-w-2xl mx-auto space-y-6 animate-in slide-in-from-bottom-8 duration-500">
+               <div className="flex justify-between items-center border-b border-border pb-4">
+                 <div className="flex items-center gap-3">
+                    <Database className="w-6 h-6 text-blue-400"/>
+                    <h3 className="text-2xl font-playfair text-white">Soft-Pull Prequalification</h3>
+                 </div>
+                 {isSales && (
+                    <span className="bg-panel border border-blue-900 text-blue-400 px-3 py-1 rounded text-[10px] font-mono uppercase tracking-widest flex items-center gap-2"><CheckCircle2 className="w-3 h-3"/> Sales View Masking Active</span>
+                 )}
+               </div>
+
+               {prequalStep === 'capture' && (
+                  <form onSubmit={handlePrequalSubmit} className="bg-charcoal border border-border rounded p-6 space-y-6">
+                     {prequalError && (
+                        <div className="bg-red-900/20 border border-red-500 text-red-500 p-3 rounded text-sm flex items-center gap-2 mb-4">
+                           <AlertCircle className="w-4 h-4 shrink-0"/> {prequalError}
+                        </div>
+                     )}
+
+                     <div className="bg-black border border-border p-4 rounded mb-6">
+                        <label className="flex items-start gap-3 cursor-pointer group">
+                           <div className="pt-1"><input type="checkbox" name="consent" required className="w-4 h-4 accent-gold" /></div>
+                           <div>
+                              <div className="text-white font-bold text-sm mb-1 group-hover:text-gold transition-colors">Capture Verbal / Digital Consent</div>
+                              <div className="text-[10px] text-text-muted leading-relaxed">By checking this box, the customer authorizes Friendly Powersports to pull a soft credit inquiry. This will not affect their credit score. IP address and timestamp will be logged for audit compliance.</div>
+                           </div>
+                        </label>
+                     </div>
+
+                     <div className="grid grid-cols-2 gap-6 mb-4">
+                        <div>
+                           <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">SSN or ITIN (Required)</label>
+                           <input type="text" name="ssn" required minLength="9" maxLength="11" placeholder="XXX-XX-XXXX" className="w-full bg-black border border-border rounded p-2 text-white font-mono tracking-widest focus:border-gold outline-none" />
+                        </div>
+                        <div>
+                           <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Gross Monthly Income</label>
+                           <div className="relative">
+                              <DollarSign className="w-4 h-4 text-text-muted absolute left-3 top-3"/>
+                              <input type="number" name="income" required defaultValue="5000" className="w-full bg-black border border-border rounded p-2 pl-9 text-white focus:border-gold outline-none" />
+                           </div>
+                        </div>
+                     </div>
+                     
+                     <div>
+                        <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wider mb-2">Self-Reported Credit Estimate</label>
+                        <select name="estimate" className="w-full bg-black border border-border rounded p-2 text-white focus:border-gold outline-none cursor-pointer">
+                           <option value="Excellent">Excellent (720+)</option>
+                           <option value="Good">Good (680-719)</option>
+                           <option value="Fair">Fair (620-679)</option>
+                           <option value="Poor">Poor (580-619)</option>
+                           <option value="Bad">Bad (Under 580)</option>
+                        </select>
+                     </div>
+
+                     <div className="pt-4 flex justify-end">
+                        <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-500 transition-colors shadow flex items-center gap-2">Execute Soft Pull <ChevronRight className="w-4 h-4"/></button>
+                     </div>
+                  </form>
+               )}
+
+               {prequalStep === 'loading' && (
+                  <div className="bg-charcoal border border-border rounded p-12 flex flex-col items-center justify-center space-y-4">
+                     <BrainCircuit className="w-12 h-12 text-blue-500 animate-pulse" />
+                     <div className="text-white font-bold text-lg animate-pulse">Running Soft-Pull Decision Engine...</div>
+                     <div className="text-xs text-text-muted font-mono uppercase tracking-widest">Querying Mock Provider • Verifying Identity • Hashing SSN</div>
+                  </div>
+               )}
+
+               {prequalStep === 'result' && prequalResult && (
+                  <div className="space-y-6">
+                     {prequalResult.needsAdverseAction ? (
+                        <div className="bg-charcoal border-l-4 border-l-red-500 rounded p-6">
+                           <div className="flex items-start gap-4">
+                              <AlertCircle className="w-8 h-8 text-red-500 shrink-0"/>
+                              <div className="space-y-3">
+                                 <h4 className="text-xl font-bold text-white">Application Declined</h4>
+                                 <div className="text-sm text-text-muted">The soft pull could not match the applicant to a viable financing tier.</div>
+                                 <div className="bg-black border border-border p-3 rounded mt-3">
+                                    <div className="text-[10px] text-text-dim uppercase tracking-widest font-mono mb-2 border-b border-border/50 pb-2">Compliance Action Required</div>
+                                    <div className="text-white text-sm">You must provide an Adverse Action Notice to the customer.</div>
+                                    <button className="bg-red-500/20 text-red-500 border border-red-500/50 px-3 py-1.5 rounded text-xs font-bold mt-3 hover:bg-red-500 hover:text-white transition-colors">Generate Notice</button>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     ) : (
+                        <div className="bg-charcoal border border-border rounded p-6">
+                           <div className="flex items-start justify-between mb-6">
+                              <div>
+                                 <div className="text-blue-400 font-bold mb-1 text-xl flex items-center gap-2"><CheckCircle2 className="w-6 h-6"/> {prequalResult.decision}</div>
+                                 <div className="text-[10px] text-text-muted font-mono uppercase tracking-widest">Via {prequalResult.provider}</div>
+                              </div>
+                              <div className="text-right">
+                                 <div className="text-[10px] text-text-muted uppercase tracking-widest font-mono mb-1">Approval Limit</div>
+                                 <div className="text-2xl text-gold font-bold">${prequalResult.maxAmount?.toLocaleString()}</div>
+                              </div>
+                           </div>
+
+                           <div className="grid grid-cols-2 gap-4 mb-6">
+                              <div className="bg-black border border-border p-4 rounded">
+                                 <div className="text-[10px] text-text-muted uppercase tracking-widest font-mono mb-1">Credit Tier / Band</div>
+                                 <div className="text-lg text-white font-bold">{isSales ? 'REDACTED' : prequalResult.tier}</div>
+                                 {!isSales && <div className="text-xs text-amber-500 mt-1">{prequalResult.scoreBand}</div>}
+                              </div>
+                              <div className="bg-black border border-border p-4 rounded">
+                                 <div className="text-[10px] text-text-muted uppercase tracking-widest font-mono mb-1">Base Rate (Buy)</div>
+                                 <div className="text-lg text-white font-bold">{isSales ? 'REDACTED' : `${prequalResult.assignedAPR}%`}</div>
+                              </div>
+                           </div>
+
+                           <div className="bg-black border border-border p-4 rounded mb-6">
+                              <div className="text-[10px] text-text-muted uppercase tracking-widest font-mono mb-2">Audit & Stipulations</div>
+                              <ul className="list-disc list-inside text-sm text-text-dim space-y-1">
+                                 {prequalResult.stipulationList?.map((s,i) => <li key={i}>{s}</li>)}
+                                 {!isSales ? (
+                                    <li className="text-amber-500">{prequalResult.secureNotes}</li>
+                                 ) : (
+                                    <li className="text-green-500">SSN Masked & Secured by RBAC.</li>
+                                 )}
+                              </ul>
+                           </div>
+
+                           <div className="flex justify-end">
+                              <button className="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-500 transition-colors shadow" onClick={() => onDrillDown('Action', {name: 'Push to Deal'})}>Push to Deal Workbench</button>
+                           </div>
+                        </div>
+                     )}
+                  </div>
+               )}
+            </div>
+         );
+      }
       case 'Action':
         return (
           <div className="space-y-6">
@@ -599,9 +1165,57 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
             </div>
           </div>
         );
+      case 'Report':
+         // Render the Dashboard List drilldowns elegantly
+         return (
+           <div className="space-y-6">
+             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
+                <div className="flex items-center gap-3"><FileBarChart className="w-7 h-7" /> Operational Report: {item.data.name}</div>
+                <div className="flex gap-2">
+                  <span className="text-[10px] font-mono bg-panel border border-border px-2 py-1 rounded text-text-muted">ID: REPORT-{Math.floor(Math.random() * 89999) + 10000}</span>
+                </div>
+             </h3>
+             
+             <div className="bg-charcoal border border-border p-6 rounded shadow-inner">
+                <div className="flex items-center gap-3 mb-6 text-sm text-text-muted border-b border-border/50 pb-4">
+                   <Filter className="w-4 h-4 text-gold"/> Active Filters: 
+                   <span className="bg-black border border-border px-2 py-1 rounded text-white text-xs font-mono">Location: ALL</span>
+                   <span className="bg-black border border-border px-2 py-1 rounded text-white text-xs font-mono">Date: MTD</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   {item.data.records && item.data.records.length > 0 ? (
+                      item.data.records.slice(0, 50).map((rec, idx) => (
+                         <div key={idx} className="bg-black border border-border p-4 rounded hover:border-gold-dim transition-colors cursor-pointer group flex justify-between items-center" onClick={() => onDrillDown(rec.type || 'Action', rec)}>
+                            <div className="flex-1 min-w-0 pr-4">
+                               <div className="text-white font-bold mb-1 truncate">{rec.title || rec.name || `Record #${idx+1}`}</div>
+                               <div className="text-[10px] text-text-muted font-mono uppercase truncate">{rec.subtitle || rec.status || 'Data Point'}</div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                               {rec.value && <span className="text-gold font-bold">{rec.value}</span>}
+                               <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-gold transition-colors flex-shrink-0"/>
+                            </div>
+                         </div>
+                      ))
+                   ) : (
+                      <div className="col-span-1 md:col-span-2 text-center text-text-muted text-sm py-8 bg-black/50 border border-border/50 rounded border-dashed cursor-pointer hover:border-gold-dim transition-colors" onClick={() => onDrillDown('Action', { name: 'Querying external database...' })}>
+                         No detailed granular records found in this context slice. Click to query the master index.
+                      </div>
+                   )}
+                </div>
+                
+                <div className="mt-6 text-center text-xs text-text-dim">
+                   Showing {item.data.records?.length > 50 ? '50+' : (item.data.records?.length || 0)} records for "{item.data.name}"
+                </div>
+             </div>
+
+             <div className="flex flex-col sm:flex-row gap-4 pt-5 border-t border-border mt-4">
+                 <button className="bg-gold text-black px-6 py-4 rounded text-sm font-bold shadow-[0_0_15px_rgba(201,168,76,0.2)] hover:bg-gold-light hover:scale-[1.02] transition-all flex-[2] flex justify-center items-center gap-2 uppercase tracking-wide" onClick={() => onDrillDown('Action', { name: `Export ${item.type} Bundle`, message: `Generating comprehensive CSV/PDF data package...` })}><TrendingUp className="w-4 h-4" /> Export Report</button>
+             </div>
+           </div>
+         );
       case 'OEM':
       case 'Campaign':
-      case 'Report':
       default:
         // Enhanced robust default view for unmapped or generic data points
         return (
@@ -622,7 +1236,7 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
                         <span>{k.replace(/([A-Z])/g, ' $1').trim()}</span>
                         {idx === 0 && <AlertCircle className="w-3 h-3 text-gold" />}
                      </div>
-                     <div className={`font-bold relative z-10 break-words ${idx === 0 ? 'text-4xl text-gold font-playfair drop-shadow-md' : 'text-xl text-white'}`}><DrillDownValue value={String(v)} label={k} type="Report" onDrillDown={onDrillDown} color={idx === 0 ? 'text-gold' : 'text-white'} /></div>
+                     <div className={`font-bold relative z-10 break-words ${idx === 0 ? 'text-4xl text-gold font-playfair drop-shadow-md' : 'text-xl text-white'}`}><DrillDownValue value={String(v)} label={k} type="Generic" onDrillDown={onDrillDown} color={idx === 0 ? 'text-gold' : 'text-white'} /></div>
                   </div>
                ))}
             </div>

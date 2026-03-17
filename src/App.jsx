@@ -7,8 +7,12 @@ import {
   LayoutDashboard, TrendingUp, CreditCard, Package, Bike, Wrench,
   Clock, DollarSign, Megaphone, Award, FileBarChart, Users as UsersIcon, Settings,
   Bell, Search, ChevronRight, CheckCircle2, ChevronDown, User, Play, Calendar, AlertCircle, Command,
-  Briefcase, Users
+  Briefcase, Users, BrainCircuit, TrendingDown, Database, Filter, Zap
 } from 'lucide-react';
+
+import {
+  getSalesDashboardData, getManagerDashboardData, getFinanceDashboardData, getRetentionDashboardData, getAutomationEngineRules
+} from './data/selectors';
 
 import { KPICard } from './components/ui/KPICard';
 import { SectionHeader } from './components/ui/SectionHeader';
@@ -21,7 +25,7 @@ import { DrillDownModal } from './components/ui/DrillDownModal';
 import { EMPLOYEES } from './data/mockDatabase';
 import { 
   getKpiStats, getLiveLeads, getTopPerformers, getInventoryAging,
-  getAlerts, getReconPipeline, getROBoard 
+  getAlerts, getReconPipeline, getROBoard, getCRMInbox, getCustomer360Data, getPipelineKanban, getAppointmentsTimeline, getPrequalQueue, getManagerOpportunityBoard
 } from './data/selectors';
 
 /* --- MOCK DATA FOR CHARTS/GRAPHS --- */
@@ -1253,11 +1257,60 @@ const ReportsModule = ({ onDrillDown }) => {
   );
 };
 
-const CustomerCRMModule = ({ onDrillDown }) => {
+class CRMErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    this.setState({ errorInfo });
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 bg-red-900 border border-red-500 rounded text-left">
+           <h2 className="text-white font-bold text-xl mb-4">CRM Module Crashed</h2>
+           <pre className="text-red-200 text-xs font-mono whitespace-pre-wrap">{this.state.error?.toString()}</pre>
+           <pre className="text-red-300 text-[10px] font-mono whitespace-pre-wrap mt-4">{this.state.errorInfo?.componentStack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const CustomerCRMModuleInner = ({ onDrillDown, user }) => {
+  const [activeView, setActiveView] = useState('Inbox'); // 'Inbox', 'Pipeline', 'Appointments', 'Finance'
+  const [filter, setFilter] = useState('All');
+  
+  const userRole = user?.role || user?.systemRole;
+  const isManager = userRole !== 'Sales Associate';
+
+  const inbox = getCRMInbox(user?.id, userRole);
+  const pipeline = getPipelineKanban(user?.id, userRole);
+  const appointments = getAppointmentsTimeline();
+  const prequalQueue = isManager ? getPrequalQueue(userRole) : [];
+  const oppBoard = isManager ? getManagerOpportunityBoard() : { neglected: [], reactivation: [], stalled: [] };
+
+  const displayLeads = inbox.filter(l => filter === 'All' || l.status === filter);
+
   return (
-    <div className="space-y-6">
-       <div className="flex justify-between items-center">
-         <h1 className="text-2xl font-playfair text-white">Customer CRM & Equity Mining</h1>
+    <div className="space-y-6 h-full flex flex-col">
+      <div className="flex justify-between items-center bg-charcoal p-4 rounded border border-border">
+         <div className="flex gap-4">
+            <button className={`text-lg font-playfair flex items-center gap-2 px-4 py-2 hover:text-white transition-colors border-b-2 ${activeView === 'Inbox' ? 'text-white border-b-gold' : 'text-text-muted border-b-transparent'}`} onClick={() => setActiveView('Inbox')}><UsersIcon className="w-5 h-5"/> Lead Inbox</button>
+            <button className={`text-lg font-playfair flex items-center gap-2 px-4 py-2 hover:text-white transition-colors border-b-2 ${activeView === 'Pipeline' ? 'text-white border-b-gold' : 'text-text-muted border-b-transparent'}`} onClick={() => setActiveView('Pipeline')}><LayoutDashboard className="w-5 h-5"/> Deal Pipeline</button>
+            <button className={`text-lg font-playfair flex items-center gap-2 px-4 py-2 hover:text-white transition-colors border-b-2 ${activeView === 'Appointments' ? 'text-white border-b-gold' : 'text-text-muted border-b-transparent'}`} onClick={() => setActiveView('Appointments')}><Calendar className="w-5 h-5"/> Showroom Tracker</button>
+            {isManager && (
+              <>
+                 <button className={`text-lg font-playfair flex items-center gap-2 px-4 py-2 hover:text-white transition-colors border-b-2 ${activeView === 'Finance' ? 'text-white border-b-gold' : 'text-text-muted border-b-transparent'}`} onClick={() => setActiveView('Finance')}><Database className="w-5 h-5"/> Finance Desk (Manager)</button>
+                 <button className={`text-lg font-playfair flex items-center gap-2 px-4 py-2 hover:text-white transition-colors border-b-2 ${activeView === 'OpportunityBoard' ? 'text-white border-b-gold' : 'text-text-muted border-b-transparent'}`} onClick={() => setActiveView('OpportunityBoard')}><Briefcase className="w-5 h-5"/> Opportunity Board</button>
+              </>
+            )}
+         </div>
          <div className="flex gap-2">
             <button className="bg-charcoal border border-border text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:border-gold transition-colors" onClick={() => onDrillDown('Action', { name: 'Log Walk-In', message: 'Opening up terminal...' })}>
               + Log Walk-In
@@ -1268,67 +1321,645 @@ const CustomerCRMModule = ({ onDrillDown }) => {
          </div>
       </div>
 
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 space-y-6">
-             <div className="bg-charcoal border border-border rounded p-6">
-               <h2 className="text-gold font-playfair text-xl mb-4 flex items-center gap-2"><User className="w-5 h-5"/> Live Internet Pipeline</h2>
-               <div className="space-y-3">
-                  {[
-                    { lead: 'Sarah Jenkins', source: 'Website Trade Val', unit: '2022 Seadoo Spark', status: 'New - Unclaimed', time: '14m ago', sColor: 'text-green-500' },
-                    { lead: 'Mike Patterson', source: 'Facebook Ads', unit: '2024 Honda Talon', status: 'Working (Tony G)', time: '2h ago', sColor: 'text-amber-500' },
-                    { lead: 'David Ross', source: 'OEM Corporate', unit: '2024 YZF-R1', status: 'Stalled', time: '2d ago', sColor: 'text-red-500' }
-                  ].map((l,i) => (
-                    <div key={i} className="bg-black border border-border p-3 rounded flex justify-between items-center cursor-pointer hover:border-gold transition-colors group" onClick={() => onDrillDown('Employee', {name: l.lead, role: 'Customer', location: l.source})}>
-                       <div>
-                          <div className="font-bold text-white text-sm group-hover:text-gold transition-colors">{l.lead}</div>
-                          <div className="text-xs text-text-muted">Interested in: <DrillDownValue value={l.unit} label={`Lead: ${l.unit}`} type="Inventory" onDrillDown={onDrillDown} /></div>
+      {activeView === 'Inbox' && (
+         <div className="bg-charcoal border border-border rounded overflow-hidden flex-1 flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b border-border bg-black">
+               <div className="text-sm font-bold text-white uppercase tracking-widest"><Clock className="w-4 h-4 inline-block mr-2 text-gold"/> SLA Queue Management</div>
+               <select className="bg-charcoal border border-border text-white px-3 py-1.5 rounded text-sm focus:border-gold outline-none cursor-pointer" value={filter} onChange={e => setFilter(e.target.value)}>
+                  <option value="All">All Active Leads</option>
+                  <option value="New">New / Unclaimed</option>
+                  <option value="Unresponded">Unresponded (SLA Risk)</option>
+                  <option value="In Progress">Working</option>
+               </select>
+            </div>
+            
+            <div className="grid grid-cols-12 gap-4 p-4 border-b border-border text-xs font-mono text-text-muted uppercase tracking-wider bg-panel">
+               <div className="col-span-3">Customer</div>
+               <div className="col-span-2">AI Score & NBA</div>
+               <div className="col-span-2">Interest Context</div>
+               <div className="col-span-2">Assigned Owner</div>
+               <div className="col-span-2">Status & SLA Timer</div>
+               <div className="col-span-1 text-right">Action</div>
+            </div>
+            
+            <div className="divide-y divide-border overflow-y-auto subtle-scrollbar flex-1 relative min-h-[500px]">
+               {displayLeads.length === 0 && (
+                 <div className="p-8 text-center text-text-muted">No leads match the current filter.</div>
+               )}
+               {displayLeads.map((l, i) => (
+                 <div key={i} className={`grid grid-cols-12 gap-4 p-4 items-center hover:bg-panel transition-colors cursor-pointer ${l.isUrgent ? 'border-l-4 border-l-red-500 bg-red-900/10' : 'border-l-4 border-l-transparent hover:border-l-gold'}`} onClick={() => onDrillDown('CRM_Customer360', { customerId: l.customerId })}>
+                    <div className="col-span-3">
+                       <div className="font-bold text-white text-sm flex items-center gap-2">
+                         {l.customerName}
+                         {l.isUrgent && <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider animate-pulse whitespace-nowrap">SLA Overdue</span>}
                        </div>
-                       <div className="text-right flex flex-col items-end">
-                          <span className={`text-xs font-bold ${l.sColor}`}><DrillDownValue value={l.status} label={`Lead Status`} type="Action" onDrillDown={onDrillDown} color={l.sColor} /></span>
-                          <span className="text-xs text-text-muted mt-1">{l.time}</span>
+                       <div className="flex gap-1 mt-1 flex-wrap">
+                         {l.customerTags.map(t => <span key={t.id} className={`text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wider ${t.color}`}>{t.name}</span>)}
                        </div>
                     </div>
-                  ))}
-               </div>
-             </div>
-          </div>
+                    <div className="col-span-2">
+                       <div className="flex items-center gap-2 mb-1">
+                          <div className={`text-xs font-bold px-1.5 py-0.5 rounded ${l.aiScore > 75 ? 'bg-green-900/30 text-green-500' : l.aiScore > 50 ? 'bg-blue-900/30 text-blue-400' : 'bg-amber-900/30 text-amber-500'}`}>
+                             {l.aiScore}
+                          </div>
+                          <span className="text-[10px] text-text-muted truncate" title={l.scoreReason}>{l.scoreReason}</span>
+                       </div>
+                       <div className="text-[10px] text-gold truncate flex items-center gap-1" title={l.nextAction?.message}><BrainCircuit className="w-3 h-3"/> {l.nextAction?.action}</div>
+                    </div>
+                    <div className="col-span-2 text-sm text-text-muted">
+                       <DrillDownValue value={l.expectedTradeACV ? "Trade-In Pending" : "Purchase Unit"} label="Interest Type" type="Inventory" onDrillDown={onDrillDown} /> 
+                       <div className="text-[10px] text-text-dim mt-1">{l.sourceId}</div>
+                    </div>
+                    <div className="col-span-2 flex items-center gap-2">
+                       <div className="w-6 h-6 rounded-full bg-black border border-border flex items-center justify-center text-[10px] text-gold font-bold">
+                          {l.assignedRep.charAt(0)}
+                       </div>
+                       <span className="text-sm text-white">{l.assignedRep}</span>
+                    </div>
+                    <div className="col-span-2">
+                       <div className={`text-xs font-bold ${l.status === 'Unresponded' ? (l.isUrgent ? 'text-red-500' : 'text-amber-500') : 'text-green-500'}`}>
+                          {l.status}
+                       </div>
+                       <div className="text-[10px] text-text-dim mt-0.5 font-mono">
+                          {l.timeSinceCreation < 60 ? `${l.timeSinceCreation}m ago` : `${Math.floor(l.timeSinceCreation/60)}h ${l.timeSinceCreation%60}m ago`}
+                       </div>
+                    </div>
+                    <div className="col-span-1 flex justify-end">
+                       <button className="text-gold hover:text-white transition-colors bg-black p-2 rounded border border-border hover:border-gold group" onClick={(e) => { e.stopPropagation(); onDrillDown('CRM_Customer360', { customerId: l.customerId }); }}>
+                          <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                       </button>
+                    </div>
+                 </div>
+               ))}
+            </div>
+         </div>
+      )}
 
-          <div className="space-y-6">
-             <div className="bg-charcoal border border-border rounded p-6 h-full border-t-2 border-t-gold">
-               <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-white font-bold text-lg">AI Equity Mining</h2>
-                  <span className="bg-gold text-black text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Live</span>
-               </div>
-               <p className="text-xs text-text-muted mb-4 border-b border-border pb-4 opacity-80">Scanning today's service ROs and CRM database against current Manheim/NPA auction values to find positive equity targets.</p>
+      {activeView === 'Pipeline' && (
+         <div className="flex-1 overflow-x-auto overflow-y-hidden subtle-scrollbar pb-4 min-h-[600px]">
+            <div className="flex gap-4 h-full min-w-max">
+               {pipeline.map(col => (
+                 <div key={col.id} className="w-80 flex flex-col bg-charcoal border border-border rounded shadow-md shrink-0 h-full overflow-hidden">
+                    <div className="p-3 border-b border-border flex justify-between items-center bg-black/40">
+                       <div className="font-bold text-white text-sm uppercase tracking-wide flex items-center gap-2">
+                          {col.id === 'New' && <AlertCircle className="w-4 h-4 text-amber-500"/>}
+                          {col.id === 'Appt' && <Calendar className="w-4 h-4 text-blue-500"/>}
+                          {col.id === 'Finance' && <DollarSign className="w-4 h-4 text-green-500"/>}
+                          {col.id === 'Sold' && <Award className="w-4 h-4 text-gold"/>}
+                          {col.title}
+                       </div>
+                       <div className="bg-panel px-2 py-0.5 rounded text-xs font-mono text-text-muted border border-border">{col.count}</div>
+                    </div>
+                    <div className="p-3 flex-1 overflow-y-auto subtle-scrollbar space-y-3">
+                       {col.items.map(opp => (
+                         <div key={opp.id} className="bg-black border border-border p-3 rounded shadow hover:border-gold transition-colors cursor-pointer group" onClick={() => onDrillDown('CRM_Customer360', { customerId: opp.customerId })}>
+                            <div className="flex justify-between items-start mb-2">
+                               <div className="font-bold text-white text-sm group-hover:text-gold transition-colors">{opp.customerName}</div>
+                               {opp.probPct > 70 && <span className="bg-green-900/30 text-green-500 text-[9px] px-1.5 py-0.5 rounded font-bold">{opp.probPct}% P<span className="hidden sm:inline">rob</span></span>}
+                            </div>
+                            <div className="text-xs text-text-muted mb-2 line-clamp-1 truncate">{opp.source}</div>
+                            
+                            <div className="flex justify-between items-center bg-panel rounded p-2 mt-3">
+                               <div className="flex -space-x-1">
+                                  <div className="w-6 h-6 rounded-full bg-charcoal border border-border flex items-center justify-center text-[9px] text-white" title={opp.repName}>{opp.repName.charAt(0)}</div>
+                               </div>
+                               {opp.isStalled && <span className="text-[9px] uppercase tracking-widest text-red-500 font-bold bg-black px-1.5 py-0.5 rounded border border-red-500/30">Stalled</span>}
+                            </div>
+                         </div>
+                       ))}
+                       {col.items.length === 0 && (
+                         <div className="h-24 border-2 border-dashed border-border rounded flex items-center justify-center text-xs text-text-muted font-mono uppercase tracking-widest">Drop here</div>
+                       )}
+                    </div>
+                 </div>
+               ))}
+            </div>
+         </div>
+      )}
+
+      {activeView === 'Appointments' && (
+         <div className="bg-charcoal border border-border rounded overflow-hidden flex-1 flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b border-border bg-black">
+               <div className="text-sm font-bold text-white uppercase tracking-widest"><Calendar className="w-4 h-4 inline-block mr-2 text-blue-500"/> Today's Showroom Traffic Log</div>
+            </div>
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto subtle-scrollbar min-h-[500px]">
+               {appointments.map(a => (
+                  <div key={a.id} className="bg-black border-l-4 border-l-blue-500 border-y border-r border-y-border border-r-border p-4 rounded-r shadow-md hover:border-y-gold transition-colors cursor-pointer" onClick={() => onDrillDown('CRM_Customer360', { customerId: a.customerId })}>
+                     <div className="flex justify-between items-start mb-4 border-b border-border pb-3">
+                        <div>
+                           <div className="font-bold text-white text-lg">{a.customerName}</div>
+                           <div className="text-xs text-text-muted uppercase tracking-widest font-mono mt-1">{a.type}</div>
+                        </div>
+                        <div className="bg-panel px-3 py-1 rounded border border-border text-center">
+                           <div className="text-[10px] text-text-muted uppercase">ETA</div>
+                           <div className="text-gold font-bold text-sm">{new Date(a.datetime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                        </div>
+                     </div>
+                     <div className="flex justify-between items-end">
+                        <div>
+                           <div className="text-[10px] text-text-muted uppercase tracking-wider mb-1">Assigned To</div>
+                           <div className="text-sm text-white flex items-center gap-2"><User className="w-3 h-3"/> {a.repName}</div>
+                        </div>
+                        <div>
+                           <StatusChip status={a.status} color={a.status === 'Pending' ? 'text-amber' : a.status === 'Showed' ? 'text-green' : 'text-red'} />
+                        </div>
+                     </div>
+                  </div>
+               ))}
+            </div>
+         </div>
+      )}
+      {activeView === 'Finance' && isManager && (
+         <div className="bg-charcoal border border-border rounded overflow-hidden flex-1 flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b border-border bg-black">
+               <div className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2"><Database className="w-4 h-4 text-green-500"/> Active Prequalification Queue</div>
+            </div>
+            
+            <div className="grid grid-cols-12 gap-4 p-4 border-b border-border text-xs font-mono text-text-muted uppercase tracking-wider bg-panel">
+               <div className="col-span-3">Applicant</div>
+               <div className="col-span-2">Status</div>
+               <div className="col-span-2">Credit Tier</div>
+               <div className="col-span-2">Approval Limit</div>
+               <div className="col-span-3">Compliance & Audit</div>
+            </div>
+            
+            <div className="divide-y divide-border overflow-y-auto subtle-scrollbar flex-1 relative min-h-[500px]">
+               {prequalQueue.length === 0 && (
+                 <div className="p-8 text-center text-text-muted">No applications in queue.</div>
+               )}
+               {prequalQueue.map(app => (
+                 <div key={app.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-panel transition-colors cursor-pointer border-l-4 border-l-transparent hover:border-l-gold" onClick={() => onDrillDown('Finance_Prequal', { customerId: app.customerId })}>
+                    <div className="col-span-3">
+                       <div className="font-bold text-white text-sm">{app.customerName}</div>
+                       <div className="text-xs text-text-muted mt-1">{app.customerPhone}</div>
+                    </div>
+                    <div className="col-span-2">
+                       <div className={`text-xs font-bold uppercase tracking-wider ${app.decision === 'Pre-Approved' ? 'text-green-500' : app.decision === 'Declined' ? 'text-red-500' : 'text-amber-500'}`}>{app.decision}</div>
+                    </div>
+                    <div className="col-span-2">
+                       <div className="text-white font-bold">{app.tier}</div>
+                       <div className="text-[10px] text-text-muted font-mono bg-black px-1.5 py-0.5 rounded inline-block mt-1 border border-border">{app.scoreBand}</div>
+                    </div>
+                    <div className="col-span-2">
+                       <div className="text-gold font-bold text-sm">${app.maxAmount.toLocaleString()}</div>
+                       <div className="text-[10px] text-text-muted">Est APR: {app.assignedAPR}%</div>
+                    </div>
+                    <div className="col-span-3 space-y-1">
+                       {app.isFraudFlagged && <div className="text-[9px] text-red-500 uppercase flex items-center gap-1 border border-red-500 bg-red-900/10 px-1 py-0.5 rounded w-max"><AlertCircle className="w-3 h-3"/> Fraud Review</div>}
+                       {app.needsAdverseAction && <div className="text-[9px] text-amber-500 uppercase flex items-center gap-1 border border-amber-500 bg-amber-900/10 px-1 py-0.5 rounded w-max"><AlertCircle className="w-3 h-3"/> Adverse Action Req</div>}
+                       {app.hasConsent ? (
+                          <div className="text-[9px] text-green-500 uppercase flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> Consent Captured</div>
+                       ) : (
+                          <div className="text-[9px] text-text-dim uppercase flex items-center gap-1"><AlertCircle className="w-3 h-3"/> No Consent Record</div>
+                       )}
+                    </div>
+                 </div>
+               ))}
+            </div>
+         </div>
+      )}
+
+      {activeView === 'OpportunityBoard' && isManager && (
+         <div className="flex-1 overflow-x-auto overflow-y-hidden subtle-scrollbar pb-4 min-h-[600px]">
+            <div className="flex gap-6 h-full min-w-max">
                
-               <div className="space-y-4">
-                  <div className="bg-black border border-border p-3 rounded hover:border-gold-dim transition-colors cursor-pointer" onClick={() => onDrillDown('Deal', {customer: 'Mark Evans', unit: '2021 MT-07', type: 'Trade-Up'})}>
-                     <div className="flex justify-between items-center mb-1">
-                        <span className="font-bold text-white text-sm">Mark Evans</span>
-                        <span className="text-xs text-text-dim">Service Bay 4</span>
+               {/* Neglected Leads Column */}
+               <div className="w-96 flex flex-col bg-charcoal border border-border rounded shadow-md shrink-0 h-full overflow-hidden">
+                  <div className="p-4 border-b border-border flex justify-between items-center bg-black/40">
+                     <div className="font-bold text-white text-sm uppercase tracking-wide flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-500"/> Neglected Hot Leads
                      </div>
-                     <div className="text-xs text-text-muted mb-2">Owns: 2021 Yamaha MT-07</div>
-                     <div className="bg-panel p-2 rounded flex justify-between items-center">
-                        <span className="text-xs font-bold text-green-500 flex items-center gap-1"><TrendingUp className="w-3 h-3"/> + <DrillDownValue value="$3,100" label="Estimated Equity" type="Financials" onDrillDown={onDrillDown} color="text-green-500" /></span>
-                        <button className="text-[10px] bg-gold text-black px-2 py-1 rounded font-bold uppercase" onClick={(e) => { e.stopPropagation(); onDrillDown('Action', {name: 'Generate Trade Pitch', message: 'Building sales desking presentation...'})}}>Pitch Trade</button>
-                     </div>
+                     <div className="bg-red-900/30 text-red-500 px-2 py-0.5 rounded text-xs font-mono font-bold">{oppBoard.neglected.length}</div>
                   </div>
-
-                  <div className="bg-black border border-border p-3 rounded hover:border-gold-dim transition-colors cursor-pointer" onClick={() => onDrillDown('Deal', {customer: 'Lisa Chen', unit: '2022 Pioneer 1000', type: 'Trade-Up'})}>
-                     <div className="flex justify-between items-center mb-1">
-                        <span className="font-bold text-white text-sm">Lisa Chen</span>
-                        <span className="text-xs text-text-dim">Sales Floor</span>
-                     </div>
-                     <div className="text-xs text-text-muted mb-2">Owns: 2022 Pioneer 1000</div>
-                     <div className="bg-panel p-2 rounded flex justify-between items-center">
-                        <span className="text-xs font-bold text-green-500 flex items-center gap-1"><TrendingUp className="w-3 h-3"/> + <DrillDownValue value="$4,850" label="Estimated Equity" type="Financials" onDrillDown={onDrillDown} color="text-green-500" /></span>
-                        <button className="text-[10px] bg-gold text-black px-2 py-1 rounded font-bold uppercase" onClick={(e) => { e.stopPropagation(); onDrillDown('Action', {name: 'Generate Trade Pitch', message: 'Building sales desking presentation...'})}}>Pitch Trade</button>
-                     </div>
+                  <div className="p-4 flex-1 overflow-y-auto subtle-scrollbar space-y-4">
+                     {oppBoard.neglected.map(l => (
+                        <div key={l.id} className="bg-black border border-red-900/50 p-4 rounded shadow hover:border-red-500 transition-colors cursor-pointer" onClick={() => onDrillDown('CRM_Customer360', { customerId: l.customerId })}>
+                           <div className="flex justify-between items-start mb-2">
+                              <div className="font-bold text-white text-md">{l.customerName}</div>
+                              <span className="text-[10px] text-red-500 uppercase tracking-widest font-bold">Uncontacted</span>
+                           </div>
+                           <div className="text-xs text-text-muted mb-3 flex items-center gap-2"><User className="w-3 h-3"/> Assigned to {l.repName}</div>
+                           <div className="bg-red-900/10 border border-red-900/30 p-2 rounded text-xs text-red-400 font-mono">
+                              <BrainCircuit className="w-3 h-3 inline mr-1"/> {l.friction}
+                           </div>
+                           <button className="w-full mt-3 bg-red-900/20 hover:bg-red-900/40 text-red-400 py-1.5 rounded text-xs font-bold transition-colors">Reassign Lead</button>
+                        </div>
+                     ))}
+                     {oppBoard.neglected.length === 0 && <div className="text-center text-text-muted mt-10">No neglected leads detected.</div>}
                   </div>
                </div>
+
+               {/* Stalled Deals Column */}
+               <div className="w-96 flex flex-col bg-charcoal border border-border rounded shadow-md shrink-0 h-full overflow-hidden">
+                  <div className="p-4 border-b border-border flex justify-between items-center bg-black/40">
+                     <div className="font-bold text-white text-sm uppercase tracking-wide flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-amber-500"/> Stalled Opportunities
+                     </div>
+                     <div className="bg-amber-900/30 text-amber-500 px-2 py-0.5 rounded text-xs font-mono font-bold">{oppBoard.stalled.length}</div>
+                  </div>
+                  <div className="p-4 flex-1 overflow-y-auto subtle-scrollbar space-y-4">
+                     {oppBoard.stalled.map(o => (
+                        <div key={o.id} className="bg-black border border-amber-900/50 p-4 rounded shadow hover:border-amber-500 transition-colors cursor-pointer" onClick={() => onDrillDown('CRM_Customer360', { customerId: o.customerId })}>
+                           <div className="flex justify-between items-start mb-2">
+                              <div className="font-bold text-white text-md">{o.customerName}</div>
+                              <span className="text-[10px] text-amber-500 uppercase tracking-widest font-bold bg-amber-900/20 px-1 py-0.5 rounded">{o.probPct}% Prob</span>
+                           </div>
+                           <div className="text-xs text-text-muted mb-3 flex items-center gap-2"><User className="w-3 h-3"/> {o.repName}</div>
+                           <div className="bg-amber-900/10 border border-amber-900/30 p-2 rounded text-xs text-amber-400 flex items-start gap-2">
+                              <TrendingDown className="w-3 h-3 shrink-0 mt-0.5"/> 
+                              <div>
+                                 <div className="font-bold">{o.friction}</div>
+                                 <div className="text-[10px] mt-0.5 text-amber-500/70">Probability dropping due to inactivity.</div>
+                              </div>
+                           </div>
+                        </div>
+                     ))}
+                     {oppBoard.stalled.length === 0 && <div className="text-center text-text-muted mt-10">No stalled deals detected.</div>}
+                  </div>
+               </div>
+
+               {/* Reactivation Column */}
+               <div className="w-96 flex flex-col bg-charcoal border border-border rounded shadow-md shrink-0 h-full overflow-hidden">
+                  <div className="p-4 border-b border-border flex justify-between items-center bg-black/40">
+                     <div className="font-bold text-white text-sm uppercase tracking-wide flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-green-500"/> Lost/Aged Reactivation
+                     </div>
+                     <div className="bg-green-900/30 text-green-500 px-2 py-0.5 rounded text-xs font-mono font-bold">{oppBoard.reactivation.length}</div>
+                  </div>
+                  <div className="p-4 flex-1 overflow-y-auto subtle-scrollbar space-y-4">
+                     {oppBoard.reactivation.map(l => (
+                        <div key={l.id} className="bg-black border border-green-900/50 p-4 rounded shadow hover:border-green-500 transition-colors cursor-pointer" onClick={() => onDrillDown('CRM_Customer360', { customerId: l.customerId })}>
+                           <div className="flex justify-between items-start mb-2">
+                              <div className="font-bold text-white text-md">{l.customerName}</div>
+                              <span className="text-[10px] text-text-muted uppercase tracking-widest font-mono line-clamp-1 ml-2">{l.sourceId}</span>
+                           </div>
+                           <div className="bg-green-900/10 border border-green-900/30 p-2 rounded text-xs text-green-400 mt-3 flex items-start gap-2">
+                              <Megaphone className="w-3 h-3 shrink-0 mt-0.5"/>
+                              <div>
+                                 <div className="font-bold">Suggested AI Campaign:</div>
+                                 <div className="text-[10px] mt-0.5">{l.reactivateReason}</div>
+                              </div>
+                           </div>
+                           <button className="w-full mt-3 bg-green-900/20 hover:bg-green-900/40 text-green-400 py-1.5 rounded text-xs font-bold transition-colors">Queue Nurture Sequence</button>
+                        </div>
+                     ))}
+                     {oppBoard.reactivation.length === 0 && <div className="text-center text-text-muted mt-10">No reactivation targets found.</div>}
+                  </div>
+               </div>
+
+            </div>
+         </div>
+      )}
+    </div>
+  );
+};
+
+const CustomerCRMModule = (props) => (
+  <CRMErrorBoundary>
+     <CustomerCRMModuleInner {...props} />
+  </CRMErrorBoundary>
+);
+
+const GlobalFilterBar = () => {
+  return (
+    <div className="bg-charcoal border border-border p-4 rounded mb-6 flex flex-wrap gap-4 items-center">
+      <div className="flex items-center gap-2 text-text-muted font-bold tracking-widest text-xs uppercase mr-4">
+        <Filter className="w-4 h-4 text-gold"/> Global Filters
+      </div>
+      <select className="bg-black border border-border text-white text-xs px-3 py-1.5 rounded outline-none focus:border-gold cursor-pointer"><option>All Locations</option><option>Baton Rouge</option><option>Slidell</option></select>
+      <select className="bg-black border border-border text-white text-xs px-3 py-1.5 rounded outline-none focus:border-gold cursor-pointer"><option>All Reps</option><option>Jake Fontenot</option><option>Marcus Broussard</option></select>
+      <select className="bg-black border border-border text-white text-xs px-3 py-1.5 rounded outline-none focus:border-gold cursor-pointer"><option>MTD (Month to Date)</option><option>Today</option><option>Last 7 Days</option></select>
+      <select className="bg-black border border-border text-white text-xs px-3 py-1.5 rounded outline-none focus:border-gold cursor-pointer"><option>All Sources</option><option>Website Forms</option><option>Walk-ins</option></select>
+      <button className="text-xs text-gold border border-gold/30 hover:bg-gold/10 px-3 py-1.5 rounded transition-colors ml-auto">+ Add Filter</button>
+    </div>
+  );
+};
+
+/* --- MOCK DATA FOR OPERATIONAL DASHBOARDS --- */
+const SALES_FUNNEL_DATA = [
+  { name: 'Leads', value: 412, fill: '#3a3a3a' },
+  { name: 'Contacted', value: 308, fill: '#5a5550' },
+  { name: 'Appts Set', value: 145, fill: '#c9a84c' },
+  { name: 'Shows', value: 98, fill: '#e8c96a' },
+  { name: 'Sold', value: 42, fill: '#22c55e' }
+];
+
+const FINANCE_MIX = [
+  { name: 'Approved', value: 65, color: '#22c55e' },
+  { name: 'Conditions', value: 20, color: '#eab308' },
+  { name: 'Declined', value: 15, color: '#ef4444' }
+];
+
+const RETENTION_TREND = [
+  { month: 'W1', reactivation: 12, loyalty: 5 },
+  { month: 'W2', reactivation: 15, loyalty: 8 },
+  { month: 'W3', reactivation: 10, loyalty: 12 },
+  { month: 'W4', reactivation: 22, loyalty: 15 }
+];
+
+const OperationalDashboardsModule = ({ onDrillDown, userRole, company, location }) => {
+  const [activeTab, setActiveTab] = useState('Overview');
+  
+  const renderContent = () => {
+    if (activeTab === 'Overview') {
+       return <DashboardModule onDrillDown={onDrillDown} company={company} location={location} />;
+    }
+    if (activeTab === 'Sales') {
+      const db = getSalesDashboardData();
+      return (
+        <div className="space-y-6">
+          <AutomatedInsights onDrillDown={onDrillDown} insights={[
+             { type: "opportunity", message: <>Internet lead conversion is trending <span className="text-green-500 font-bold">12% higher</span> than the rolling 30-day average. Sales velocity is excellent.</>, actionText: "View Conversion Funnel", data: { name: 'Lead Conversion Records', records: db.newLeadsData } },
+             { type: "warning", message: <>There are exactly <DrillDownValue value={db.overdueTasks.toString()} label="Overdue SLA Tasks" type="Report" onDrillDown={onDrillDown} data={{ name: 'SLA Exceptions', records: db.overdueTasksData }} color="text-red-500" /> overdue tasks in the Global Inbox. SLAs are breached.</>, actionText: "Go to Inbox", data: { name: 'Escalation Records', records: db.overdueTasksData } }
+          ]} />
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+             <KPICard title="Total Prequals" value={db.prequalsStarted.toString()} onDrillDown={() => onDrillDown('Report', { name: "Finance Activity", records: db.prequalsData })} type="Report" />
+             <KPICard title="Quotes Desked" value={db.quotesSent.toString()} onDrillDown={() => onDrillDown('Report', { name: "Desking Log" })} type="Report" />
+             <KPICard title="Closing Ratio" value={db.closeRate} onDrillDown={() => onDrillDown('Report', { name: "Closing Performance" })} type="Report" />
+             <KPICard title="Est. Front Gross" value={db.grossEstimate} isCurrency={false} onDrillDown={() => onDrillDown('Report', { name: "Margin Detail" })} type="Report" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+             <div className="lg:col-span-2 bg-charcoal p-5 rounded border border-border">
+                <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase flex justify-between">
+                   <span>MTD Sales Conversion Funnel</span>
+                   <span className="text-gold cursor-pointer hover:underline" onClick={() => onDrillDown('Report', { name: 'Full Funnel Detail' })}>Expand</span>
+                </h3>
+                <div className="h-48">
+                   <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={SALES_FUNNEL_DATA} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                         <XAxis dataKey="name" stroke="#666" tick={{fill: '#888', fontSize: 10}} />
+                         <YAxis stroke="#666" tick={{fill: '#888', fontSize: 10}} />
+                         <Tooltip cursor={{fill: '#222'}} contentStyle={{backgroundColor: '#000', borderColor: '#333', color: '#fff'}} />
+                         <Bar dataKey="value" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                   </ResponsiveContainer>
+                </div>
+             </div>
+
+             <div className="flex flex-col gap-4">
+                <div className="bg-charcoal border border-border p-4 rounded flex-1 flex flex-col justify-center items-center text-center hover:border-gold transition-colors cursor-pointer group" onClick={() => onDrillDown('Report', { name: "SLA Response Times", records: db.contactsData })}>
+                   <div className="text-[10px] text-text-muted uppercase tracking-widest font-mono mb-2 group-hover:text-gold transition-colors">Avg First Response</div>
+                   <div className="text-4xl text-white font-playfair">{db.responseTimesAvg}</div>
+                   <div className="text-xs text-green-500 mt-2 bg-green-900/20 px-2 py-0.5 rounded border border-green-500/30 w-fit mx-auto">-4m vs Last MTD</div>
+                </div>
+                <div className="bg-charcoal border border-border p-4 rounded flex-1 flex flex-col justify-center items-center text-center hover:border-gold transition-colors cursor-pointer group" onClick={() => onDrillDown('Report', { name: "Lost Deal Matrix" })}>
+                   <div className="text-[10px] text-text-muted uppercase tracking-widest font-mono mb-2 group-hover:text-gold transition-colors">Total Lost Deals</div>
+                   <div className="text-4xl text-white font-playfair">{db.lostCount}</div>
+                   <div className="text-xs text-amber-500 mt-2 bg-amber-900/20 px-2 py-0.5 rounded border border-amber-500/30 w-fit mx-auto">Click to view resurrection targets</div>
+                </div>
              </div>
           </div>
-       </div>
+        </div>
+      );
+    }
+    if (activeTab === 'Manager') {
+      const db = getManagerDashboardData();
+      return (
+        <div className="space-y-6">
+           <AutomatedInsights onDrillDown={onDrillDown} insights={[
+              { type: "action", message: <>Marcus Broussard has <DrillDownValue value="8 units" label="Pending Deals" type="Employee" /> in active deals this week but is pacing <span className="text-red-500 underline decoration-red-500/50">behind</span> the CSI target response average.</>, actionText: "View Employee Profile" }
+           ]} />
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-charcoal border border-border p-5 rounded shadow-inner">
+                 <h4 className="text-gold text-sm font-bold border-b border-border/50 pb-2 mb-4 flex justify-between items-center hover:text-gold-light cursor-pointer transition-colors" onClick={() => onDrillDown('Report', { name: 'Full Performance Grid' })}>
+                    <span>Pipeline by Rep</span> <ChevronRight className="w-4 h-4" />
+                 </h4>
+                 <div className="space-y-1">
+                    {db.byRep.map((r,i) => (
+                      <div key={i} className="flex justify-between items-center text-sm cursor-pointer hover:bg-black p-3 rounded -mx-3 transition-colors border-b border-border/30 last:border-0 group" onClick={() => onDrillDown('Employee', r)}>
+                        <div>
+                           <span className="text-white font-bold group-hover:text-gold transition-colors block">{r.name}</span>
+                           <span className="text-[10px] text-text-muted font-mono uppercase">Avg Margin: $2.4k</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-green-500 font-bold bg-green-900/20 border border-green-500/30 px-2 py-0.5 rounded mr-2">{r.units} Units</span>
+                          <span className="text-gold font-mono text-sm block mt-1">${r.gross.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    ))}
+                 </div>
+              </div>
+              
+              <div className="bg-charcoal border border-border p-5 rounded shadow-inner">
+                 <h4 className="text-gold text-sm font-bold border-b border-border/50 pb-2 mb-4 flex justify-between items-center hover:text-gold-light cursor-pointer transition-colors" onClick={() => onDrillDown('Report', { name: 'Lead Velocity Timeline' })}>
+                    <span>Stage Aging (Days)</span> <ChevronRight className="w-4 h-4" />
+                 </h4>
+                 <div className="space-y-4 pt-2">
+                    {db.byStageAging.map((s,i) => (
+                      <div key={i} className="flex flex-col cursor-pointer group" onClick={() => onDrillDown('Report', { name: `${s.stage} Aging Matrix` })}>
+                        <div className="flex justify-between text-xs mb-1">
+                           <span className="text-white group-hover:text-gold transition-colors">{s.stage}</span>
+                           <span className="text-amber-500 font-mono">{s.avgDays} days avg</span>
+                        </div>
+                        <div className="w-full bg-black h-2 rounded overflow-hidden">
+                           <div className={`h-full rounded ${s.avgDays > 5 ? 'bg-red-500' : s.avgDays > 2 ? 'bg-amber-500' : 'bg-green-500'}`} style={{width: `${Math.min((s.avgDays/14)*100, 100)}%`}}></div>
+                        </div>
+                      </div>
+                    ))}
+                 </div>
+              </div>
+
+              <div className="bg-charcoal border border-border p-5 rounded shadow-inner">
+                 <h4 className="text-gold text-sm font-bold border-b border-border/50 pb-2 mb-4 flex justify-between items-center hover:text-gold-light cursor-pointer transition-colors" onClick={() => onDrillDown('Report', { name: 'AI Lead Confidence Report' })}>
+                    <span>AI Lead Scoring Spread</span> <ChevronRight className="w-4 h-4" />
+                 </h4>
+                 <div className="flex flex-col gap-4 mt-2">
+                    <div className="flex items-center justify-between text-xs cursor-pointer group" onClick={() => onDrillDown('Report', { name: 'Hot Leads Queue', records: db.hotData })}>
+                       <span className="text-white font-bold w-12 group-hover:text-gold transition-colors">Hot</span> 
+                       <div className="flex-1 bg-black h-5 mx-3 rounded border border-border overflow-hidden"><div className="bg-green-500 h-full w-[12%] shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div></div> 
+                       <span className="font-mono text-gold bg-gold/10 px-1.5 rounded">{db.scoreDistribution.hot}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs cursor-pointer group" onClick={() => onDrillDown('Report', { name: 'Warm Leads Queue', records: db.warmData })}>
+                       <span className="text-white font-bold w-12 group-hover:text-gold transition-colors">Warm</span> 
+                       <div className="flex-1 bg-black h-5 mx-3 rounded border border-border overflow-hidden"><div className="bg-amber-500 h-full w-[45%]"></div></div> 
+                       <span className="font-mono text-gold bg-gold/10 px-1.5 rounded">{db.scoreDistribution.warm}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs cursor-pointer group" onClick={() => onDrillDown('Report', { name: 'Cold Leads Queue', records: db.coldData })}>
+                       <span className="text-white font-bold w-12 group-hover:text-gold transition-colors">Cold</span> 
+                       <div className="flex-1 bg-black h-5 mx-3 rounded border border-border overflow-hidden"><div className="bg-blue-500 h-full w-[80%] opacity-50"></div></div> 
+                       <span className="font-mono text-gold bg-gold/10 px-1.5 rounded">{db.scoreDistribution.cold}</span>
+                    </div>
+                 </div>
+                 <div className="mt-6 text-[10px] text-text-muted text-center italic border-t border-border/50 pt-3">Scores generated automatically based on recency, cadence, and website dwell-time algorithms.</div>
+              </div>
+           </div>
+        </div>
+      );
+    }
+    if (activeTab === 'Finance') {
+      const db = getFinanceDashboardData();
+      return (
+        <div className="space-y-6">
+           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <KPICard title="Compliance Review" value={`${db.startedVsCompleted.completed}/${db.startedVsCompleted.started}`} onDrillDown={() => onDrillDown('Report', { name: "Prequal Conversion", records: db.prequalData })} type="Report" />
+              <KPICard title="Identity Fraud Flags" value={db.fraudReviewFlags.toString()} onDrillDown={() => onDrillDown('Report', { name: "Fraud Escalations", records: db.fraudData })} type="Report" />
+              <KPICard title="Lender Ready" value={db.lenderReadyQueue.toString()} onDrillDown={() => onDrillDown('Report', { name: "Ready for Desking" })} type="Report" />
+              <KPICard title="Provider Errors" value={db.bureauErrors.toString()} onDrillDown={() => onDrillDown('Report', { name: "API Error Log", records: db.bureauData })} type="Report" />
+           </div>
+
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-charcoal p-5 rounded border border-border flex flex-col items-center justify-center relative">
+                 <h4 className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-2 absolute top-5 left-5">Decision Split MTD</h4>
+                 <div className="h-48 w-full mt-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                       <PieChart>
+                          <Pie data={FINANCE_MIX} innerRadius={50} outerRadius={70} paddingAngle={2} dataKey="value">
+                             {FINANCE_MIX.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                          </Pie>
+                          <Tooltip contentStyle={{backgroundColor: '#000', borderColor: '#333'}} itemStyle={{color: '#fff'}} />
+                       </PieChart>
+                    </ResponsiveContainer>
+                 </div>
+                 <div className="flex gap-4 justify-center w-full mt-2">
+                    {FINANCE_MIX.map((m,i) => <div key={i} className="flex items-center gap-1 text-[10px] text-white"><div className="w-2 h-2 rounded-full" style={{backgroundColor: m.color}}></div>{m.name}</div>)}
+                 </div>
+              </div>
+
+              <div className="md:col-span-2 bg-charcoal p-5 rounded border border-border">
+                  <h4 className="text-gold text-sm font-bold border-b border-border/50 pb-2 mb-4 flex justify-between items-center hover:text-gold-light cursor-pointer transition-colors" onClick={() => onDrillDown('Report', { name: 'Adverse Action & Review Queue' })}>
+                    <span>Sensitive Document Queue</span> <ChevronRight className="w-4 h-4" />
+                 </h4>
+                 <div className="space-y-3">
+                    {[
+                       { type: "Adverse Action Notice Required", customer: "John D.", ago: "2 hours ago", status: "PENDING", color: "text-red-500", bg: "bg-red-900/20" },
+                       { type: "Provide Stipulation: Pay Stub", customer: "Sarah K.", ago: "5 hours ago", status: "WAITING", color: "text-amber-500", bg: "bg-amber-900/20" },
+                       { type: "Clear Out-of-State ID Override", customer: "Mark E.", ago: "1 day ago", status: "MANAGER_REV", color: "text-blue-500", bg: "bg-blue-900/20" }
+                    ].map((row, idx) => (
+                       <div key={idx} className="flex items-center justify-between p-3 bg-black border border-border rounded cursor-pointer hover:border-gold-dim transition-colors group" onClick={() => onDrillDown('Action', { name: `Processing Queue: ${row.type}` })}>
+                          <div className="flex items-center gap-3">
+                             <div className={`w-8 h-8 rounded-full ${row.bg} flex items-center justify-center`}><AlertCircle className={`w-4 h-4 ${row.color}`}/></div>
+                             <div>
+                                <div className="text-white text-sm font-bold group-hover:text-gold transition-colors">{row.type}</div>
+                                <div className="text-[10px] text-text-muted uppercase font-mono tracking-wide">{row.customer} • {row.ago}</div>
+                             </div>
+                          </div>
+                          <span className={`${row.color} border border-current px-2 py-0.5 rounded text-[10px] font-bold tracking-widest`}>{row.status}</span>
+                       </div>
+                    ))}
+                 </div>
+              </div>
+           </div>
+        </div>
+      );
+    }
+    if (activeTab === 'Retention') {
+      const db = getRetentionDashboardData();
+      return (
+        <div className="space-y-6">
+           <AutomatedInsights onDrillDown={onDrillDown} insights={[
+              { type: "opportunity", message: <>Service to Sales AI has identified <DrillDownValue value={`${db.serviceToSales} customers`} label="Equity Candidates" type="Report" data={{name: "Lane Conquests", records: db.serviceData}} /> with positive equity currently in the active Service bay. Target them before ticket close.</>, actionText: "View Lane Conquests", data: {name: "Lane Conquests", records: db.serviceData} }
+           ]} />
+           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <KPICard title="60d Unsold Reactivations" value={db.unsoldReactivation.toString()} onDrillDown={() => onDrillDown('Report', { name: "Reactivation Targets", records: db.reactivationData })} type="Report" />
+              <div className="bg-charcoal border border-border rounded p-4 flex flex-col justify-center cursor-pointer hover:border-gold transition-colors group" onClick={() => onDrillDown('Report', { name: "Equity Pitch Queue", records: db.serviceData })}>
+                 <div className="text-[10px] text-text-muted font-mono mb-1 uppercase tracking-wider group-hover:text-gold transition-colors">Svc to Sales Ops</div>
+                 <div className="text-2xl font-bold text-white group-hover:text-gold drop-shadow-md">{db.serviceToSales.toString()}</div>
+                 <div className="text-xs text-green-500 mt-1 bg-green-900/20 px-1 py-0.5 inline-block rounded overflow-hidden relative"><div className="w-full h-full bg-green-500/20 absolute inset-0 animate-pulse"></div>+12% Conquest Rate</div>
+              </div>
+              <KPICard title="Recent Repeat Buyers" value={db.repeatCandidates.toString()} onDrillDown={() => onDrillDown('Report', { name: "Loyalty Queue" })} type="Report" />
+              <KPICard title="Lapsed Service Accounts" value={db.lapsedCustomers.toString()} onDrillDown={() => onDrillDown('Report', { name: "Defector Recovery" })} type="Report" />
+           </div>
+
+           <div className="bg-charcoal p-5 rounded border border-border mt-4">
+               <h4 className="text-gold text-sm font-bold border-b border-border/50 pb-2 mb-4 flex justify-between items-center hover:text-gold-light cursor-pointer transition-colors" onClick={() => onDrillDown('Report', { name: 'Full Retention Pipeline Graph' })}>
+                 <span>30-Day Automated Retention Trend</span> <ChevronRight className="w-4 h-4" />
+              </h4>
+              <div className="h-48 w-full">
+                 <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={RETENTION_TREND} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                       <XAxis dataKey="month" stroke="#666" tick={{fill: '#888', fontSize: 10}} />
+                       <YAxis stroke="#666" tick={{fill: '#888', fontSize: 10}} />
+                       <Tooltip cursor={{fill: '#222'}} contentStyle={{backgroundColor: '#000', borderColor: '#333', color: '#fff'}} />
+                       <Line type="monotone" dataKey="reactivation" stroke="#c9a84c" strokeWidth={3} dot={{fill: '#c9a84c', r: 4}} />
+                       <Line type="monotone" dataKey="loyalty" stroke="#22c55e" strokeWidth={3} dot={{fill: '#22c55e', r: 4}} />
+                    </LineChart>
+                 </ResponsiveContainer>
+              </div>
+              <div className="flex gap-4 justify-center w-full mt-2 text-xs">
+                 <span className="text-gold font-bold">Unsold Lead Reactivation Base</span>
+                 <span className="text-text-muted">|</span>
+                 <span className="text-green-500 font-bold">Service/Loyalty Equity Base</span>
+              </div>
+           </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+         <h1 className="text-2xl font-playfair text-white flex items-center gap-3"><LayoutDashboard className="w-6 h-6 text-gold"/> Operational Dashboards</h1>
+      </div>
+      
+      <GlobalFilterBar />
+
+      <div className="flex gap-4 border-b border-border pb-2 mb-6 overflow-x-auto subtle-scrollbar">
+        {['Overview', 'Sales', 'Manager', 'Finance', 'Retention'].map(tab => (
+          <button key={tab} className={`text-sm font-bold px-4 py-2 transition-colors border-b-2 whitespace-nowrap ${activeTab === tab ? 'text-white border-b-gold' : 'text-text-muted border-b-transparent hover:text-white'}`} onClick={() => setActiveTab(tab)}>
+            {tab} Dash
+          </button>
+        ))}
+      </div>
+
+      <div className="animate-in fade-in duration-500">
+         {renderContent()}
+      </div>
+    </div>
+  );
+};
+
+const AutomationEngineModule = ({ onDrillDown }) => {
+  const rules = getAutomationEngineRules();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+         <h1 className="text-2xl font-playfair text-white flex items-center gap-3"><Zap className="w-6 h-6 text-gold"/> Automation Engine</h1>
+         <button className="bg-gold text-black font-bold text-sm px-4 py-2 rounded hover:bg-gold-light transition-colors shadow" onClick={() => onDrillDown('Action', { name: 'Create Rule Builder' })}>
+            + Built New Flow
+         </button>
+      </div>
+
+      <div className="bg-charcoal border border-border rounded overflow-hidden">
+         <div className="grid grid-cols-12 gap-4 p-4 border-b border-border bg-black text-xs font-bold text-text-muted uppercase tracking-widest">
+            <div className="col-span-1 text-center">Active</div>
+            <div className="col-span-3">Flow Name / Trigger</div>
+            <div className="col-span-3">Condition</div>
+            <div className="col-span-4">Action Pipeline</div>
+            <div className="col-span-1">Owner</div>
+         </div>
+         <div className="divide-y divide-border">
+            {rules.map(rule => (
+              <div key={rule.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-black/40 transition-colors cursor-pointer" onClick={() => onDrillDown('Action', { name: `Edit Rule: ${rule.name}` })}>
+                 <div className="col-span-1 flex justify-center">
+                    {rule.active ? (
+                      <div className="w-10 h-5 bg-green-500/20 rounded-full border border-green-500 flex items-center px-1"><div className="w-3 h-3 bg-green-500 rounded-full ml-auto shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div></div>
+                    ) : (
+                      <div className="w-10 h-5 bg-panel rounded-full border border-border flex items-center px-1"><div className="w-3 h-3 bg-text-dim rounded-full mr-auto"></div></div>
+                    )}
+                 </div>
+                 <div className="col-span-3">
+                    <div className="font-bold text-white text-sm truncate">{rule.name}</div>
+                    <div className="text-[10px] text-gold uppercase tracking-widest font-mono mt-1 w-fit bg-gold/10 px-1.5 py-0.5 rounded border border-gold/30">{rule.trigger}</div>
+                 </div>
+                 <div className="col-span-3">
+                    <code className="text-xs text-text-muted bg-black border border-border px-2 py-1 rounded line-clamp-2 leading-relaxed">{rule.condition}</code>
+                 </div>
+                 <div className="col-span-4 flex items-center gap-2">
+                    <ChevronRight className="w-4 h-4 text-text-dim shrink-0"/>
+                    <div className="text-xs font-bold text-green-400 bg-green-900/20 border border-green-900/50 px-2 py-1 rounded line-clamp-2">
+                       {rule.action}
+                    </div>
+                 </div>
+                 <div className="col-span-1 text-xs text-text-muted font-mono">{rule.owner}</div>
+              </div>
+            ))}
+         </div>
+      </div>
     </div>
   );
 };
@@ -1503,6 +2134,7 @@ const App = () => {
     { name: "Dashboard", icon: LayoutDashboard },
     { name: "Sales", icon: TrendingUp },
     { name: "Customer CRM", icon: Users },
+    { name: "Automation Engine", icon: Zap },
     { name: "F&I / Finance", icon: CreditCard },
     { name: "Inventory", icon: Package },
     { name: "Used Bikes / UBD", icon: Bike },
@@ -1638,9 +2270,10 @@ const App = () => {
         {/* SCROLLABLE MODULE RENDERER */}
         <div className="flex-1 overflow-y-auto p-6 bg-black">
           <div className="max-w-[1600px] mx-auto">
-            {activeTab === "Dashboard" && <DashboardModule onNavigate={setActiveTab} onDrillDown={handleDrillDown} company={activeCompany} location={activeLocation} />}
+            {activeTab === "Dashboard" && <OperationalDashboardsModule onDrillDown={handleDrillDown} userRole={currentUser?.role} company={activeCompany} location={activeLocation} />}
             {activeTab === "Sales" && <SalesModule onNavigate={setActiveTab} onDrillDown={handleDrillDown} />}
-            {activeTab === "Customer CRM" && <CustomerCRMModule onDrillDown={handleDrillDown} />}
+            {activeTab === "Customer CRM" && <CustomerCRMModule onDrillDown={handleDrillDown} user={currentUser} />}
+            {activeTab === "Automation Engine" && <AutomationEngineModule onDrillDown={handleDrillDown} />}
             {activeTab === "F&I / Finance" && <FIModule onDrillDown={handleDrillDown} />}
             {activeTab === "Inventory" && <InventoryModule onDrillDown={handleDrillDown} />}
             {activeTab === "Used Bikes / UBD" && <UsedBikesModule onDrillDown={handleDrillDown} />}
@@ -1653,7 +2286,7 @@ const App = () => {
             {activeTab === "Employee Hub" && <EmployeeHubModule user={currentUser} onDrillDown={handleDrillDown} />}
             {activeTab === "Settings" && <SettingsModule onDrillDown={handleDrillDown} />}
             {activeTab === "Clock In / HR" && <ClockInModule user={currentUser} onDrillDown={handleDrillDown} />}
-            {![ "Dashboard", "Sales", "Customer CRM", "F&I / Finance", "Inventory", "Used Bikes / UBD", "Service & Parts", "Payroll", "OEM Incentives", "Marketing", "Reports", "Accounting & GL", "Employee Hub", "Settings", "Clock In / HR" ].includes(activeTab) && (
+            {![ "Dashboard", "Sales", "Customer CRM", "Automation Engine", "F&I / Finance", "Inventory", "Used Bikes / UBD", "Service & Parts", "Payroll", "OEM Incentives", "Marketing", "Reports", "Accounting & GL", "Employee Hub", "Settings", "Clock In / HR" ].includes(activeTab) && (
               <PlaceholderModule title={`${activeTab} Module`} desc={`Select Dashboard, Sales, or Clock In to see full interactive builds. Or ask the agent to render ${activeTab} fully.`} />
             )}
             

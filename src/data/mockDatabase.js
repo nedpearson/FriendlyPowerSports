@@ -44,11 +44,11 @@ export const INVENTORY = [
 ];
 
 export const CUSTOMERS = [
-  { id: 'CUST-1', name: 'John Davis', phone: '225-555-0192', email: 'john.davis@mock.com', LTV: 14500 },
-  { id: 'CUST-2', name: 'Sarah Miller', phone: '985-555-0188', email: 'smiller@mock.com', LTV: 0 },
-  { id: 'CUST-3', name: 'Robert King', phone: '225-555-0177', email: 'rking@mock.com', LTV: 32000 },
-  { id: 'CUST-4', name: 'Emily White', phone: '985-555-0166', email: 'emily.w@mock.com', LTV: 0 },
-  { id: 'CUST-5', name: 'Mark Allen', phone: '225-555-0155', email: 'm.allen@mock.com', LTV: 8000 }
+  { id: 'CUST-1', householdId: 'HH-1', name: 'John Davis', phone: '225-555-0192', email: 'john.davis@mock.com', LTV: 14500, tags: ['VIP'], lastContacted: new Date(Date.now() - 3600000).toISOString() },
+  { id: 'CUST-2', householdId: null, name: 'Sarah Miller', phone: '985-555-0188', email: 'smiller@mock.com', LTV: 0, tags: ['Bad Credit'], lastContacted: null },
+  { id: 'CUST-3', householdId: 'HH-2', name: 'Robert King', phone: '225-555-0177', email: 'rking@mock.com', LTV: 32000, tags: ['Cash Buyer'], lastContacted: new Date(Date.now() - 86400000).toISOString() },
+  { id: 'CUST-4', householdId: null, name: 'Emily White', phone: '985-555-0166', email: 'emily.w@mock.com', LTV: 0, tags: [], lastContacted: null },
+  { id: 'CUST-5', householdId: 'HH-1', name: 'Mark Allen', phone: '225-555-0155', email: 'm.allen@mock.com', LTV: 8000, tags: ['Service Defector'], lastContacted: new Date(Date.now() - 172800000).toISOString() }
 ];
 
 export const CAMPAIGNS = [
@@ -60,11 +60,11 @@ export const CAMPAIGNS = [
 ];
 
 export const LEADS = [
-  { id: 'LEAD-1', customerId: 'CUST-1', sourceId: 'CAMP-4', empId: 'EMP-3', createdAt: new Date(Date.now() - 4000*60), status: 'Responded', stage: 'Working' },
-  { id: 'LEAD-2', customerId: 'CUST-2', sourceId: 'CAMP-5', empId: 'EMP-4', createdAt: new Date(Date.now() - 82000*60), status: 'Unresponded', stage: 'New' }, // 1h 22m old
-  { id: 'LEAD-3', customerId: 'CUST-3', sourceId: 'Walk-in', empId: 'EMP-8', createdAt: new Date(Date.now() - 20000*60), status: 'In Progress', stage: 'Demo' },
-  { id: 'LEAD-4', customerId: 'CUST-4', sourceId: 'CAMP-1', empId: 'EMP-8', createdAt: new Date(Date.now() - 120000*60), status: 'Unresponded', stage: 'New' }, // 2h old
-  { id: 'LEAD-5', customerId: 'CUST-5', sourceId: 'Referral', empId: 'EMP-3', createdAt: new Date(Date.now() - 180000*60), status: 'Responded', stage: 'Sold' }
+  { id: 'LEAD-1', customerId: 'CUST-1', sourceId: 'CAMP-4', empId: 'EMP-3', createdAt: new Date(Date.now() - 4000*60), status: 'Responded', stage: 'Working', tradeIn_ExpectedACV: 4500, appointmentId: 'APT-1' },
+  { id: 'LEAD-2', customerId: 'CUST-2', sourceId: 'CAMP-5', empId: 'EMP-4', createdAt: new Date(Date.now() - 82000*60), status: 'Unresponded', stage: 'New', tradeIn_ExpectedACV: null, appointmentId: null },
+  { id: 'LEAD-3', customerId: 'CUST-3', sourceId: 'Walk-in', empId: 'EMP-8', createdAt: new Date(Date.now() - 20000*60), status: 'In Progress', stage: 'Demo', tradeIn_ExpectedACV: null, appointmentId: null },
+  { id: 'LEAD-4', customerId: 'CUST-4', sourceId: 'CAMP-1', empId: 'EMP-8', createdAt: new Date(Date.now() - 120000*60), status: 'Unresponded', stage: 'New', tradeIn_ExpectedACV: 2000, appointmentId: null },
+  { id: 'LEAD-5', customerId: 'CUST-5', sourceId: 'Referral', empId: 'EMP-3', createdAt: new Date(Date.now() - 180000*60), status: 'Responded', stage: 'Sold', tradeIn_ExpectedACV: null, appointmentId: null }
 ];
 
 export const LENDERS = [
@@ -96,4 +96,98 @@ export const TASKS_AND_ALERTS = [
 
 export const APPRAISALS = [
   { id: 'APP-1', customerId: 'CUST-1', evaluatorId: 'EMP-3', make: 'Kawasaki', model: 'Z900', year: 2020, expectedACV: 4500, status: 'Pending Customer Approval' }
+];
+
+/* --- NEW CRM DATA STRUCTURES (PHASE 1) --- */
+
+export const CRM_HOUSEHOLDS = [
+  { id: 'HH-1', name: 'Davis-Allen Household', mainContactId: 'CUST-1', address: '123 Powersports Way, Baton Rouge, LA', totalLTV: 22500 },
+  { id: 'HH-2', name: 'King Household', mainContactId: 'CUST-3', address: '456 Mud Bayou Rd, Slidell, LA', totalLTV: 32000 }
+];
+
+export const CRM_OPPORTUNITIES = [
+  { id: 'OPP-1', leadId: 'LEAD-1', customerId: 'CUST-1', status: 'Active', probPct: 80, estimatedFrontGross: 1200, estimatedBackGross: 800 },
+  { id: 'OPP-2', leadId: 'LEAD-2', customerId: 'CUST-2', status: 'Active', probPct: 15, estimatedFrontGross: 600, estimatedBackGross: 400 },
+  { id: 'OPP-3', leadId: 'LEAD-3', customerId: 'CUST-3', status: 'Active', probPct: 40, estimatedFrontGross: 2500, estimatedBackGross: 1500 }
+];
+
+export const CRM_ACTIVITIES = [
+  { id: 'ACT-1', type: 'System', description: 'Lead score increased to 85 due to third website visit', timestamp: new Date(Date.now() - 3600000).toISOString(), customerId: 'CUST-1' }
+];
+
+export const CRM_TASKS = [
+  { id: 'TSK-1', assignedTo: 'EMP-3', customerId: 'CUST-1', dueDate: new Date(Date.now() + 86400000).toISOString(), status: 'Pending', type: 'Follow Up Call' }
+];
+
+export const CRM_APPOINTMENTS = [
+  { id: 'APT-1', leadId: 'LEAD-1', customerId: 'CUST-1', assignedTo: 'EMP-3', datetime: new Date(Date.now() + (2 * 86400000)).toISOString(), status: 'Pending', type: 'Sales Demo' }
+];
+
+export const CRM_COMMUNICATIONS = [
+  { id: 'COM-1', customerId: 'CUST-1', type: 'SMS', direction: 'out', body: 'Hey John, your Z900 appraisal looks solid! When can you bring it by?', timestamp: new Date(Date.now() - 7200000).toISOString(), authorId: 'EMP-3' },
+  { id: 'COM-2', customerId: 'CUST-1', type: 'SMS', direction: 'in', body: 'I can probably swing by Tuesday afternoon. Do you have the new Talon assembled?', timestamp: new Date(Date.now() - 3600000).toISOString(), authorId: null },
+  { id: 'COM-3', customerId: 'CUST-2', type: 'Email', direction: 'out', body: 'Hi Sarah, are you still interested in the Honda Talon?', timestamp: new Date(Date.now() - 82000*60).toISOString(), authorId: 'EMP-4' }
+];
+
+export const CRM_QUOTES = [
+  { id: 'QTE-1', opportunityId: 'OPP-1', customerId: 'CUST-1', status: 'Draft', totalVehiclePrice: 23699, cashDown: 2000, tradeAllowance: 4500, tradePayoff: 0, requestedTerm: 60 }
+];
+
+export const CRM_QUOTE_SCENARIOS = [
+  { id: 'QS-1', quoteId: 'QTE-1', name: 'Standard Payment', apr: 6.99, termLength: 60, monthlyPayment: 342.15, isSelected: true },
+  { id: 'QS-2', quoteId: 'QTE-1', name: 'Aggressive APR (Zero Down)', apr: 3.99, termLength: 48, monthlyPayment: 421.10, isSelected: false }
+];
+
+export const CRM_TRADE_INS = [
+  { id: 'TRD-1', customerId: 'CUST-1', vin: 'JKAZ900XX12345', make: 'Kawasaki', model: 'Z900', year: 2020, mileage: 4200, payOffAmount: 0, actualCashValue: 4500 }
+];
+
+export const CRM_PREQUAL_APPLICATIONS = [
+  { id: 'PQ-1', customerId: 'CUST-1', status: 'Submitted', consentId: 'CON-1', submittedAt: new Date(Date.now() - 86400000).toISOString(), secureNotes: 'Equifax pull returned clean history. ***-**-1234' }
+];
+
+export const CRM_PREQUAL_CONSENTS = [
+  { id: 'CON-1', customerId: 'CUST-1', ipAddress: '192.168.1.44', capturedAt: new Date(Date.now() - 86500000).toISOString(), method: 'SMS Link' }
+];
+
+export const CRM_PREQUAL_RESULTS = [
+  { id: 'PQR-1', applicationId: 'PQ-1', provider: 'Octane', decision: 'Pre-Approved', maxAmount: 28000, tier: 'Prime', assignedAPR: 6.99, stipulationList: ['Proof of income'] }
+];
+
+export const CRM_SCORE_EVENTS = [
+  { id: 'SE-1', customerId: 'CUST-1', newScore: 85, delta: 15, trigger: 'Website Inventory View (Talon)', timestamp: new Date().toISOString() }
+];
+
+export const CRM_LOST_REASONS = [
+  { id: 'LR-1', reason: 'Price too high' },
+  { id: 'LR-2', reason: 'Bought elsewhere' },
+  { id: 'LR-3', reason: 'Credit declined' },
+  { id: 'LR-4', reason: 'Lost contact' }
+];
+
+export const CRM_TAGS = [
+  { id: 'TAG-1', name: 'VIP', color: 'bg-gold text-black' },
+  { id: 'TAG-2', name: 'Bad Credit', color: 'bg-red-500 text-white' },
+  { id: 'TAG-3', name: 'Cash Buyer', color: 'bg-green-500 text-white' },
+  { id: 'TAG-4', name: 'Service Defector', color: 'bg-purple-500 text-white' }
+];
+
+export const CRM_AUTOMATION_RULES = [
+  { id: 'AR-1', name: 'Auto-Assign Internet Leads', trigger: 'New Lead Created', condition: 'Lead Source = Website OR Chat', action: 'Round Robin assigned to Sales Associate', owner: 'EMP-2', active: true },
+  { id: 'AR-2', name: 'Uncontacted Lead Alert (SLA)', trigger: 'Lead Age > 12h', condition: 'Status = New AND Contact Count = 0', action: 'Send SMS Alert to Assigned Rep', owner: 'EMP-2', active: true },
+  { id: 'AR-3', name: 'Manager Escalation: Neglected Hot Lead', trigger: 'Lead Age > 48h', condition: 'Lead Score >= 80 AND Status = Unresponded', action: 'Reassign to GM & Create Priority Task', owner: 'EMP-1', active: true },
+  { id: 'AR-4', name: 'No-Show Follow-Up', trigger: 'Appointment Time Passed', condition: 'Status = NoShow', action: 'Send "Sorry we missed you" Email Sequence', owner: 'EMP-2', active: true },
+  { id: 'AR-5', name: 'Quote Follow-Up (Day 3)', trigger: 'Quote Created', condition: 'Age = 3 Days AND Status = Draft', action: 'Create Follow-up Call Task for Rep', owner: 'EMP-3', active: true },
+  { id: 'AR-6', name: 'Missing Trade Photos Reminder', trigger: 'Trade Captured', condition: 'Missing Photos AND Age > 24h', action: 'Send SMS with Secure Upload Link', owner: 'EMP-2', active: false },
+  { id: 'AR-7', name: 'Prequal Incomplete Chase', trigger: 'Soft-Pull Consent Sent', condition: 'Age > 24h AND No Result', action: 'Send SMS Reminder: "Finish your application"', owner: 'EMP-5', active: true },
+  { id: 'AR-8', name: 'AI Inventory Match Alert', trigger: 'New Unit Added to Floorplan', condition: 'Matches > 85% with any Working Lead', action: 'Email Lead: "We found your perfect match!"', owner: 'System', active: false },
+  { id: 'AR-9', name: 'Price Drop Blast', trigger: 'Unit Price Reduced > $500', condition: 'Unit is on Lead Watchlist', action: 'Send SMS Price Drop Alert', owner: 'EMP-2', active: true },
+  { id: 'AR-10', name: 'Lost Deal Reactivation (60 Day)', trigger: 'Lead Status Changed to Lost', condition: 'Time Since Lost = 60 Days', action: 'Add to "60-Day Resurrection" Marketing List', owner: 'EMP-2', active: true },
+  { id: 'AR-11', name: 'Post-Sale Gratitude Sequence', trigger: 'Deal Status Changed to Funded', condition: 'None', action: 'Queue 3-Day Check-in Email & 30-Day Call', owner: 'EMP-2', active: true },
+  { id: 'AR-12', name: 'First Service Reminder (Break-In)', trigger: 'Deal Status Changed to Funded', condition: 'Category = Vehicle', action: 'Create Service Appointment Task +60 Days', owner: 'EMP-6', active: true }
+];
+
+export const CRM_AUDIT_LOGS = [
+  { id: 'AUD-1', userId: 'EMP-3', action: 'READ_PII', targetId: 'CUST-1', timestamp: new Date().toISOString(), description: 'Accessed secured identity info.' },
+  { id: 'AUD-2', userId: 'EMP-5', action: 'OVERRIDE_RATE', targetId: 'QS-1', timestamp: new Date().toISOString(), description: 'F&I Manager overrode buy rate.' }
 ];
