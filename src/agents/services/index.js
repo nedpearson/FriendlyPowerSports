@@ -6,6 +6,8 @@ import './ExecutiveCommandAgent.js';
 import './LeadIntelligenceAgent.js';
 import './BDCFollowupAgent.js';
 import './InventoryMatchmakingAgent.js';
+import './SalesDeskAgent.js';
+import './FIReadinessAgent.js';
 
 /**
  * Base template for registering an Agent.
@@ -42,12 +44,6 @@ function createDummyAgent(id, name, description, priority, actionTypeName, defau
 }
 
 // Real agents imported and auto-registered above.
-
-// 5. Sales Desk Agent
-createDummyAgent('sales_desk_agent', 'Sales Desk Agent', 'Active deal structuring', 'HIGH', 'ADJUST_GROSS', {type: 'Deal', id: 'DL-881', label: 'Pending Sale'});
-
-// 6. F&I Readiness Agent
-createDummyAgent('fi_readiness_agent', 'F&I Readiness Agent', 'Stipulation & approval checks', 'URGENT', 'SUBMIT_TO_LENDER', {type: 'Prequal', id: 'PQ-99', label: 'Prequal App'});
 
 // 7. Service Retention Agent
 createDummyAgent('service_retention_agent', 'Service Retention Agent', 'Recapture defecting service clients', 'MEDIUM', 'SEND_COUPON', {type: 'ServiceOrder', id: 'RO-112', label: 'RO #112'});
