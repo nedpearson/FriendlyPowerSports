@@ -8,6 +8,8 @@ import './BDCFollowupAgent.js';
 import './InventoryMatchmakingAgent.js';
 import './SalesDeskAgent.js';
 import './FIReadinessAgent.js';
+import './ServiceRetentionAgent.js';
+import './PartsProfitAgent.js';
 
 /**
  * Base template for registering an Agent.
@@ -44,12 +46,6 @@ function createDummyAgent(id, name, description, priority, actionTypeName, defau
 }
 
 // Real agents imported and auto-registered above.
-
-// 7. Service Retention Agent
-createDummyAgent('service_retention_agent', 'Service Retention Agent', 'Recapture defecting service clients', 'MEDIUM', 'SEND_COUPON', {type: 'ServiceOrder', id: 'RO-112', label: 'RO #112'});
-
-// 8. Parts Profit Agent
-createDummyAgent('parts_profit_agent', 'Parts Profit Agent', 'Accessory upselling routing', 'LOW', 'ORDER_PARTS', {type: 'Part', id: 'PT-1', label: 'Slip-on Exhaust'});
 
 // 9. Customer LTV Agent
 createDummyAgent('customer_ltv_agent', 'Customer LTV Agent', 'Lifetime value cohort analysis', 'MEDIUM', 'UPGRADE_TIER', {type: 'Customer', id: 'CUST-1', label: 'John Davis'});
