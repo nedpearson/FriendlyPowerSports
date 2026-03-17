@@ -10,6 +10,8 @@ import './SalesDeskAgent.js';
 import './FIReadinessAgent.js';
 import './ServiceRetentionAgent.js';
 import './PartsProfitAgent.js';
+import './CustomerLTVAgent.js';
+import './AuditComplianceAgent.js';
 
 /**
  * Base template for registering an Agent.
@@ -46,9 +48,3 @@ function createDummyAgent(id, name, description, priority, actionTypeName, defau
 }
 
 // Real agents imported and auto-registered above.
-
-// 9. Customer LTV Agent
-createDummyAgent('customer_ltv_agent', 'Customer LTV Agent', 'Lifetime value cohort analysis', 'MEDIUM', 'UPGRADE_TIER', {type: 'Customer', id: 'CUST-1', label: 'John Davis'});
-
-// 10. Audit Compliance Agent
-createDummyAgent('audit_compliance_agent', 'Audit & Compliance Agent', 'Reg Z / Red Flags checking', 'URGENT', 'FREEZE_DEAL', {type: 'Deal', id: 'DL-444', label: 'Flagged Deal'});
