@@ -191,3 +191,9 @@ export const CRM_AUDIT_LOGS = [
   { id: 'AUD-1', userId: 'EMP-3', action: 'READ_PII', targetId: 'CUST-1', timestamp: new Date().toISOString(), description: 'Accessed secured identity info.' },
   { id: 'AUD-2', userId: 'EMP-5', action: 'OVERRIDE_RATE', targetId: 'QS-1', timestamp: new Date().toISOString(), description: 'F&I Manager overrode buy rate.' }
 ];
+
+/* --- SUPER AGENT PERSISTENCE LAYER --- */
+
+export const AGENT_RECOMMENDATIONS = [];
+export const AGENT_ACTIONS = [];
+export const AGENT_AUDIT_LOGS = [];
