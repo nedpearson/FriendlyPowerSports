@@ -6,7 +6,8 @@ import {
 import {
   LayoutDashboard, TrendingUp, CreditCard, Package, Bike, Wrench,
   Clock, DollarSign, Megaphone, Award, FileBarChart, Users as UsersIcon, Settings,
-  Bell, Search, ChevronRight, CheckCircle2, ChevronDown, User, Play, Calendar, AlertCircle, Command
+  Bell, Search, ChevronRight, CheckCircle2, ChevronDown, User, Play, Calendar, AlertCircle, Command,
+  Briefcase, Users
 } from 'lucide-react';
 
 import { KPICard } from './components/ui/KPICard';
@@ -1248,6 +1249,167 @@ const ReportsModule = ({ onDrillDown }) => {
              </div>
           </div>
        </div>
+     </div>
+  );
+};
+
+const CustomerCRMModule = ({ onDrillDown }) => {
+  return (
+    <div className="space-y-6">
+       <div className="flex justify-between items-center">
+         <h1 className="text-2xl font-playfair text-white">Customer CRM & Equity Mining</h1>
+         <div className="flex gap-2">
+            <button className="bg-charcoal border border-border text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:border-gold transition-colors" onClick={() => onDrillDown('Action', { name: 'Log Walk-In', message: 'Opening up terminal...' })}>
+              + Log Walk-In
+            </button>
+            <button className="bg-gold hover:bg-gold-light text-black px-4 py-2 rounded text-sm font-bold flex items-center gap-2 transition-colors" onClick={() => onDrillDown('Action', { name: 'Run Equity Scan', message: 'Scanning service appointments for trade targets...' })}>
+              <Search className="w-4 h-4" /> Run AI Equity Scan
+            </button>
+         </div>
+      </div>
+
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2 space-y-6">
+             <div className="bg-charcoal border border-border rounded p-6">
+               <h2 className="text-gold font-playfair text-xl mb-4 flex items-center gap-2"><User className="w-5 h-5"/> Live Internet Pipeline</h2>
+               <div className="space-y-3">
+                  {[
+                    { lead: 'Sarah Jenkins', source: 'Website Trade Val', unit: '2022 Seadoo Spark', status: 'New - Unclaimed', time: '14m ago', sColor: 'text-green-500' },
+                    { lead: 'Mike Patterson', source: 'Facebook Ads', unit: '2024 Honda Talon', status: 'Working (Tony G)', time: '2h ago', sColor: 'text-amber-500' },
+                    { lead: 'David Ross', source: 'OEM Corporate', unit: '2024 YZF-R1', status: 'Stalled', time: '2d ago', sColor: 'text-red-500' }
+                  ].map((l,i) => (
+                    <div key={i} className="bg-black border border-border p-3 rounded flex justify-between items-center cursor-pointer hover:border-gold transition-colors group" onClick={() => onDrillDown('Employee', {name: l.lead, role: 'Customer', location: l.source})}>
+                       <div>
+                          <div className="font-bold text-white text-sm group-hover:text-gold transition-colors">{l.lead}</div>
+                          <div className="text-xs text-text-muted">Interested in: <DrillDownValue value={l.unit} label={`Lead: ${l.unit}`} type="Inventory" onDrillDown={onDrillDown} /></div>
+                       </div>
+                       <div className="text-right flex flex-col items-end">
+                          <span className={`text-xs font-bold ${l.sColor}`}><DrillDownValue value={l.status} label={`Lead Status`} type="Action" onDrillDown={onDrillDown} color={l.sColor} /></span>
+                          <span className="text-xs text-text-muted mt-1">{l.time}</span>
+                       </div>
+                    </div>
+                  ))}
+               </div>
+             </div>
+          </div>
+
+          <div className="space-y-6">
+             <div className="bg-charcoal border border-border rounded p-6 h-full border-t-2 border-t-gold">
+               <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-white font-bold text-lg">AI Equity Mining</h2>
+                  <span className="bg-gold text-black text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Live</span>
+               </div>
+               <p className="text-xs text-text-muted mb-4 border-b border-border pb-4 opacity-80">Scanning today's service ROs and CRM database against current Manheim/NPA auction values to find positive equity targets.</p>
+               
+               <div className="space-y-4">
+                  <div className="bg-black border border-border p-3 rounded hover:border-gold-dim transition-colors cursor-pointer" onClick={() => onDrillDown('Deal', {customer: 'Mark Evans', unit: '2021 MT-07', type: 'Trade-Up'})}>
+                     <div className="flex justify-between items-center mb-1">
+                        <span className="font-bold text-white text-sm">Mark Evans</span>
+                        <span className="text-xs text-text-dim">Service Bay 4</span>
+                     </div>
+                     <div className="text-xs text-text-muted mb-2">Owns: 2021 Yamaha MT-07</div>
+                     <div className="bg-panel p-2 rounded flex justify-between items-center">
+                        <span className="text-xs font-bold text-green-500 flex items-center gap-1"><TrendingUp className="w-3 h-3"/> + <DrillDownValue value="$3,100" label="Estimated Equity" type="Financials" onDrillDown={onDrillDown} color="text-green-500" /></span>
+                        <button className="text-[10px] bg-gold text-black px-2 py-1 rounded font-bold uppercase" onClick={(e) => { e.stopPropagation(); onDrillDown('Action', {name: 'Generate Trade Pitch', message: 'Building sales desking presentation...'})}}>Pitch Trade</button>
+                     </div>
+                  </div>
+
+                  <div className="bg-black border border-border p-3 rounded hover:border-gold-dim transition-colors cursor-pointer" onClick={() => onDrillDown('Deal', {customer: 'Lisa Chen', unit: '2022 Pioneer 1000', type: 'Trade-Up'})}>
+                     <div className="flex justify-between items-center mb-1">
+                        <span className="font-bold text-white text-sm">Lisa Chen</span>
+                        <span className="text-xs text-text-dim">Sales Floor</span>
+                     </div>
+                     <div className="text-xs text-text-muted mb-2">Owns: 2022 Pioneer 1000</div>
+                     <div className="bg-panel p-2 rounded flex justify-between items-center">
+                        <span className="text-xs font-bold text-green-500 flex items-center gap-1"><TrendingUp className="w-3 h-3"/> + <DrillDownValue value="$4,850" label="Estimated Equity" type="Financials" onDrillDown={onDrillDown} color="text-green-500" /></span>
+                        <button className="text-[10px] bg-gold text-black px-2 py-1 rounded font-bold uppercase" onClick={(e) => { e.stopPropagation(); onDrillDown('Action', {name: 'Generate Trade Pitch', message: 'Building sales desking presentation...'})}}>Pitch Trade</button>
+                     </div>
+                  </div>
+               </div>
+             </div>
+          </div>
+       </div>
+    </div>
+  );
+};
+
+const AccountingGLModule = ({ onDrillDown }) => {
+  return (
+    <div className="space-y-6">
+       <div className="flex justify-between items-center">
+         <h1 className="text-2xl font-playfair text-white">Accounting & General Ledger</h1>
+         <button className="bg-gold hover:bg-gold-light text-black px-4 py-2 rounded text-sm font-bold flex items-center gap-2 transition-colors" onClick={() => onDrillDown('Action', { name: 'Run Month-End Close', message: 'Validating ledgers for close out...' })}>
+           <CheckCircle2 className="w-4 h-4" /> Run Month-End Close
+         </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          { label: "Operating Cash", value: "$412,850", delta: "+$14k vs Mo", color: "text-green-500" },
+          { label: "Total A/R", value: "$184,200", delta: "12% Aged >30d", color: "text-amber-500" },
+          { label: "Total A/P", value: "$62,400", delta: "On Schedule", color: "text-green-500" },
+          { label: "CIT (Contracts in Transit)", value: "$142,500", delta: "$82k Funding Today", color: "text-gold" }
+        ].map((m,i) => (
+          <div key={i} className="bg-charcoal p-4 rounded border border-border">
+            <div className="text-xs text-text-muted font-mono mb-1 uppercase tracking-wider">{m.label}</div>
+            <div className={`text-2xl font-bold ${m.label === 'Operating Cash' ? 'text-white' : 'text-gold'}`}>
+               <DrillDownValue value={m.value} label={m.label} type="Financials" onDrillDown={onDrillDown} color={m.label === 'Operating Cash' ? 'text-white' : 'text-gold'} />
+            </div>
+            <div className={`text-xs mt-1 ${m.color} bg-black inline-block px-1 rounded`}>
+               {m.delta}
+            </div>
+          </div>
+        ))}
+      </div>
+
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-charcoal border border-border rounded p-6">
+             <div className="flex justify-between items-center mb-6">
+               <h2 className="text-gold font-playfair text-xl">Accounts Receivable Aging</h2>
+               <div className="text-xs border border-border px-2 py-1 rounded text-text-muted">As of Today</div>
+             </div>
+             
+             <div className="space-y-4">
+               {[
+                  { label: "0-30 Days", amount: "$162,096", pct: 88, bg: "bg-green-500" },
+                  { label: "31-60 Days", amount: "$14,736", pct: 8, bg: "bg-amber-500" },
+                  { label: "61-90 Days", amount: "$5,526", pct: 3, bg: "bg-orange-500" },
+                  { label: "90+ Days (Critical)", amount: "$1,842", pct: 1, bg: "bg-red-500" }
+               ].map((a, i) => (
+                 <div key={i} className="relative">
+                   <div className="flex justify-between text-xs mb-1">
+                     <span className="text-white">{a.label}</span>
+                     <span className="font-bold text-white"><DrillDownValue value={a.amount} label={`A/R Aging: ${a.label}`} type="Financials" onDrillDown={onDrillDown} /></span>
+                   </div>
+                   <div className="w-full bg-black h-2 rounded-full overflow-hidden border border-border">
+                     <div className={`h-full ${a.bg}`} style={{width: `${a.pct}%`}}></div>
+                   </div>
+                 </div>
+               ))}
+             </div>
+          </div>
+          
+          <div className="bg-charcoal border border-border rounded p-6">
+             <h2 className="text-gold font-playfair text-xl mb-6">Bank Reconciliations</h2>
+             <div className="space-y-3">
+               {[
+                 { acct: 'Chase Operating (...4492)', status: 'Reconciled', date: 'Yesterday' },
+                 { acct: 'Wells Fargo Flooring (...1102)', status: 'Pending', date: '3 days ago' },
+                 { acct: 'Capital One Payroll (...0093)', status: 'Reconciled', date: 'Today' }
+               ].map((b, i) => (
+                  <div key={i} className="bg-black border border-border p-3 rounded flex justify-between items-center hover:border-gold transition-colors cursor-pointer" onClick={() => onDrillDown('Financials', { account: b.acct })}>
+                     <div>
+                        <div className="font-bold text-white text-sm">{b.acct}</div>
+                        <div className="text-xs text-text-muted mt-1">Last matched: {b.date}</div>
+                     </div>
+                     <span className={`text-xs px-2 py-1 rounded font-bold border border-current ${b.status === 'Reconciled' ? 'text-green-500' : 'text-amber-500'}`}>
+                        {b.status}
+                     </span>
+                  </div>
+               ))}
+             </div>
+          </div>
+       </div>
     </div>
   );
 };
@@ -1340,6 +1502,7 @@ const App = () => {
   const NAV_ITEMS = [
     { name: "Dashboard", icon: LayoutDashboard },
     { name: "Sales", icon: TrendingUp },
+    { name: "Customer CRM", icon: Users },
     { name: "F&I / Finance", icon: CreditCard },
     { name: "Inventory", icon: Package },
     { name: "Used Bikes / UBD", icon: Bike },
@@ -1349,6 +1512,7 @@ const App = () => {
     { name: "Marketing", icon: Megaphone },
     { name: "OEM Incentives", icon: Award },
     { name: "Reports", icon: FileBarChart },
+    { name: "Accounting & GL", icon: Briefcase },
     { name: "Employee Hub", icon: UsersIcon },
     { name: "Settings", icon: Settings },
   ];
@@ -1476,6 +1640,7 @@ const App = () => {
           <div className="max-w-[1600px] mx-auto">
             {activeTab === "Dashboard" && <DashboardModule onNavigate={setActiveTab} onDrillDown={handleDrillDown} company={activeCompany} location={activeLocation} />}
             {activeTab === "Sales" && <SalesModule onNavigate={setActiveTab} onDrillDown={handleDrillDown} />}
+            {activeTab === "Customer CRM" && <CustomerCRMModule onDrillDown={handleDrillDown} />}
             {activeTab === "F&I / Finance" && <FIModule onDrillDown={handleDrillDown} />}
             {activeTab === "Inventory" && <InventoryModule onDrillDown={handleDrillDown} />}
             {activeTab === "Used Bikes / UBD" && <UsedBikesModule onDrillDown={handleDrillDown} />}
@@ -1484,10 +1649,11 @@ const App = () => {
             {activeTab === "OEM Incentives" && <OEMIncentivesModule onDrillDown={handleDrillDown} />}
             {activeTab === "Marketing" && <MarketingModule onDrillDown={handleDrillDown} />}
             {activeTab === "Reports" && <ReportsModule onDrillDown={handleDrillDown} />}
+            {activeTab === "Accounting & GL" && <AccountingGLModule onDrillDown={handleDrillDown} />}
             {activeTab === "Employee Hub" && <EmployeeHubModule user={currentUser} onDrillDown={handleDrillDown} />}
             {activeTab === "Settings" && <SettingsModule onDrillDown={handleDrillDown} />}
             {activeTab === "Clock In / HR" && <ClockInModule user={currentUser} onDrillDown={handleDrillDown} />}
-            {![ "Dashboard", "Sales", "F&I / Finance", "Inventory", "Used Bikes / UBD", "Service & Parts", "Payroll", "OEM Incentives", "Marketing", "Reports", "Employee Hub", "Settings", "Clock In / HR" ].includes(activeTab) && (
+            {![ "Dashboard", "Sales", "Customer CRM", "F&I / Finance", "Inventory", "Used Bikes / UBD", "Service & Parts", "Payroll", "OEM Incentives", "Marketing", "Reports", "Accounting & GL", "Employee Hub", "Settings", "Clock In / HR" ].includes(activeTab) && (
               <PlaceholderModule title={`${activeTab} Module`} desc={`Select Dashboard, Sales, or Clock In to see full interactive builds. Or ask the agent to render ${activeTab} fully.`} />
             )}
             
