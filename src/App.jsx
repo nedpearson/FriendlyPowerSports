@@ -2459,8 +2459,120 @@ const CopilotModal = ({ isOpen, onClose, onDrillDown }) => {
   );
 };
 
-/* --- APP SHELL --- */
+const OmniCommandModule = ({ onDrillDown }) => {
+  const [recommendations, setRecommendations] = useState([]);
+  const [view, setView] = useState("Review");
 
+  useEffect(() => {
+    // Generate trigger implicitly
+    const fetchRecs = async () => {
+       await AgentRegistry.broadcastTrigger({ type: 'MANUAL', timestamp: new Date().toISOString() }, { userId: 'EMP-1', role: 'Owner', locationId: 'ALL' });
+       // Fetch everything
+       setRecommendations(RecommendationService.fetchPending({ userRole: 'Owner' }));
+    };
+    fetchRecs();
+  }, []);
+
+  const executeAction = (recId) => {
+    // Optimistically update
+    setRecommendations(prev => prev.map(r => r.id === recId ? { ...r, status: 'Approved' } : r));
+    const execution = ActionExecutionService.executeRecommendation(recId, { userId: 'EMP-1' });
+    if (execution.status === 'ERROR') {
+       alert("Error executing action: " + execution.error);
+    }
+  };
+
+  const snoozeAction = (recId) => {
+    setRecommendations(prev => prev.map(r => r.id === recId ? { ...r, status: 'Snoozed' } : r));
+  };
+
+  const getFilteredRecs = (statusGroup) => {
+     if (statusGroup === 'Review') return recommendations.filter(r => !r.status || r.status === 'Pending' || r.status === 'Unresolved');
+     return recommendations.filter(r => r.status === statusGroup);
+  };
+
+  const renderCard = (rec) => (
+    <div key={rec.id} className="bg-panel border border-border p-4 rounded-lg flex flex-col justify-between shadow">
+       <div>
+         <div className="flex justify-between items-start mb-2">
+            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border uppercase tracking-widest ${rec.priority === 'URGENT' ? 'bg-red-900/20 text-red-500 border-red-500/30' : rec.priority === 'HIGH' ? 'bg-gold/10 text-gold border-gold/30' : 'bg-green-900/20 text-green-500 border-green-500/30'}`}>
+              {rec.priority} PRIORITY
+            </span>
+            <span className="text-xs text-text-muted">{new Date(rec.generatedAt).toLocaleTimeString()}</span>
+         </div>
+         <h4 className="text-white font-bold text-sm mb-1 line-clamp-2" title={rec.title}>{rec.title}</h4>
+         <p className="text-xs text-text-dim line-clamp-2">{rec.description}</p>
+         
+         <div className="mt-3 flex gap-2">
+           {rec.agentId === 'super_orchestrator' ? (
+              <span className="text-[10px] bg-electric border border-electric/50 text-white font-bold px-1.5 py-0.5 rounded shadow-[0_0_10px_rgba(0,195,255,0.4)]">MULTI-DEPARTMENT SYNERGY</span>
+           ) : (
+              <span className="text-[10px] bg-charcoal text-text-muted px-1.5 py-0.5 rounded border border-border">AGENT: {rec.agentId.replace('ag_','')}</span>
+           )}
+           <span className="text-[10px] bg-charcoal text-text-muted px-1.5 py-0.5 rounded border border-border">CONF: {rec.confidenceScore}%</span>
+         </div>
+       </div>
+       
+       <div className="mt-4 pt-3 border-t border-border/50 flex flex-wrap gap-2">
+          {view === "Review" ? (
+             <>
+               <button onClick={() => executeAction(rec.id)} className="flex-1 bg-gold text-black text-xs font-bold py-1.5 rounded hover:bg-gold-light transition-colors">Approve & Execute</button>
+               <button onClick={() => snoozeAction(rec.id)} className="bg-black border border-border text-text hover:text-white text-xs px-3 py-1.5 rounded transition-colors">Snooze</button>
+               <button onClick={() => onDrillDown('AgentRecommendation', rec)} className="bg-black border border-border text-text hover:text-white text-xs px-3 py-1.5 rounded transition-colors" title="Deep inspection"><Search className="w-3.5 h-3.5"/></button>
+             </>
+          ) : view === "Approved" ? (
+             <div className="w-full text-center text-xs font-bold text-green-500 bg-green-900/20 py-1 rounded border border-green-500/20">Execution Logged</div>
+          ) : (
+             <button onClick={() => setRecommendations(prev => prev.map(r => r.id === rec.id ? { ...r, status: 'Pending' } : r))} className="w-full text-center text-xs font-bold text-amber-500 bg-amber-900/20 py-1 rounded border border-amber-500/20 hover:bg-amber-800 transition-colors">Wake from Snooze</button>
+          )}
+       </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6 h-full flex flex-col">
+       <div className="flex justify-between items-center shrink-0">
+          <div className="flex items-center gap-3">
+             <div className="w-12 h-12 bg-charcoal border border-border rounded flex items-center justify-center text-gold shadow-[0_0_15px_rgba(201,168,76,0.2)]">
+               <Zap className="w-6 h-6" />
+             </div>
+             <div>
+               <h1 className="text-2xl font-playfair text-white">Omni-Command Center</h1>
+               <p className="text-text-muted text-sm border-l-2 border-gold pl-2 ml-1">Global Strategy & Execution Orchestration</p>
+             </div>
+          </div>
+          
+          <div className="flex bg-charcoal border border-border rounded overflow-hidden">
+             {['Review', 'Approved', 'Snoozed'].map(tab => (
+                <button 
+                  key={tab}
+                  className={`px-4 py-2 text-sm font-bold transition-colors ${view === tab ? 'bg-gold text-black shadow-inner' : 'text-text-muted hover:bg-panel hover:text-white'}`}
+                  onClick={() => setView(tab)}
+                >
+                  {tab} ({getFilteredRecs(tab).length})
+                </button>
+             ))}
+          </div>
+       </div>
+
+       <div className="flex-1 bg-charcoal border border-border rounded-xl p-4 overflow-y-auto">
+          {getFilteredRecs(view).length === 0 ? (
+             <div className="h-full flex flex-col items-center justify-center text-text-muted">
+                <CheckCircle2 className="w-16 h-16 text-green-900/50 mb-4" />
+                <p className="text-lg font-playfair text-white mb-1">{view === 'Review' ? "Inbox Zero." : `No ${view.toLowerCase()} actions.`}</p>
+                <p className="text-sm">All agent recommendations have been processed.</p>
+             </div>
+          ) : (
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 auto-rows-max">
+               {getFilteredRecs(view).map(renderCard)}
+             </div>
+          )}
+       </div>
+    </div>
+  );
+};
+
+/* --- APP SHELL --- */
 const App = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [activeTab, setActiveTab] = useState("Dashboard");
@@ -2491,6 +2603,7 @@ const App = () => {
 
   const NAV_ITEMS = [
     { name: "Dashboard", icon: LayoutDashboard },
+    { name: "Omni-Command", icon: Zap },
     { name: "Sales", icon: TrendingUp },
     { name: "Customer CRM", icon: Users },
     { name: "AI Command Center", icon: Command },
@@ -2632,6 +2745,7 @@ const App = () => {
           <div className="max-w-[1600px] mx-auto">
             {activeTab === "Dashboard" && <OperationalDashboardsModule onNavigate={setActiveTab} onDrillDown={handleDrillDown} userRole={currentUser?.role} company={activeCompany} location={activeLocation} />}
             {activeTab === "Sales" && <SalesModule onNavigate={setActiveTab} onDrillDown={handleDrillDown} />}
+            {activeTab === "Omni-Command" && <OmniCommandModule onDrillDown={handleDrillDown} />}
             {activeTab === "Customer CRM" && <CustomerCRMModule onDrillDown={handleDrillDown} user={currentUser} />}
             {activeTab === "AI Command Center" && <AICommandCenterModule onDrillDown={handleDrillDown} userRole={currentUser?.role} />}
             {activeTab === "F&I / Finance" && <FIModule onDrillDown={handleDrillDown} />}
@@ -2646,7 +2760,7 @@ const App = () => {
             {activeTab === "Employee Hub" && <EmployeeHubModule user={currentUser} onDrillDown={handleDrillDown} />}
             {activeTab === "Settings" && <SettingsModule onDrillDown={handleDrillDown} />}
             {activeTab === "Clock In / HR" && <ClockInModule user={currentUser} onDrillDown={handleDrillDown} />}
-            {![ "Dashboard", "Sales", "Customer CRM", "AI Command Center", "F&I / Finance", "Inventory", "Used Bikes / UBD", "Service & Parts", "Payroll", "OEM Incentives", "Marketing", "Reports", "Accounting & GL", "Employee Hub", "Settings", "Clock In / HR" ].includes(activeTab) && (
+            {![ "Dashboard", "Omni-Command", "Sales", "Customer CRM", "AI Command Center", "F&I / Finance", "Inventory", "Used Bikes / UBD", "Service & Parts", "Payroll", "OEM Incentives", "Marketing", "Reports", "Accounting & GL", "Employee Hub", "Settings", "Clock In / HR" ].includes(activeTab) && (
               <PlaceholderModule title={`${activeTab} Module`} desc={`Select Dashboard, Sales, or Clock In to see full interactive builds. Or ask the agent to render ${activeTab} fully.`} />
             )}
             

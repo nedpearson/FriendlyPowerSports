@@ -2021,6 +2021,78 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
         );
       }
 
+      case 'DealSimulator': {
+        const baseMSRP = 15000;
+        const baseCost = 12500;
+        const baseFront = baseMSRP - baseCost; // 2500
+        const tradeAcvTarget = 5000;
+        
+        const currentFrontGross = baseFront - simMsrpDiscount + (tradeAcvTarget - simAcv);
+        const totalProfit = currentFrontGross + simFiGross;
+        const aiDecision = totalProfit >= 2500 ? "PUSH" : totalProfit >= 1500 ? "NEGOTIATE" : "HOLD FIRM";
+        
+        return (
+          <div className="space-y-6">
+             <h3 className="text-2xl font-playfair text-white border-b border-border pb-3 flex items-center justify-between">
+                <div className="flex items-center gap-3"><Calculator className="w-7 h-7 text-gold" /> "What-If" Deal Simulator</div>
+                <div className={`text-[10px] font-mono font-bold px-3 py-1.5 rounded border uppercase tracking-widest ${aiDecision === 'PUSH' ? 'bg-green-900/20 text-green-500 border-green-500/30' : aiDecision === 'NEGOTIATE' ? 'bg-amber-900/20 text-amber-500 border-amber-500/30' : 'bg-red-900/20 text-red-500 border-red-500/30'}`}>
+                   AI REC: {aiDecision}
+                </div>
+             </h3>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-charcoal p-6 border border-border rounded shadow-[0_0_15px_rgba(201,168,76,0.05)] space-y-6">
+                   <h4 className="text-xs text-text-muted font-mono uppercase tracking-widest mb-4 border-b border-border/50 pb-2">Deal Levers</h4>
+                   
+                   <div>
+                      <div className="flex justify-between text-sm mb-2"><span className="text-white">MSRP Discount</span><span className="text-gold font-bold font-mono">-${simMsrpDiscount}</span></div>
+                      <input type="range" min="0" max="4000" step="100" value={simMsrpDiscount} onChange={e => setSimMsrpDiscount(Number(e.target.value))} className="w-full accent-gold bg-black/50" />
+                   </div>
+                   
+                   <div>
+                      <div className="flex justify-between text-sm mb-2"><span className="text-white">Trade ACV Over-allowance</span><span className="text-red-400 font-bold font-mono">-${Math.max(0, simAcv - tradeAcvTarget)}</span></div>
+                      <input type="range" min="3000" max="8000" step="100" value={simAcv} onChange={e => setSimAcv(Number(e.target.value))} className="w-full accent-red-500 bg-black/50" />
+                      <div className="text-[10px] text-text-muted text-right mt-1">Base ACV Target: $5,000</div>
+                   </div>
+
+                   <div>
+                      <div className="flex justify-between text-sm mb-2"><span className="text-white">F&I Backend Gross Target</span><span className="text-green-500 font-bold font-mono">+${simFiGross}</span></div>
+                      <input type="range" min="0" max="3000" step="100" value={simFiGross} onChange={e => setSimFiGross(Number(e.target.value))} className="w-full accent-green-500 bg-black/50" />
+                   </div>
+                   
+                   <div>
+                      <div className="flex justify-between text-sm mb-2"><span className="text-white">Desired Term Length</span><span className="text-blue-400 font-bold font-mono">{simTerm} Mos</span></div>
+                      <input type="range" min="24" max="84" step="12" value={simTerm} onChange={e => setSimTerm(Number(e.target.value))} className="w-full accent-blue-500 bg-black/50" />
+                   </div>
+                </div>
+
+                <div className="bg-black p-6 border border-border rounded shadow-inner flex flex-col justify-between relative overflow-hidden group">
+                   <div className="absolute inset-0 bg-gradient-to-br from-gold/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                   <div>
+                      <h4 className="text-xs text-text-muted font-mono uppercase tracking-widest mb-4 border-b border-border/50 pb-2">Deal Economics</h4>
+                      <div className="space-y-3 mb-6">
+                         <div className="flex justify-between text-sm"><span className="text-text-muted">Front End Gross:</span><span className={`font-mono font-bold ${currentFrontGross < 0 ? 'text-red-500' : 'text-white'}`}>${currentFrontGross.toLocaleString()}</span></div>
+                         <div className="flex justify-between text-sm"><span className="text-text-muted">F&I Backend Gross:</span><span className="font-mono font-bold text-green-500">${simFiGross.toLocaleString()}</span></div>
+                      </div>
+                      <div className="flex justify-between text-lg border-t border-border pt-3"><span className="text-white font-playfair font-bold">Total Economic Profit:</span><span className="font-mono font-bold text-gold">${totalProfit.toLocaleString()}</span></div>
+                   </div>
+                   
+                   <div className="mt-8">
+                      <strong className="text-gold text-[10px] uppercase tracking-[0.15em] mb-2 block font-mono flex items-center gap-2">
+                         <BrainCircuit className="w-4 h-4 text-gold" /> AI Risk Synthesis
+                      </strong>
+                      <p className="text-text-muted text-sm leading-relaxed mb-4">
+                         {aiDecision === 'PUSH' ? "This deal structure sits well above the $2,500 enterprise margin threshold. AI recommends immediate presentation to customer." : aiDecision === 'NEGOTIATE' ? "Deal is acceptable but below optimal thresholds. Consider anchoring down the trade-in allowance by $500 before presenting to customer." : "Warning: Deal violates profit floor constraints (Sub-$1,500 total). Do not present without shifting F&I product penetration or reducing the discount."}
+                      </p>
+                      <button className="w-full bg-gold hover:bg-gold-light text-black transition-colors px-4 py-3 rounded text-sm font-bold shadow-[0_0_15px_rgba(201,168,76,0.2)] flex items-center justify-center gap-2 uppercase tracking-wide" onClick={() => onDrillDown('Action', { name: `Apply Deal Simulation to Active Quote`, message: `Overwriting active desk quote and pinging sales rep...` })}>
+                         <CheckCircle2 className="w-4 h-4"/> Sync Back to Quote Workbench
+                      </button>
+                   </div>
+                </div>
+             </div>
+          </div>
+        );
+      }
+
       case 'OEM':
       default:
         // Enhanced robust default view for unmapped or generic data points
