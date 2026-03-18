@@ -24,18 +24,31 @@ const AutomatedInsightsInner = ({ insights, onDrillDown }) => {
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         {insights.map((insight, idx) => (
-          <div key={idx} className="bg-charcoal border border-border rounded p-4 flex gap-3 items-start hover:border-gold-dim transition-colors group cursor-pointer relative overflow-hidden">
+          <div key={idx} 
+               className="bg-charcoal border border-border rounded p-4 flex gap-3 items-start hover:border-gold-dim transition-colors group cursor-pointer relative overflow-hidden"
+               onClick={() => {
+                 if (insight.onAction) {
+                   insight.onAction();
+                 } else if (onDrillDown && insight.actionText) {
+                   onDrillDown('Action', { name: insight.actionText, context: 'Automated Insight' });
+                 }
+               }}
+          >
             <div className="absolute top-0 left-0 w-1 h-full bg-gold opacity-0 group-hover:opacity-100 transition-opacity"></div>
             {getIcon(insight.type)}
             <div>
-              <p className="text-sm text-text leading-relaxed">
+              <p className="text-sm text-text leading-relaxed pointer-events-none">
                 {insight.message}
               </p>
               {insight.actionText && (
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (onDrillDown) onDrillDown('Action', { name: insight.actionText, context: 'Automated Insight' });
+                    if (insight.onAction) {
+                      insight.onAction();
+                    } else if (onDrillDown) {
+                      onDrillDown('Action', { name: insight.actionText, context: 'Automated Insight' });
+                    }
                   }}
                   className="text-xs font-bold font-mono tracking-wide text-gold mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform"
                 >

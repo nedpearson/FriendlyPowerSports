@@ -1826,7 +1826,7 @@ const UniversalReportView = ({ item }) => {
                 </h4>
                 
                 <div className="prose prose-invert prose-sm max-w-none text-text">
-                   <p className="mb-4"><strong>Strategic Rationale:</strong> The AI Agent ({rec.agentId.replace('ag_','')}) has evaluated current operational conditions and determined this course of action optimal with a <strong>{rec.confidenceScore}% confidence interval</strong>.</p>
+                   <p className="mb-4"><strong>Strategic Rationale:</strong> The AI Agent ({(rec.agentId || 'SYSTEM').replace('ag_','')}) has evaluated current operational conditions and determined this course of action optimal with a <strong>{rec.confidenceScore || 95}% confidence interval</strong>.</p>
                    
                    {rec.strategyNotes && (
                       <div className="mb-6 p-4 bg-black border border-border/50 rounded-lg shadow-inner">
@@ -1842,7 +1842,7 @@ const UniversalReportView = ({ item }) => {
                          <h5 className="text-white text-sm font-bold mb-3 uppercase tracking-wide">Proposed Action Sequence</h5>
                          <div className="space-y-3">
                             {rec.proposedActions.map((action, i) => (
-                               <div key={i} className="flex items-center justify-between bg-panel p-3 rounded border border-border relative z-10 hover:bg-black transition-colors group">
+                               <button key={i} onClick={() => onDrillDown('Action', { name: action.actionType.replace(/_/g, ' '), message: JSON.stringify(action.payload) || 'Execution parameters attached.', actionType: action.actionType, payload: action.payload, requiresApproval: action.requiresApproval })} className="w-full text-left flex items-center justify-between bg-panel p-3 rounded border border-border relative z-10 hover:border-gold-dim hover:bg-black transition-colors group cursor-pointer shadow-inner">
                                   <div className="flex items-start gap-4">
                                      <div className="w-8 h-8 rounded-full bg-gold/10 border border-gold/30 text-gold flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-gold group-hover:text-black transition-colors">{i+1}</div>
                                      <div>
@@ -1854,8 +1854,8 @@ const UniversalReportView = ({ item }) => {
                                     <div className="text-[10px] text-red-500 uppercase tracking-widest font-bold border border-red-500/30 bg-red-900/10 px-2 py-1 rounded whitespace-nowrap">Admin Required</div>
                                     : <div className="text-[10px] text-green-500 uppercase tracking-widest font-bold border border-green-500/30 bg-green-900/10 px-2 py-1 rounded whitespace-nowrap">Auto-Execute</div>
                                   }
-                               </div>
-                            ))}
+                                </button>
+                             ))}
                          </div>
                       </div>
                    )}

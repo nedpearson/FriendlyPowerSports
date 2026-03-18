@@ -34,20 +34,63 @@ export const AgentOrchestrator = {
           // Identify the base entity
           const entityLabel = groupRecs[0].relatedEntities.find(e => `${e.entityType}_${e.entityId}` === key)?.label || key;
 
-          // Merge Actions
+          // Merge Actions and Notes
           const mergedActions = [];
+          const mergedNotes = [];
+          const seenActions = new Set();
+
           groupRecs.forEach(r => {
-             if (r.proposedActions) mergedActions.push(...r.proposedActions);
+             if (r.proposedActions) {
+                 r.proposedActions.forEach(a => {
+                     const hash = `${a.actionType}_${JSON.stringify(a.payload)}`;
+                     if (!seenActions.has(hash)) {
+                         seenActions.add(hash);
+                         mergedActions.push(a);
+                     }
+                 });
+             }
+             if (r.strategyNotes) mergedNotes.push(...r.strategyNotes.map(n => `[${r.agentId.split('_')[1]?.toUpperCase() || 'SYSTEM'}] ${n}`));
           });
+
+          // Natural Language Formatter
+          const uniqueInsights = new Map();
+          groupRecs.forEach(r => {
+             const agentName = r.agentId.split('_')[0].toUpperCase();
+             const cleanTitle = r.title.replace('Multi-Department Strategy: ', '').trim();
+             if (!uniqueInsights.has(cleanTitle)) {
+                 uniqueInsights.set(cleanTitle, agentName);
+             }
+          });
+
+          let nlpDesc = "Cross-departmental intelligence has evaluated this entity. ";
+          const bulletPoints = [];
+          uniqueInsights.forEach((agentName, message) => {
+             bulletPoints.push(`the ${agentName} agent flagged "${message}"`);
+          });
+
+          if (bulletPoints.length === 1) {
+             nlpDesc += bulletPoints[0].charAt(0).toUpperCase() + bulletPoints[0].slice(1) + ".";
+          } else if (bulletPoints.length === 2) {
+             nlpDesc += bulletPoints[0].charAt(0).toUpperCase() + bulletPoints[0].slice(1) + " while " + bulletPoints[1] + ".";
+          } else if (bulletPoints.length > 2) {
+             const last = bulletPoints.pop();
+             nlpDesc += bulletPoints[0].charAt(0).toUpperCase() + bulletPoints[0].slice(1);
+             if (bulletPoints.length > 1) {
+               nlpDesc += ", " + bulletPoints.slice(1).join(", ");
+             }
+             nlpDesc += ", and " + last + ".";
+          }
+          nlpDesc += " Please review the operational deep-dive below for immediate deployment strategies.";
 
           // Create the Super Prompt / Multi-Department Strategy
           const strategyRec = {
              title: `Multi-Department Strategy: ${entityLabel}`,
-             description: `[SYNTHESIZED] Multiple agents flagged this entity. Combined insights: ` + groupRecs.map(r => `(${r.agentId.split('_')[0].toUpperCase()}): ${r.title}`).join(' | '),
+             description: nlpDesc,
              confidenceScore: 99,
              priority: 'URGENT',
              relatedEntities: groupRecs[0].relatedEntities, // Keep the same entity links
-             proposedActions: mergedActions
+             proposedActions: mergedActions,
+             strategyNotes: mergedNotes.length > 0 ? mergedNotes : ["Multi-vector AI synthesis indicates immediate action required."]
           };
 
           // Generate the meta-recommendation (Assume a generic Orchestrator Agent context)
