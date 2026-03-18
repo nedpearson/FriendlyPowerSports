@@ -81,9 +81,11 @@ export const DEALS = [
 ];
 
 export const SERVICE_ORDERS = [
-  { id: 'RO-1842', customerId: 'CUST-1', unitDesc: '2024 Honda Talon', techId: 'EMP-6', advisorId: 'EMP-4', status: 'In Progress', type: 'Customer Pay', laborHoursSold: 4.0, laborHoursActual: 2.5, partsSale: 120, partsCost: 65, openedAt: new Date(Date.now() - 4*3600000) },
-  { id: 'RO-1843', customerId: 'CUST-2', unitDesc: '2022 Yamaha Waverunner', techId: null, advisorId: 'EMP-4', status: 'Waiting Parts', type: 'Warranty', laborHoursSold: 2.0, laborHoursActual: 0, partsSale: 0, partsCost: 0, openedAt: new Date(Date.now() - 24*3600000) },
-  { id: 'RO-1844', customerId: 'CUST-3', unitDesc: '2023 Polaris Rzr', techId: 'EMP-7', advisorId: 'EMP-8', status: 'Quality Check', type: 'Internal', laborHoursSold: 3.5, laborHoursActual: 3.5, partsSale: 850, partsCost: 400, openedAt: new Date(Date.now() - 2*3600000) }
+  { id: 'RO-1842', customerId: 'CUST-1', unitDesc: '2024 Honda Talon', techId: 'EMP-6', advisorId: 'EMP-4', status: 'In Progress', type: 'Customer Pay', laborHoursSold: 4.0, laborHoursActual: 2.5, partsSale: 120, partsCost: 65, openedAt: new Date(Date.now() - 4*3600000).toISOString() },
+  { id: 'RO-1843', customerId: 'CUST-2', unitDesc: '2022 Yamaha Waverunner', techId: null, advisorId: 'EMP-4', status: 'Waiting Parts', type: 'Warranty', laborHoursSold: 2.0, laborHoursActual: 0, partsSale: 0, partsCost: 0, openedAt: new Date(Date.now() - 24*3600000).toISOString() },
+  { id: 'RO-1844', customerId: 'CUST-3', unitDesc: '2023 Polaris Rzr', techId: 'EMP-7', advisorId: 'EMP-8', status: 'Quality Check', type: 'Internal', laborHoursSold: 3.5, laborHoursActual: 3.5, partsSale: 850, partsCost: 400, openedAt: new Date(Date.now() - 2*3600000).toISOString() },
+  { id: 'RO-1845', customerId: 'CUST-5', unitDesc: '2020 Kawasaki Z900', techId: 'EMP-6', advisorId: 'EMP-8', status: 'Ready for Pickup', type: 'Customer Pay', laborHoursSold: 1.5, laborHoursActual: 1.2, partsSale: 45, partsCost: 20, openedAt: new Date(Date.now() - 48*3600000).toISOString() },
+  { id: 'RO-1846', customerId: 'CUST-4', unitDesc: '2021 Yamaha MT-07', techId: 'EMP-7', advisorId: 'EMP-4', status: 'In Bay', type: 'Customer Pay', laborHoursSold: 6.0, laborHoursActual: 5.5, partsSale: 420, partsCost: 190, openedAt: new Date(Date.now() - 6*3600000).toISOString() }
 ];
 
 export const TASKS_AND_ALERTS = [

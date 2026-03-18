@@ -852,60 +852,135 @@ const ServicePartsModule = ({ onDrillDown }) => {
     actionText: "Review Service Plan",
     onAction: () => onDrillDown('AgentRecommendation', { ...rec })
   })) : [
-    { type: "opportunity", message: <>Service to Sales AI has identified <DrillDownValue value="12 customers" label="Equity Candidates" type="Report" /> with positive equity currently in the active Service bay. Target them before ticket close.</>, actionText: "View Lane Conquests" }
+    { type: "opportunity", message: <>Service to Sales AI has identified <DrillDownValue value="12 customers" label="Equity Candidates" type="Report" onDrillDown={onDrillDown} /> with positive equity currently in the active Service bay. Target them before ticket close.</>, actionText: "View Lane Conquests" }
   ];
 
+  const roBoard = getROBoard();
+
   return (
-    <div className="space-y-6">
-       <div className="flex justify-between items-center">
-         <h1 className="text-2xl font-playfair text-white">Service & Parts</h1>
+    <div className="space-y-6 h-full flex flex-col">
+       <div className="flex justify-between items-center bg-charcoal p-4 rounded border border-border">
+         <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-black border border-border rounded flex items-center justify-center text-blue-500 shadow-inner">
+              <Wrench className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-playfair text-white">Fixed Operations Control</h1>
+              <p className="text-text-muted text-sm border-l-2 border-blue-500 pl-2 ml-1">Service Bays & Parts Inventory Intelligence</p>
+            </div>
+         </div>
+         <div className="flex gap-2">
+            <button className="bg-charcoal border border-border text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:border-blue-500 transition-colors" onClick={() => onDrillDown('Action', { name: 'Log Walk-In', message: 'Opening terminal...' })}>
+              + Write Repair Order
+            </button>
+         </div>
       </div>
+
       <AutomatedInsights onDrillDown={onDrillDown} insights={serviceInsights} />
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-charcoal border border-border rounded p-6">
-          <h2 className="text-gold font-playfair text-xl mb-6">Technician Efficiency</h2>
-          <div className="space-y-4">
-             {[
-               { name: 'Tony Guillory', eff: 104, flagged: 42, actual: 40, status: 'text-green-500' },
-               { name: 'Chris Fontenot', eff: 92, flagged: 35, actual: 38, status: 'text-gold' },
-               { name: 'Sam LeBlanc', eff: 71, flagged: 27, actual: 38, status: 'text-red-500' },
-             ].map(t => (
-               <div key={t.name} className="flex justify-between items-center pb-2 border-b border-border/50">
-                 <div>
-                   <div className="text-white font-bold">{t.name}</div>
-                   <div className="text-xs text-text-muted">{t.flagged} flagged hrs / {t.actual} clock hrs</div>
-                 </div>
-                 <div className={`text-xl font-bold ${t.status}`}>
-                    <DrillDownValue value={`${t.eff}%`} label={`${t.name} Efficiency`} type="Employee" onDrillDown={onDrillDown} color={t.status} />
-                 </div>
-               </div>
-             ))}
-          </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-charcoal border border-border rounded p-4 shadow-inner hover:border-gold-dim transition-colors group cursor-pointer" onClick={() => onDrillDown('Report', { name: 'Retention Drilldown' })}>
+           <div className="flex items-center gap-2 text-blue-500 text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><UsersIcon className="w-4 h-4"/> Automated Retention</div>
+           <div className="text-xl font-bold text-white mb-1"><DrillDownValue value="142 Defectors" label="Retention Risk" type="Report" onDrillDown={onDrillDown}/></div>
+           <div className="text-xs text-text-muted mb-2">Saved MTD: <span className="text-green-500 font-bold">18 Customers</span></div>
+           <div className="text-[10px] text-text-dim leading-relaxed bg-black p-2 rounded">
+              AI has queued 142 clients who missed their 12-month service window for automated Twilio outreach.
+           </div>
+        </div>
+
+        <div className="bg-charcoal border border-border rounded p-4 shadow-inner hover:border-gold-dim transition-colors group cursor-pointer flex flex-col" onClick={() => onDrillDown('Report', { name: 'Tech Efficiency' })}>
+           <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><Clock className="w-4 h-4"/> Technician Efficiency</div>
+           <div className="flex-1 space-y-2 font-mono text-xs">
+              <div className="flex justify-between items-center bg-black p-1.5 rounded border border-border/50">
+                 <span className="text-white">Tony G.</span>
+                 <span className="text-green-500 font-bold">104% (42h / 40h)</span>
+              </div>
+              <div className="flex justify-between items-center bg-black p-1.5 rounded border border-border/50">
+                 <span className="text-white">Chris F.</span>
+                 <span className="text-gold font-bold">92% (35h / 38h)</span>
+              </div>
+              <div className="flex justify-between items-center bg-black p-1.5 rounded border border-border/50">
+                 <span className="text-white">Sam L.</span>
+                 <span className="text-red-500 font-bold">71% (27h / 38h)</span>
+              </div>
+           </div>
         </div>
         
-        <div className="bg-charcoal border border-border rounded p-6">
-          <h2 className="text-gold font-playfair text-xl mb-6">RO Board</h2>
-          <div className="space-y-3">
-             {[
-               { id: '1842', unit: '2024 Honda Talon', status: 'In Progress', tech: 'Tony G.' },
-               { id: '1843', unit: '2022 Waverunner', status: 'Waiting Parts', tech: 'Unassigned' },
-               { id: '1844', unit: '2023 Polaris Rzr', status: 'Quality Check', tech: 'Sam L.' }
-             ].map(ro => (
-                <div key={ro.id} onClick={() => onDrillDown('RO', ro)} className="bg-black border border-border rounded p-3 flex justify-between cursor-pointer hover:border-gold transition-colors group">
-                  <div>
-                    <div className="text-xs text-text-dim font-mono group-hover:text-gold transition-colors">RO #{ro.id}</div>
-                    <div className="font-bold text-white text-sm"><DrillDownValue value={ro.unit} label={`RO: ${ro.unit}`} type="Inventory" onDrillDown={onDrillDown} /></div>
-                  </div>
-                  <div className="text-right flex flex-col items-end">
-                     <div className={`text-xs font-bold ${ro.status === 'In Progress' ? 'text-green-500' : 'text-amber-500'}`}>
-                        <DrillDownValue value={ro.status} label={`RO Status`} type="RO" onDrillDown={onDrillDown} color={ro.status === 'In Progress' ? 'text-green-500' : 'text-amber-500'} />
-                     </div>
-                     <div className="text-xs text-text-muted mt-1"><DrillDownValue value={ro.tech} label={`Assigned: ${ro.tech}`} type="Employee" onDrillDown={onDrillDown} /></div>
-                  </div>
-                </div>
-             ))}
-          </div>
+        <div className="bg-charcoal border border-border rounded p-4 shadow-inner">
+           <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><DollarSign className="w-4 h-4"/> Fixed Ops Gross (MTD)</div>
+           <div className="text-3xl font-playfair text-white text-center mt-2">
+              <DrillDownValue value="$188,200" label="Fixed Ops Pacing" type="Financials" onDrillDown={onDrillDown} />
+           </div>
+           <div className="flex justify-between text-xs mt-4 px-2">
+              <span className="text-text-muted">Labor: <span className="text-white">$89k</span></span>
+              <span className="text-text-muted">Parts: <span className="text-white">$99k</span></span>
+           </div>
         </div>
+        
+        <div className="bg-charcoal border border-border rounded p-4 shadow-inner border-y-[3px] border-y-blue-500 relative flex flex-col justify-center items-center text-center">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 rounded-full blur-xl"></div>
+            <Package className="w-8 h-8 text-blue-500 mb-2" />
+            <div className="text-sm font-bold text-white uppercase tracking-widest mb-1">Parts Inventory</div>
+            <div className="text-2xl font-mono text-gold mb-1"><DrillDownValue value="$412,500" label="Total Parts Value" type="Report" onDrillDown={onDrillDown} /></div>
+            <div className="text-[10px] text-text-muted bg-black border border-border px-2 py-1 rounded mt-2">Obsolete (&gt;12mo): <span className="text-red-500">$18k</span></div>
+        </div>
+      </div>
+
+      <div className="bg-charcoal border border-border rounded overflow-hidden flex-1 flex flex-col min-h-[500px]">
+         <div className="p-4 border-b border-border bg-black flex justify-between items-center">
+            <div className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
+               <Grid3X3 className="w-4 h-4 text-gold"/> Live Service Bay Tracker
+            </div>
+         </div>
+         <div className="flex-1 overflow-x-auto overflow-y-hidden subtle-scrollbar p-4">
+            <div className="flex gap-4 h-full min-w-max">
+               {['Waiting / Write-Up', 'In Bay / Progress', 'Quality Check / Parts Hold', 'Ready for Delivery'].map((statusFilter, idx) => {
+                  
+                  // Map column names to our mock RO statuses
+                  const statusMap = {
+                     'Waiting / Write-Up': ['Waiting Parts', 'Scheduled'],
+                     'In Bay / Progress': ['In Progress', 'In Bay'],
+                     'Quality Check / Parts Hold': ['Quality Check'],
+                     'Ready for Delivery': ['Ready for Pickup', 'Completed']
+                  };
+                  
+                  const activeStatuses = statusMap[statusFilter] || [];
+                  const colOrders = roBoard.filter(ro => activeStatuses.includes(ro.status));
+                  
+                  return (
+                     <div key={statusFilter} className="w-80 flex flex-col bg-black border border-border rounded shadow-md shrink-0 h-full overflow-hidden">
+                        <div className="p-3 border-b border-border bg-panel flex justify-between items-center">
+                           <div className="font-bold text-white text-xs uppercase tracking-wide">{statusFilter}</div>
+                           <div className="bg-charcoal px-2 py-0.5 rounded text-xs font-mono text-text-muted border border-border">{colOrders.length}</div>
+                        </div>
+                        <div className="p-3 flex-1 overflow-y-auto subtle-scrollbar space-y-3 bg-gradient-to-b from-transparent to-black/20">
+                           {colOrders.map(ro => (
+                              <div key={ro.id} className="bg-charcoal border border-border p-3 rounded shadow hover:border-blue-500 transition-colors cursor-pointer group" onClick={() => onDrillDown('RO', ro)}>
+                                 <div className="flex justify-between items-start mb-2">
+                                    <div className="font-bold text-white text-sm group-hover:text-blue-400 transition-colors line-clamp-1">{ro.unitDesc}</div>
+                                 </div>
+                                 <div className="text-xs text-text-muted mb-3 flex items-center justify-between">
+                                    <span className="font-mono text-gold tracking-widest">{ro.id}</span>
+                                    <span className="bg-panel px-1.5 py-0.5 rounded border border-border">{ro.type}</span>
+                                 </div>
+                                 <div className="flex justify-between items-center bg-black rounded p-2 mt-2 border border-border/50">
+                                    <div className="text-[10px] text-text-dim flex items-center gap-1">
+                                       <User className="w-3 h-3 text-blue-500" />
+                                       {ro.techName}
+                                    </div>
+                                    <div className="text-[10px] font-mono font-bold text-green-500">
+                                       ${((ro.partsSale||0) + ((ro.laborHoursSold||0) * 125)).toLocaleString()}
+                                    </div>
+                                 </div>
+                              </div>
+                           ))}
+                           {colOrders.length === 0 && <div className="text-center text-text-muted mt-6 font-mono text-xs uppercase tracking-widest opacity-50">Empty Lane</div>}
+                        </div>
+                     </div>
+                  );
+               })}
+            </div>
+         </div>
       </div>
     </div>
   );
