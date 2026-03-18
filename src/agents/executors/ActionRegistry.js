@@ -51,6 +51,58 @@ export const ActionRegistry = {
          return ActionResult.Success({ status: 'Rate Match Submitted', dealId: actionData.dealId });
       },
       preview(actionData) { return `Will submit structured rate match request for Deal ${actionData.dealId}.`; }
+    },
+    'REASSIGN_LEADS_ROUND_ROBIN': {
+      requiresApproval: true,
+      requiredScopes: ['REASSIGN_LEADS'],
+      isRisky: true,
+      description: 'Reassign orphaned or misrouted leads using standard round-robin distribution rules.',
+      async execute(actionData, context) {
+         const targetId = actionData.manualOverrideEmployeeId || actionData.targetEmployeeId || 'ROUND_ROBIN_POOL';
+         const assignedLocation = actionData.manualOverrideLocationId || actionData.targetLocationId || 'GLOBAL';
+         return ActionResult.Success({ status: 'Leads Reassigned', target: targetId, location: assignedLocation, count: actionData.leadCount || 1 });
+      },
+      preview(actionData) { return `Will reassign ${actionData.leadCount || 1} leads to ${actionData.manualOverrideEmployeeId || actionData.targetEmployeeId || 'Round Robin Pool'} at ${actionData.manualOverrideLocationId || actionData.targetLocationId || 'all locations'}.`; }
+    },
+    'REASSIGN_TO_BDC': {
+      requiresApproval: true,
+      requiredScopes: ['WRITE_LEADS'],
+      isRisky: false,
+      description: 'Forcefully strip lead ownership and route to standard BDC triage.',
+      async execute(actionData, context) {
+         return ActionResult.Success({ status: 'Assigned to BDC', leadId: actionData.leadId });
+      },
+      preview(actionData) { return `Will enforce SLA rules and strip lead ${actionData.leadId} to the BDC pool.`; }
+    },
+    'SEND_AUTOMATED_SMS': {
+      requiresApproval: true,
+      requiredScopes: ['WRITE_COMMS'],
+      isRisky: true,
+      description: 'Dispatch automated SMS via external gateway.',
+      async execute(actionData, context) {
+         return ActionResult.Success({ status: 'SMS Dispatched', customerId: actionData.customerId });
+      },
+      preview(actionData) { return `Will dispatch automated SMS to customer ${actionData.customerId}: "${actionData.message}"`; }
+    },
+    'NOTIFY_SALES_REP': {
+      requiresApproval: false,
+      requiredScopes: [],
+      isRisky: false,
+      description: 'Push immediate alert notification to assigned sales associate.',
+      async execute(actionData, context) {
+         return ActionResult.Success({ status: 'Notification Pushed', empId: actionData.empId });
+      },
+      preview(actionData) { return `Will ping internal notification to employee ${actionData.empId}.`; }
+    },
+    'CREATE_VIP_TASK': {
+      requiresApproval: true,
+      requiredScopes: ['WRITE_TASKS'],
+      isRisky: false,
+      description: 'Generate high-urgency VIP task for management review.',
+      async execute(actionData, context) {
+         return ActionResult.Success({ status: 'VIP Task Created', leadId: actionData.leadId });
+      },
+      preview(actionData) { return `Will generate a High-Priority VIP Task for lead ${actionData.leadId}.`; }
     }
   },
 

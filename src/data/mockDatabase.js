@@ -38,7 +38,7 @@ export const INVENTORY = [
   { id: 'INV-1001', stock: 'H8842', vin: 'JHM123456789', brandId: 'BR-2', model: 'Talon 1000R', year: 2024, category: 'SxS', condition: 'New', locationId: 'LOC-1', cost: 21500, price: 23699, ageDays: 14, fpCostPerDay: 4, status: 'Active' },
   { id: 'INV-1002', stock: 'Y1102', vin: 'JYAA123456789', brandId: 'BR-1', model: 'YZF-R7', year: 2023, category: 'Motorcycle', condition: 'New', locationId: 'LOC-2', cost: 7800, price: 8999, ageDays: 92, fpCostPerDay: 2, status: 'Active' },
   { id: 'INV-1003', stock: 'P9921', vin: '3A1123456789', brandId: 'BR-3', model: 'RZR Pro R', year: 2024, category: 'SxS', condition: 'New', locationId: 'LOC-1', cost: 32000, price: 37499, ageDays: 4, fpCostPerDay: 6, status: 'Pending' },
-  { id: 'INV-1004', stock: 'U8831', vin: 'JKAA123456789', brandId: 'BR-4', model: 'Ninja 400', year: 2021, category: 'Motorcycle', condition: 'Used', locationId: 'LOC-3', cost: 3800, price: 5499, reconSpend: 340, ageDays: 41, fpCostPerDay: 0, status: 'Active' },
+  { id: 'INV-1004', stock: 'U8831', vin: 'JKAA123456789', brandId: 'BR-4', model: 'Ninja 400', year: 2021, category: 'Motorcycle', condition: 'Used', locationId: 'LOC-3', cost: 3800, price: 5499, reconSpend: 340, ageDays: 104, fpCostPerDay: 0, status: 'Active' },
   { id: 'INV-1005', stock: 'U8845', vin: 'JYAB123456789', brandId: 'BR-1', model: 'MT-07', year: 2021, category: 'Motorcycle', condition: 'Used', locationId: 'LOC-3', cost: 5100, price: null, reconSpend: 340, ageDays: 8, fpCostPerDay: 0, status: 'Recon' },
   { id: 'INV-1006', stock: 'U8846', vin: 'JHMB123456789', brandId: 'BR-2', model: 'Rebel 500', year: 2019, category: 'Motorcycle', condition: 'Used', locationId: 'LOC-3', cost: 3200, price: null, reconSpend: 0, ageDays: 2, fpCostPerDay: 0, status: 'Inspection' }
 ];
@@ -63,7 +63,7 @@ export const LEADS = [
   { id: 'LEAD-1', customerId: 'CUST-1', sourceId: 'CAMP-4', empId: 'EMP-3', createdAt: new Date(Date.now() - 4000*60), status: 'Responded', stage: 'Working', tradeIn_ExpectedACV: 4500, appointmentId: 'APT-1' },
   { id: 'LEAD-2', customerId: 'CUST-2', sourceId: 'CAMP-5', empId: 'EMP-4', createdAt: new Date(Date.now() - 82000*60), status: 'Unresponded', stage: 'New', tradeIn_ExpectedACV: null, appointmentId: null },
   { id: 'LEAD-3', customerId: 'CUST-3', sourceId: 'Walk-in', empId: 'EMP-8', createdAt: new Date(Date.now() - 20000*60), status: 'In Progress', stage: 'Demo', tradeIn_ExpectedACV: null, appointmentId: null },
-  { id: 'LEAD-4', customerId: 'CUST-4', sourceId: 'CAMP-1', empId: 'EMP-8', createdAt: new Date(Date.now() - 120000*60), status: 'Unresponded', stage: 'New', tradeIn_ExpectedACV: 2000, appointmentId: null },
+  { id: 'LEAD-4', customerId: 'CUST-4', sourceId: 'CAMP-3', empId: 'EMP-8', createdAt: new Date(Date.now() - 120000*60), status: 'Unresponded', stage: 'New', tradeIn_ExpectedACV: 2000, appointmentId: null },
   { id: 'LEAD-5', customerId: 'CUST-5', sourceId: 'Referral', empId: 'EMP-3', createdAt: new Date(Date.now() - 180000*60), status: 'Responded', stage: 'Sold', tradeIn_ExpectedACV: null, appointmentId: null }
 ];
 
@@ -209,4 +209,11 @@ export const CAPACITY_METRICS = {
     'DEPT-1': { type: 'Sales', showroomTraffic: 4, activeReps: 2, waitingForFI: 0, avgWaitTimeMins: 0 },
     'DEPT-3': { type: 'Service', activeBays: 4, occupiedBays: 4, idleTechs: 0, wipDollarAmount: 8200 }
   }
+};
+
+export const AGENT_THRESHOLDS = {
+  leadVIP: 80,
+  inventoryAged: 60,
+  slingshotDiscount: 15,
+  serviceOverdue: 24
 };

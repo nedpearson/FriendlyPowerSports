@@ -1,0 +1,13 @@
+Running test trace...
+BROWSER CONSOLE: [AgentRegistry] Registered executive_command_agent
+BROWSER CONSOLE: [AgentRegistry] Registered lead_intelligence_agent
+BROWSER CONSOLE: [AgentRegistry] Registered bdc_followup_agent
+BROWSER CONSOLE: [AgentRegistry] Registered inventory_matchmaking_agent
+BROWSER CONSOLE: [AgentRegistry] Registered sales_desk_agent
+BROWSER CONSOLE: [AgentRegistry] Registered fi_readiness_agent
+BROWSER CONSOLE: [AgentRegistry] Registered service_retention_agent
+BROWSER CONSOLE: [AgentRegistry] Registered parts_profit_agent
+BROWSER CONSOLE: [AgentRegistry] Registered customer_ltv_agent
+BROWSER CONSOLE: [AgentRegistry] Registered audit_compliance_agent
+Locating Omni-Command Tab
+Test trace complete.

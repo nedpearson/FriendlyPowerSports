@@ -1,14 +1,14 @@
 import { AgentRegistry } from '../registry/AgentRegistry';
 import { RecommendationEngine } from '../recommendations/RecommendationEngine';
 import { EntityLinker } from '../core/EntityLinker';
-import { LEADS, CUSTOMERS, CRM_COMMUNICATIONS } from '../../data/mockDatabase';
+import { LEADS, CUSTOMERS, CRM_COMMUNICATIONS, AGENT_THRESHOLDS } from '../../data/mockDatabase';
 
 export const LeadIntelligenceAgent = {
   id: 'lead_intelligence_agent',
   name: 'Lead Intelligence Agent',
   description: 'Scores leads based on real dealer usefulness, identifying hot prospects, duplicates, and routing optimization.',
   supportedRoles: ['Owner', 'General Manager', 'Sales Associate'],
-  supportedTriggers: ['LEAD_CREATED', 'LEAD_UPDATED', 'MANUAL'],
+  supportedTriggers: ['APP_BOOT', 'LEAD_CREATED', 'LEAD_UPDATED', 'MANUAL'],
 
   async evaluate(trigger, context) {
     const recommendations = [];
@@ -44,14 +44,20 @@ export const LeadIntelligenceAgent = {
 
       // 2. Recommendations based on signals
 
-      // High Value Lead Route
-      if (qualityScore >= 80 && lead.status !== 'Sold') {
+      // VIP Lead Detection leveraging adjustable Risk Dials
+      if (qualityScore >= AGENT_THRESHOLDS.leadVIP && lead.status !== 'Sold') {
+        if (!context.scannedEntityIds.has(lead.id)) {
         recommendations.push(
           RecommendationEngine.generateRecommendation(this, {
             title: `High Value Lead: Score ${qualityScore}`,
             description: `Lead ${lead.id} shows strong buying signals (Trade-in attached, past buyer). Recommend priority engagement by a senior assigned rep.`,
             confidenceScore: qualityScore,
             priority: urgencyScore > 70 ? 'URGENT' : 'HIGH',
+            strategyNotes: [
+               `Lead scoring index exceeded thresholds (Score: ${qualityScore}) indicating high close probability.`,
+               `Customer LTV profile matching executed. Cross-referencing against historic purchase habits suggests immediate RO/F&I attachment potentials.`,
+               `Proposed Approach: AGGRESSIVE FAST-TRACK. Bypass standard BDC and assign directly to highest-closing senior associate.`
+            ],
             relatedEntities: [ 
                EntityLinker.createLink('Lead', lead.id, `Lead Data`),
                EntityLinker.createLink('Customer', customer.id, customer.name) 
@@ -62,30 +68,38 @@ export const LeadIntelligenceAgent = {
             ]
           }, context)
         );
+        }
       }
 
       // Overdue First Response
       if (lead.status === 'Unresponded' && urgencyScore >= 20) {
-        // Calculate age
-        const ageMs = Date.now() - new Date(lead.createdAt).getTime();
-        const ageHours = ageMs / (1000 * 60 * 60);
+      // Ghosting / SLA Breach Detection
+        const ageHours = (Date.now() - new Date(lead.createdAt).getTime()) / (1000 * 60 * 60);
         
-        if (ageHours > 2) {
+        if (ageHours > AGENT_THRESHOLDS.serviceOverdue) {
            recommendations.push(
             RecommendationEngine.generateRecommendation(this, {
               title: `Overdue First Response: Lead ${lead.id}`,
-              description: `Lead has been untouched for ${ageHours.toFixed(1)} hours. The standard SLA is 1 hour. Immediate follow-up or reassignment required.`,
+              description: `Lead has been untouched for ${ageHours.toFixed(1)} hours. The standard SLA is ${AGENT_THRESHOLDS.serviceOverdue} hour(s). Immediate follow-up or reassignment required.`,
               confidenceScore: 95,
-              priority: 'HIGH',
-              relatedEntities: [ EntityLinker.createLink('Lead', lead.id, `Overdue Lead`) ],
-              proposedActions: [
-                { id: `ACT-LEAD-${Date.now()}-3`, actionType: 'SEND_AUTOMATED_SMS', payload: { customerId: lead.customerId, message: "Hi, just matching you with an agent..." }, requiresApproval: true, requiredScopes: ['WRITE_COMMS'] },
-                { id: `ACT-LEAD-${Date.now()}-4`, actionType: 'REASSIGN_TO_BDC', payload: { leadId: lead.id }, requiresApproval: true, requiredScopes: ['WRITE_LEADS'] }
-              ]
-            }, context)
-          );
+            priority: 'HIGH',
+            strategyNotes: [
+               `Lead SLA Violation detected: Time elapsed ${ageHours.toFixed(1)} Hrs > 1.0 Hr Limit.`,
+               `Customer is currently at high-flight risk and subject to competitor poaching.`,
+               `Proposed Approach: AUTOMATED DE-ESCALATION. Immediately deploy 'Sorry we missed you' SMS logic via Twilio bridge and forcefully strip lead ownership from current rep.`
+            ],
+            relatedEntities: [ EntityLinker.createLink('Lead', lead.id, `Overdue Lead`) ],
+            proposedActions: [
+              { id: `ACT-LEAD-${Date.now()}-3`, actionType: 'SEND_AUTOMATED_SMS', payload: { customerId: lead.customerId, message: "Hi, just matching you with an agent..." }, requiresApproval: true, requiredScopes: ['WRITE_COMMS'] },
+              { id: `ACT-LEAD-${Date.now()}-4`, actionType: 'REASSIGN_TO_BDC', payload: { leadId: lead.id }, requiresApproval: true, requiredScopes: ['WRITE_LEADS'] }
+            ]
+          }, context)
+        );
         }
       }
+      
+      console.log(`[DEBUG LIA] Evaluated ${lead.id}: QScore=${qualityScore}, Urgency=${urgencyScore}, Pushed? ${recommendations.length}`);
+
     });
 
     return recommendations;

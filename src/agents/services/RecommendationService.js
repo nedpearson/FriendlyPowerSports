@@ -24,6 +24,10 @@ export const RecommendationService = {
   /**
    * Fetch all active recommendations (optionally filter by user/role/agent).
    */
+  getAll() {
+    return AGENT_RECOMMENDATIONS;
+  },
+
   fetchPending(context = {}) {
     let results = AGENT_RECOMMENDATIONS.filter(r => r.status === 'PENDING');
     

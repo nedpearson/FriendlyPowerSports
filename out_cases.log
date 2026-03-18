@@ -1,0 +1,28 @@
+126: case 'AgentRecommendation':
+372: case 'Agent':
+531: case 'CRM_Customer360': {
+726: case 'Quote_Workbench': {
+849: case 'Trade_Capture': {
+919: case 'Finance_Prequal': {
+1090: case 'Action':
+1169: case 'KPI':
+1198: case 'Lead':
+1239: case 'Financials':
+1319: case 'Deal':
+1401: case 'Inventory':
+1556: case 'Employee':
+1557: case 'RO':
+1622: case 'Report':
+1664: case 'Employee': {
+1715: case 'Lender': {
+1754: case 'Campaign': {
+1814: case 'Department': {
+1835: case 'TimelineEvent': {
+1852: case 'ActionMetrics': {
+1872: case 'AIScoreAnalysis': {
+1905: case 'RuleAudit': {
+1939: case 'StageVelocity': {
+1994: case 'DealSimulator': {
+2066: case 'AgentRecommendation': {
+2133: case 'InventoryUnit': {
+2213: case 'OEM':

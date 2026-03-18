@@ -33,6 +33,11 @@ function createDummyAgent(id, name, description, priority, actionTypeName, defau
         description: `Analysis complete. Recommending structural adjustment based on current metrics.`,
         confidenceScore: Math.floor(Math.random() * 20) + 80,
         priority: priority,
+        strategyNotes: [
+          `Systematic baseline analysis completed for ${name}.`,
+          `Key metric deviance detected against historical trailing 90-day averages.`,
+          `Proposed Approach: BALANCED MITIGATION. Execute the attached payload workflow to normalize operations.`
+        ],
         relatedEntities: [ EntityLinker.createLink(defaultEntity.type, defaultEntity.id, defaultEntity.label) ],
         proposedActions: [
           {

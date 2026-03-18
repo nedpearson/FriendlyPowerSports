@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { DrillDownValue } from './DrillDownValue';
+import { GenericDataTable } from './GenericDataTable';
+import { ReportRegistry } from '../../reports/ReportRegistry';
 import { getCustomer360Data, getInventoryMatches, getQuoteWorkbenchData, getAuditLogs, getEmployeeData, getLenderData, getCampaignData, getDepartmentCapacity, getGlobalInventory } from '../../data/selectors';
 import { CreditPrequalAdapter } from '../../data/crmAdapters';
 import { ActionExecutionService } from '../../agents/services/ActionExecutionService';
 import { AgentMetrics } from '../../agents/audit/AgentMetrics';
 import {
   CheckCircle2, TrendingUp, User, Bike, AlertCircle, Command,
-  DollarSign, Megaphone, Search, FileBarChart, ChevronRight, TrendingDown, Users as UsersIcon, Clock, Database, BrainCircuit, Wrench, Package, Calculator, Camera, Filter
+  DollarSign, Megaphone, Search, FileBarChart, ChevronRight, TrendingDown, Users as UsersIcon, Clock, Database, BrainCircuit, Wrench, Package, Calculator, Camera, Filter, MapPin
 } from 'lucide-react';
 
 export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown }) => {
@@ -23,6 +25,10 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
   const [actionStep, setActionStep] = useState(0);
   const [actionPreview, setActionPreview] = useState(null);
   const [actionResult, setActionResult] = useState(null);
+
+  // Manual Overrides
+  const [overrideEmployee, setOverrideEmployee] = useState('');
+  const [overrideLocation, setOverrideLocation] = useState('');
 
   // Deal Simulator States
   const [simMsrpDiscount, setSimMsrpDiscount] = useState(0);
@@ -66,223 +72,57 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
 
   if (!item) return null;
 
-  const renderContent = () => {
-    switch (item.type) {
-      case 'AgentRecommendation':
-         const isProcessing = actionProcessing;
-         return (
-            <div className="space-y-6 animate-in slide-in-from-right-8 duration-500">
-               <div className="flex justify-between items-start border-b border-border pb-4">
-                  <div>
-                     <div className="text-text-muted uppercase text-[10px] font-mono tracking-widest flex items-center gap-2 mb-2">
-                        <BrainCircuit className="w-3 h-3 text-gold"/> COMMAND CENTER AI 
-                        {item.data.priority === 'URGENT' || item.data.urgency === 'High' ? <span className="bg-red-500 text-white px-1.5 py-0.5 rounded text-[9px] animate-pulse">URGENT</span> : <span className="bg-panel border border-border text-text-muted px-1.5 py-0.5 rounded text-[9px]">{item.data.priority || item.data.urgency || 'NORMAL'}</span>}
-                     </div>
-                     <h3 className="text-2xl font-playfair text-white flex items-center gap-3">
-                        {item.data.title}
-                     </h3>
-                  </div>
-                  <div className="text-right">
-                     <div className="text-[10px] text-text-muted uppercase tracking-widest font-mono mb-1">Confidence</div>
-                     <div className={`text-2xl font-bold font-mono ${item.data.confidenceScore > 85 ? 'text-green-500' : 'text-gold'}`}>{item.data.confidenceScore || 92}%</div>
-                  </div>
-               </div>
+const UniversalReportView = ({ item }) => {
+   const [universalData, setUniversalData] = useState(null);
+   const [isUniversalLoading, setIsUniversalLoading] = useState(true);
+   const [universalError, setUniversalError] = useState(null);
 
-               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className="lg:col-span-2 space-y-6">
-                     <div className="bg-charcoal border border-border rounded p-6">
-                        <h4 className="text-gold text-sm font-bold mb-4 border-b border-border/50 pb-2">Analysis Context & Explanation</h4>
-                        <div className="text-sm text-text-muted leading-relaxed font-mono whitespace-pre-wrap">
-                           {item.data.description || item.data.context}
-                        </div>
-                     </div>
+   useEffect(() => {
+      let isMounted = true;
+      setIsUniversalLoading(true);
+      ReportRegistry.resolveDataset(item.data.reportId, item.data, { locationId: 'ALL', dateRange: 'MTD' })
+         .then(data => {
+            if(isMounted) { setUniversalData(data); setIsUniversalLoading(false); }
+         })
+         .catch(err => {
+            if(isMounted) { setUniversalError(err.message); setIsUniversalLoading(false); }
+         });
+      return () => { isMounted = false; };
+   }, [item]);
 
-                     <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-black border border-border rounded p-5 shadow-inner">
-                           <h4 className="text-[10px] text-text-dim uppercase tracking-widest font-mono mb-3">Assignment</h4>
-                           <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-charcoal border border-border flex items-center justify-center text-lg text-gold font-bold">
-                                 {(item.data.assignedOwner || "BTR Pool").charAt(0)}
-                              </div>
-                              <div>
-                                 <div className="text-white font-bold text-sm">{item.data.assignedOwner || "BTR Pool"}</div>
-                                 <div className="text-[10px] text-text-dim uppercase flex items-center gap-1 mt-0.5"><Clock className="w-3 h-3"/> Due: {item.data.dueDate || "Today"}</div>
-                              </div>
-                           </div>
-                        </div>
+   if (isUniversalLoading) {
+      return (
+         <div className="flex flex-col items-center justify-center p-12 space-y-4">
+            <div className="w-8 h-8 rounded-full border-t-2 border-gold animate-spin"></div>
+            <div className="text-sm font-mono tracking-widest text-gold uppercase">Resolving Dataset Registry...</div>
+         </div>
+      );
+   }
 
-                        {(item.data.relatedEntities?.length > 0 || (item.data.dataPayload && Object.keys(item.data.dataPayload).length > 0)) && (
-                           <div className="bg-black border border-border rounded p-5 shadow-inner">
-                              <h4 className="text-[10px] text-text-dim uppercase tracking-widest font-mono mb-3">Linked Entities</h4>
-                              <div className="space-y-2">
-                                 {item.data.relatedEntities?.map(ent => (
-                                    <div key={ent.entityId} className="bg-charcoal p-2 rounded border border-border/50 flex justify-between items-center group cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Action', { name: `Drill to: ${ent.label}` })}>
-                                       <div className="text-white font-bold text-xs truncate">{ent.label}</div>
-                                       <ChevronRight className="w-3 h-3 text-text-muted group-hover:text-gold transition-colors" />
-                                    </div>
-                                 ))}
-                                 {item.data.dataPayload && Object.entries(item.data.dataPayload).map(([k, v]) => (
-                                    <div key={k} className="bg-charcoal p-2 rounded border border-border/50 flex justify-between items-center group cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Action', { name: `Drill to: ${k}` })}>
-                                       <div className="text-white font-bold text-xs truncate"><span className="text-[9px] text-text-muted uppercase tracking-widest font-mono mr-2">{k}</span> {String(v)}</div>
-                                       <ChevronRight className="w-3 h-3 text-text-muted group-hover:text-gold transition-colors" />
-                                    </div>
-                                 ))}
-                              </div>
-                           </div>
-                        )}
-                     </div>
-                  </div>
+   if (universalError) {
+      return <div className="p-8 text-red-500 font-mono border border-red-500/20 bg-red-900/10 rounded">Resolution Error: {universalError}</div>;
+   }
 
-                  <div className="space-y-6">
-                     <div className="bg-charcoal border border-border rounded p-5 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-2 opacity-10"><Command className="w-16 h-16 text-gold"/></div>
-                        <h4 className="text-gold text-xs uppercase tracking-widest font-mono mb-4 border-b border-border/50 pb-2 flex justify-between">
-                           Resolution Path & Actions
-                        </h4>
-                        
-                        {isProcessing ? (
-                           <div className="space-y-4 animate-in fade-in duration-300">
-                              <div className="bg-black border border-gold-dim p-4 rounded text-center">
-                                 <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                                 <div className="text-gold text-xs font-mono uppercase tracking-widest animate-pulse">Executing Action...</div>
-                                 <div className="text-xs text-text-muted mt-2">Checking Permissions & Emitting Audit Event</div>
-                              </div>
-                           </div>
-                        ) : actionResult ? (
-                           <div className="space-y-4 animate-in zoom-in-95 duration-300">
-                              <div className={`border p-4 rounded text-center ${actionResult.success ? 'bg-green-900/10 border-green-500/30' : 'bg-red-900/10 border-red-500/30'}`}>
-                                 {actionResult.success ? <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-2"/> : <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2"/>}
-                                 <div className={`text-sm font-bold ${actionResult.success ? 'text-green-500' : 'text-red-500'}`}>{actionResult.success ? 'Action Successful' : 'Action Failed'}</div>
-                                 <div className="text-xs text-text-muted mt-1">{actionResult.success ? actionResult.data?.status || 'Executed' : actionResult.reason}</div>
-                                 
-                                 {actionResult.auditId && (
-                                   <div className="text-[9px] text-text-dim font-mono uppercase tracking-widest mt-4 pt-2 border-t border-border/50">
-                                     Audit ID: {actionResult.auditId}
-                                   </div>
-                                 )}
-                              </div>
-                              <button 
-                                 className="w-full bg-panel hover:bg-black border border-border transition-colors px-4 py-2 rounded text-xs text-text-muted hover:text-white font-bold"
-                                 onClick={onClose}
-                              >
-                                 Dismiss
-                              </button>
-                           </div>
-                        ) : actionPreview ? (
-                           <div className="space-y-4 animate-in zoom-in duration-300">
-                              <div className="bg-black border border-gold-dim p-4 rounded">
-                                 <div className="text-[10px] text-gold uppercase tracking-widest font-mono mb-2">Preview Execution</div>
-                                 <div className="text-sm text-text-muted font-mono whitespace-pre-wrap">{actionPreview.preview}</div>
-                              </div>
-                              <div className="flex gap-2">
-                                 <button 
-                                    className="flex-1 bg-gold hover:bg-gold-light text-black transition-colors px-4 py-2.5 rounded text-sm font-bold"
-                                    onClick={async () => {
-                                       setActionProcessing(true);
-                                       const res = await ActionExecutionService.executeAction(actionPreview.actionType, actionPreview.actionData, { userId: 'U-100', userRole });
-                                       setActionResult(res);
-                                       setActionProcessing(false);
-                                    }}
-                                 >
-                                    Confirm Execute
-                                 </button>
-                                 <button 
-                                    className="flex-1 border border-border bg-black hover:bg-panel transition-colors px-4 py-2.5 rounded text-sm text-white font-bold"
-                                    onClick={() => setActionPreview(null)}
-                                 >
-                                    Cancel
-                                 </button>
-                              </div>
-                           </div>
-                        ) : (
-                           <div className="space-y-3 relative z-10 hidden-scrollbar overflow-y-auto max-h-[300px]">
-                              {item.data.proposedActions?.map(action => (
-                                 <button 
-                                    key={action.id}
-                                    className="w-full bg-gold hover:bg-gold-light text-black transition-colors px-4 py-3 rounded text-sm font-bold shadow-[0_0_15px_rgba(201,168,76,0.2)] flex items-center justify-center gap-2"
-                                    onClick={async () => {
-                                       setActionProcessing(true);
-                                       const res = await ActionExecutionService.previewAction(action.actionType, action.payload, { userId: 'U-100', userRole });
-                                       if (res.success && res.preview) {
-                                          setActionPreview({ ...res, actionType: action.actionType, actionData: action.payload });
-                                       } else {
-                                          setActionResult(res); // Will show permission error immediately if block
-                                       }
-                                       setActionProcessing(false);
-                                    }}
-                                 >
-                                    <CheckCircle2 className="w-4 h-4"/> {action.actionType.replace(/_/g, ' ')}
-                                 </button>
-                              ))}
-
-                              {/* Fallback legacy execution behavior if no specific registered proposedActions exist */}
-                              {(!item.data.proposedActions || item.data.proposedActions.length === 0) && (
-                                <button 
-                                   className="w-full bg-gold hover:bg-gold-light text-black transition-colors px-4 py-3 rounded text-sm font-bold shadow-[0_0_15px_rgba(201,168,76,0.2)] flex items-center justify-center gap-2"
-                                   onClick={() => {
-                                      if (item.data.onExecute) item.data.onExecute();
-                                      onDrillDown('Action', { name: `Execute: ${item.data.title}` });
-                                   }}
-                                >
-                                   <CheckCircle2 className="w-4 h-4"/> Approve & Execute
-                                </button>
-                              )}
-
-                              <button 
-                                 className="w-full border border-border bg-black hover:bg-panel transition-colors px-4 py-2.5 rounded text-sm text-white font-bold flex items-center justify-center gap-2"
-                                 onClick={async () => {
-                                    setActionProcessing(true);
-                                    const actionType = 'SNOOZE_RECOMMENDATION';
-                                    const actionData = { recommendationId: item.data.id || item.data.title, durationDays: 1 };
-                                    const res = await ActionExecutionService.executeAction(actionType, actionData, { userId: 'U-100', userRole });
-                                    setActionResult(res);
-                                    setActionProcessing(false);
-                                 }}
-                              >
-                                 <Clock className="w-4 h-4 text-emerald-500"/> Snooze Action
-                              </button>
-
-                              <button 
-                                 className="w-full border border-border bg-black hover:bg-panel transition-colors px-4 py-2.5 rounded text-sm text-white font-bold flex items-center justify-center gap-2"
-                                 onClick={async () => {
-                                    setActionProcessing(true);
-                                    const actionType = 'REASSIGN_OWNER';
-                                    const actionData = { entityId: item.data.id || item.data.title, newOwnerId: 'EMP-4' }; // Mock target
-                                    const res = await ActionExecutionService.executeAction(actionType, actionData, { userId: 'U-100', userRole });
-                                    setActionResult(res);
-                                    setActionProcessing(false);
-                                 }}
-                              >
-                                 <UsersIcon className="w-4 h-4 text-blue-500"/> Reassign Owner
-                              </button>
-                              
-                              <button 
-                                 className="w-full bg-panel hover:bg-black border border-border transition-colors px-4 py-2.5 rounded text-sm text-text-muted hover:text-white font-bold flex items-center justify-center gap-2 mt-4"
-                                 onClick={() => {
-                                    AgentMetrics.trackDismissal();
-                                    if (item.data.onDismiss) item.data.onDismiss();
-                                    onClose();
-                                 }}
-                              >
-                                 Dismiss Suggestion
-                              </button>
-                           </div>
-                        )}
-                     </div>
-
-                     <div className="bg-charcoal border border-border rounded p-5 opacity-70">
-                        <div className="text-[10px] text-text-muted uppercase tracking-widest font-mono mb-2">Audit Subroutine</div>
-                        <div className="text-[10px] text-text-dim font-mono space-y-1">
-                           <div>Timestamp: {new Date(item.data.timestamp || Date.now()).toLocaleString()}</div>
-                           <div>Category: {item.data.category || item.data.agentId}</div>
-                           <div>Session ID: {item.data.id || Math.random().toString(36).substring(7).toUpperCase()}</div>
-                           <div>Engine: SuperAgent_v2</div>
-                        </div>
-                     </div>
-                  </div>
-               </div>
+   const def = ReportRegistry.getDefinition(item.data.reportId) || { title: item.data.label || 'Detailed Report' };
+   return (
+      <div className="space-y-6">
+         <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
+            <div className="flex items-center gap-3"><FileBarChart className="w-7 h-7" /> {def.title}</div>
+            <div className="flex gap-2">
+               <span className="text-[10px] font-mono bg-panel border border-border px-2 py-1 rounded text-text-muted">ID: {item.data.reportId}</span>
             </div>
-         );
+         </h3>
+         <GenericDataTable data={universalData || []} tableName={def.title} />
+      </div>
+   );
+};
+
+  const renderContent = () => {
+    if (item.data?.reportId) {
+       return <UniversalReportView item={item} />;
+    }
+
+    switch (item.type) {
       case 'Agent':
         if (agentSearching) {
            const steps = [
@@ -984,7 +824,7 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
                               <ul className="list-disc list-inside text-sm text-text-dim space-y-1">
                                  {prequalResult.stipulationList?.map((s,i) => <li key={i}>{s}</li>)}
                                  {!isSales ? (
-                                    <li className="text-amber-500">{prequalResult.secureNotes}</li>
+                                    <li className="text-amber-500">SSN: {prequalResult.secureNotes}</li>
                                  ) : (
                                     <li className="text-green-500">SSN Masked & Secured by RBAC.</li>
                                  )}
@@ -1380,13 +1220,13 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
                      <div className="text-[10px] text-text-dim uppercase tracking-widest border-b border-border/50 pb-2">True Cost Asset</div>
                      <div className="text-white font-bold text-2xl mt-3"><DrillDownValue value={invCost ? `$${invCost.toLocaleString()}` : '$0'} label="Financial Basis" type="Financials" onDrillDown={onDrillDown} /></div>
                      {fullInv && (
-                        <div className="mt-2 text-xs text-text-muted flex justify-between">
+                        <div className="mt-2 text-xs text-text-muted">
                            <span>MSRP Cost:</span>
                            <span className="font-mono">${fullInv.cost.toLocaleString()}</span>
                         </div>
                      )}
                      {fullInv && (
-                        <div className="mt-0.5 text-[10px] text-amber-500/80 flex justify-between">
+                        <div className="mt-0.5 text-[10px] text-amber-500/80">
                            <span>Hard Pack:</span>
                            <span className="font-mono">+$400</span>
                         </div>
@@ -1467,83 +1307,28 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
             </div>
           </div>
         );
-      case 'Employee':
-      case 'RO':
-        return (
-          <div className="space-y-6">
-            <h3 className="text-2xl font-playfair text-gold border-b border-border pb-4 flex items-center justify-between">
-               <span>{userRole === 'Employee' ? 'My Performance Profile' : 'Staff Dossier & Execution Profile'}</span>
-               {userRole !== 'Employee' && (
-                 <span className="text-[10px] font-mono text-green-500 border border-green-500 rounded bg-green-900/10 px-3 py-1.5 tracking-widest shadow-[0_0_10px_rgba(34,197,94,0.2)]"><DrillDownValue value="PERSONNEL ACTIVE" label="HR Status" type="Action" color="text-green-500" onDrillDown={onDrillDown} /></span>
-               )}
-            </h3>
-            
-            <div className={`flex items-center gap-6 mb-6 bg-black p-6 rounded-xl border border-border transition-all cursor-pointer shadow-inner relative overflow-hidden ${userRole === 'Owner' ? 'hover:border-gold-dim' : ''}`} onClick={() => { if (userRole !== 'Employee') onDrillDown('Report', { name: 'KPI and Performance Breakdown Grid' }); }}>
-              <div className="absolute right-0 top-0 w-32 h-32 bg-gold/5 rounded-full blur-2xl translate-x-10 -translate-y-10"></div>
-              <div className="w-24 h-24 rounded-full bg-panel border-[3px] border-gold flex items-center justify-center text-5xl font-playfair text-gold shadow-[0_0_25px_rgba(201,168,76,0.25)] relative z-10">
-                {item.data.name ? item.data.name[0] : 'U'}
-              </div>
-              <div className="flex-1 relative z-10 pb-1">
-                <div className="text-[10px] text-text-dim uppercase tracking-[0.2em] font-mono mb-1">{item.data.role || 'Sales Consultant'}</div>
-                <div className="text-4xl font-playfair text-white mb-2 leading-none">{item.data.name || 'Universal Employee'}</div>
-                <div className="flex items-center gap-3 text-sm text-text-muted bg-charcoal/50 w-max px-3 py-1.5 rounded-md border border-border/50">
-                  <span className="flex items-center gap-1.5 font-bold"><CheckCircle2 className="w-3.5 h-3.5 text-green-500"/> Clocked In</span> 
-                  <span className="text-border">|</span>
-                  <span className="cursor-pointer hover:text-white transition-colors flex items-center gap-1"><Clock className="w-3.5 h-3.5"/> {item.data.location || 'BTR Corporate'}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-               {Object.entries(item.data).filter(([k]) => !['name', 'role', 'avatar', 'location'].includes(k)).map(([k,v]) => (
-                  <div key={k} className="bg-panel p-5 rounded border border-border flex flex-col justify-center hover:bg-black transition-colors group">
-                     <div className="text-[10px] text-text-dim uppercase tracking-widest mb-2 border-b border-border/50 pb-2 group-hover:text-gold-dim transition-colors">{k.replace(/([A-Z])/g, ' $1').trim()}</div>
-                     <div className="text-xl font-bold text-white"><DrillDownValue value={String(v)} label={`${item.data.name} Metric: ${k}`} type="Report" onDrillDown={onDrillDown} /></div>
-                  </div>
-               ))}
-            </div>
-
-            {userRole === 'Manager' && (
-              <div className="bg-charcoal border border-border rounded p-6 text-sm leading-relaxed mt-4 shadow-inner">
-                 <strong className="text-gold text-[10px] uppercase tracking-[0.2em] mb-3 block border-b border-border/50 pb-2 font-mono">Automated Management AI Copilot Summary</strong>
-                 <DrillDownValue value={item.data.name || 'Resource'} label="Employee Identity" type="Employee" onDrillDown={onDrillDown} /> is pacing <span className="text-green-500 font-bold px-1 bg-green-900/20 rounded border border-green-500/20">ahead of baseline parameters</span> for the current commission period. Lead conversion velocity is extremely high this week. 
-                 <div className="mt-4 pt-3 border-t border-border/50 flex justify-end">
-                    <span className="text-gold text-xs font-bold cursor-pointer hover:underline uppercase tracking-wide flex items-center gap-1" onClick={() => onDrillDown('Action', { name: 'Construct Disciplinary/Praise HR Ticket' })}>Draft Personnel File Note <ChevronRight className="w-3 h-3"/></span>
-                 </div>
-              </div>
-            )}
-            
-            {userRole === 'Owner' && (
-              <div className="bg-charcoal border border-border rounded p-6 text-sm leading-relaxed mt-4 shadow-inner">
-                 <strong className="text-gold text-[10px] uppercase tracking-[0.2em] mb-3 block border-b border-border/50 pb-2 font-mono">Owner ROI Matrix</strong>
-                 Total YTD Commission paid to {item.data.name || 'Resource'}: <strong className="text-white">$78,400</strong>. Front-end gross generated: <strong className="text-white">$312,000</strong>. 
-                 <span className="block mt-2 text-green-500 font-bold px-1 bg-green-900/20 rounded border border-green-500/20 w-fit">4.0x Return on Capital</span> 
-              </div>
-            )}
-
-            <div className="flex flex-col md:flex-row gap-4 pt-4 border-t border-border mt-4">
-                {userRole !== 'Employee' && (
-                  <button className="bg-blue-600 hover:bg-blue-500 border border-blue-400/50 text-white px-6 py-4 rounded text-sm font-bold flex items-center justify-center gap-2 transition-transform hover:scale-[1.02] flex-1 shadow-[0_0_15px_rgba(37,99,235,0.4)]" onClick={() => onDrillDown('Action', { name: 'Ping employee asynchronously', message: 'Opening secure internal communications bridge...' })}>
-                    <UsersIcon className="w-4 h-4" /> Direct Message
-                  </button>
-                )}
-                <button className="bg-black text-white hover:text-gold border border-border hover:border-gold-dim px-6 py-4 rounded text-sm transition-colors flex-1 shadow font-bold tracking-wide" onClick={() => onDrillDown('Report', { name: 'Chronological timesheet event logs' })}>
-                  {userRole === 'Employee' ? 'View My Punches' : 'Audit Time & Punch Records'}
-                </button>
-            </div>
-          </div>
-        );
       case 'Report':
          // Render the Dashboard List drilldowns elegantly
          const reportName = item.data.name || item.data.label || 'Data Analysis';
          const isAuditLog = reportName.toLowerCase().includes('log') || reportName.toLowerCase().includes('audit');
          
-         // Generate robust mock records for Audit logs that were passed without payload data
-         const displayRecords = (item.data.records && item.data.records.length > 0) 
+         // Generate robust mock records for Audit logs or synthesize data for bare KPIs
+         let displayRecords = (item.data.records && item.data.records.length > 0) 
             ? item.data.records 
             : isAuditLog 
                ? getAuditLogs()
-               : null;
+               : [];
+
+         if (displayRecords.length === 0 && item.data.value) {
+            displayRecords = Array.from({length: 45}).map((_, i) => ({
+                id: `SYN-${Math.floor(Math.random() * 90000) + 10000}`,
+                timestamp: new Date(Date.now() - (i * 3600000)).toLocaleString(),
+                category: reportName,
+                attributionValue: typeof item.data.value === 'string' && item.data.value.includes('$') ? `$${(Math.random() * 5000).toFixed(2)}` : Math.floor(Math.random() * 100),
+                status: i % 4 === 0 ? 'Pending Validation' : 'Confirmed',
+                assignedAgent: `EMP-${(i % 5) + 1}`
+            }));
+         }
 
          return (
            <div className="space-y-6">
@@ -1561,42 +1346,7 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
                </div>
              )}
              
-             <div className="bg-charcoal border border-border p-6 rounded shadow-inner">
-                <div className="flex items-center gap-3 mb-6 text-sm text-text-muted border-b border-border/50 pb-4">
-                   <Filter className="w-4 h-4 text-gold"/> Active Filters: 
-                   <span className="bg-black border border-border px-2 py-1 rounded text-white text-xs font-mono">Location: ALL</span>
-                   <span className="bg-black border border-border px-2 py-1 rounded text-white text-xs font-mono">Date: MTD</span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   {displayRecords && displayRecords.length > 0 ? (
-                      displayRecords.slice(0, 50).map((rec, idx) => (
-                         <div key={idx} className="bg-black border border-border p-4 rounded hover:border-gold-dim transition-colors cursor-pointer group flex justify-between items-center" onClick={() => onDrillDown(rec.type || 'Action', rec)}>
-                            <div className="flex-1 min-w-0 pr-4">
-                               <div className="text-white font-bold mb-1 truncate">{rec.title || rec.name || `Record #${idx+1}`}</div>
-                               <div className="text-[10px] text-text-muted font-mono uppercase truncate">{rec.subtitle || rec.status || 'Data Point'}</div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                               {rec.value && <span className="text-gold font-bold">{rec.value}</span>}
-                               <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-gold transition-colors flex-shrink-0"/>
-                            </div>
-                         </div>
-                      ))
-                   ) : (
-                      <div className="col-span-1 md:col-span-2 text-center text-text-muted text-sm py-8 bg-black/50 border border-border/50 rounded border-dashed cursor-pointer hover:border-gold-dim transition-colors" onClick={() => onDrillDown('Action', { name: 'Querying external database...' })}>
-                         No detailed granular records found in this context slice. Click to query the master index.
-                      </div>
-                   )}
-                </div>
-                
-                <div className="mt-6 text-center text-xs text-text-dim">
-                   Showing {displayRecords?.length > 50 ? '50+' : (displayRecords?.length || 0)} records for "{reportName}"
-                </div>
-             </div>
-
-             <div className="flex flex-col sm:flex-row gap-4 pt-5 border-t border-border mt-4">
-                 <button className="bg-gold text-black px-6 py-4 rounded text-sm font-bold shadow-[0_0_15px_rgba(201,168,76,0.2)] hover:bg-gold-light hover:scale-[1.02] transition-all flex-[2] flex justify-center items-center gap-2 uppercase tracking-wide" onClick={() => onDrillDown('Action', { name: `Export ${item.type} Bundle`, message: `Generating comprehensive CSV/PDF data package...` })}><TrendingUp className="w-4 h-4" /> Export Report</button>
-             </div>
+             <GenericDataTable data={displayRecords} tableName={reportName} />
            </div>
          );
       case 'Employee': {
@@ -1787,107 +1537,22 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
         );
       }
 
-      case 'DealSimulator': {
-         const baseMsrp = item.data?.msrp || 15000;
-         const baseInvoice = item.data?.invoice || 13500;
-         const dealCustomer = item.data?.customer || "Walk-In Structuring";
-         
-         const curMsrpValue = baseMsrp - simMsrpDiscount;
-         const frontGross = curMsrpValue - baseInvoice;
-         const tradeGross = 6000 - simAcv; // Assume retail value is 6000
-         const totalBackend = simFiGross + (simTerm * 10); // Fake reserve calculation based on term
-         const totalEconomicProfit = frontGross + tradeGross + totalBackend;
-
-         let aiStance = "OPTIMAL YIELD";
-         let aiColor = "text-green-500";
-         if (totalEconomicProfit < 1000) { aiStance = "MARGIN RISK - PUSH BACK"; aiColor = "text-red-500"; }
-         else if (frontGross < 0) { aiStance = "BACKEND HEAVY - SECURE STIPS"; aiColor = "text-amber-500"; }
-
-         return (
-            <div className="space-y-6">
-              <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
-                 <div className="flex items-center gap-3"><Calculator className="w-7 h-7" /> AI Deal Simulator</div>
-                 <span className="text-[10px] font-mono bg-panel border border-border px-2 py-1 rounded text-text-muted">{dealCustomer}</span>
-              </h3>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                 {/* Controls */}
-                 <div className="bg-charcoal p-6 border border-border rounded space-y-6 shadow-inner">
-                    <strong className="text-white text-[10px] uppercase tracking-[0.15em] mb-4 block border-b border-border/50 pb-2 font-mono flex items-center gap-2">
-                       <CheckCircle2 className="w-4 h-4 text-text-muted" /> Live Variables
-                    </strong>
-                    
-                    <div className="space-y-4">
-                       <div>
-                          <div className="flex justify-between text-xs text-text-muted font-bold mb-2"><span>MSRP Discount</span><span className="text-white font-mono">${simMsrpDiscount}</span></div>
-                          <input type="range" min="0" max="3000" step="100" value={simMsrpDiscount} onChange={(e) => setSimMsrpDiscount(Number(e.target.value))} className="w-full accent-gold cursor-pointer" />
-                       </div>
-                       <div>
-                          <div className="flex justify-between text-xs text-text-muted font-bold mb-2"><span>Trade ACV Allowance</span><span className="text-white font-mono">${simAcv}</span></div>
-                          <input type="range" min="2000" max="8000" step="500" value={simAcv} onChange={(e) => setSimAcv(Number(e.target.value))} className="w-full accent-gold cursor-pointer" />
-                       </div>
-                       <div>
-                          <div className="flex justify-between text-xs text-text-muted font-bold mb-2"><span>F&I VSC/GAP Gross</span><span className="text-white font-mono">${simFiGross}</span></div>
-                          <input type="range" min="0" max="2500" step="100" value={simFiGross} onChange={(e) => setSimFiGross(Number(e.target.value))} className="w-full accent-gold cursor-pointer" />
-                       </div>
-                       <div>
-                          <div className="flex justify-between text-xs text-text-muted font-bold mb-2"><span>Term Length (Months)</span><span className="text-white font-mono">{simTerm} mos</span></div>
-                          <input type="range" min="24" max="84" step="12" value={simTerm} onChange={(e) => setSimTerm(Number(e.target.value))} className="w-full accent-gold cursor-pointer" />
-                       </div>
-                    </div>
-                 </div>
-
-                 {/* Results */}
-                 <div className="space-y-4">
-                    <div className="bg-black p-6 border border-gold shadow-[0_0_15px_rgba(201,168,76,0.15)] rounded text-center relative overflow-hidden group">
-                       <div className="absolute top-0 right-0 w-16 h-16 bg-gold/10 rounded-full blur-xl translate-x-4 -translate-y-4"></div>
-                       <div className="text-[10px] uppercase text-gold tracking-widest font-mono mb-2">Total Economic Profit</div>
-                       <div className="text-5xl font-playfair font-bold text-white relative z-10 drop-shadow-md">${totalEconomicProfit.toLocaleString()}</div>
-                    </div>
-
-                    <div className="bg-charcoal p-4 border border-border rounded grid grid-cols-2 gap-4 shadow-inner">
-                       <div>
-                          <div className="text-[9px] uppercase text-text-muted tracking-widest font-mono mb-1">Front Gross</div>
-                          <div className={`text-2xl font-playfair font-bold ${frontGross < 0 ? 'text-red-500' : 'text-white'}`}>${frontGross.toLocaleString()}</div>
-                       </div>
-                       <div>
-                          <div className="text-[9px] uppercase text-text-muted tracking-widest font-mono mb-1">Back Gross (Inc Res)</div>
-                          <div className="text-2xl font-playfair font-bold text-white">${totalBackend.toLocaleString()}</div>
-                       </div>
-                    </div>
-
-                    <div className="bg-panel border border-border p-4 rounded shadow-inner relative overflow-hidden">
-                       <div className="absolute inset-0 bg-gradient-to-br from-gold/5 via-transparent to-transparent opacity-100"></div>
-                       <strong className="text-white text-[10px] uppercase tracking-[0.15em] mb-2 block font-mono flex items-center gap-2 relative z-10">
-                          <BrainCircuit className="w-4 h-4 text-gold" /> AI Agent Stance
-                       </strong>
-                       <div className={`text-lg font-bold tracking-wider relative z-10 ${aiColor}`}>{aiStance}</div>
-                    </div>
-                 </div>
-              </div>
-            </div>
-         );
-      }
-
       case 'ActionMetrics': {
+        const metricItemCount = Math.max(1, Math.min(25, Number(item.value) || 3));
+        const actionRecords = [...Array(metricItemCount)].map((_, i) => ({
+             auditId: Math.floor(Math.random() * 90000) + 10000,
+             actionType: item.label?.replace(' Audit', '') || "Action Extracted",
+             trigger: 'Agent Engine',
+             hoursAgo: Math.floor(Math.random() * 24) + 1,
+             status: 'SUCCESS'
+        }));
         return (
           <div className="space-y-6">
              <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
                 <div className="flex items-center gap-3"><Command className="w-7 h-7" /> {item.label}</div>
                 <span className="text-[10px] font-mono bg-panel border border-border px-2 py-1 rounded text-text-muted">Metric Count: {item.value}</span>
              </h3>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[...Array(Math.max(1, Math.min(6, Number(item.value) || 3)))].map((_, i) => (
-                   <div key={i} className="bg-black p-4 rounded border border-border hover:border-gold transition-colors cursor-pointer group" onClick={() => onDrillDown('TimelineEvent', { id: `EVT-ACT-${Math.floor(Math.random() * 9000) + 1000}` })}>
-                      <div className="flex justify-between items-center mb-2 text-xs font-mono uppercase tracking-widest text-text-muted">
-                        <span><Clock className="w-3 h-3 inline mr-1 text-gold"/> {Math.floor(Math.random() * 24) + 1} hours ago</span>
-                        <span className="bg-green-900/20 border border-green-500/30 text-green-500 px-1 rounded font-bold">SUCCESS</span>
-                      </div>
-                      <div className="font-bold text-white text-sm mb-1 group-hover:text-gold transition-colors">{item.label?.replace(' Audit', '') || "Action Extracted"}</div>
-                      <div className="text-xs text-text-dim truncate">Triggered by Agent Engine · Audit ID: {Math.floor(Math.random() * 90000) + 10000}</div>
-                   </div>
-                ))}
-             </div>
+             <GenericDataTable data={actionRecords} tableName={`${item.label} Export`} />
           </div>
         );
       }
@@ -1947,21 +1612,14 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
                    <div className="text-2xl font-bold text-amber-500 flex items-center justify-center gap-1"><TrendingUp className="w-5 h-5"/> 12%</div>
                 </div>
              </div>
-             <div className="bg-charcoal border border-border rounded flex-1 overflow-x-auto">
-                <table className="w-full text-sm text-left whitespace-nowrap">
-                   <thead className="text-xs text-text-muted font-mono uppercase tracking-widest bg-black border-b border-border">
-                      <tr><th className="p-3">Trigger Instance</th><th className="p-3">Location</th><th className="p-3">Overriding Manager</th></tr>
-                   </thead>
-                   <tbody className="divide-y divide-border">
-                      <tr className="hover:bg-panel cursor-pointer transition-colors" onClick={() => onDrillDown('Employee', { name: "Marcus Broussard" })}>
-                         <td className="p-3 font-bold text-white flex items-center gap-2"><TrendingDown className="w-4 h-4 text-amber-500"/> Deal #84A92</td><td className="p-3 text-text-muted">Baton Rouge</td><td className="p-3 text-gold">Marcus Broussard</td>
-                      </tr>
-                      <tr className="hover:bg-panel cursor-pointer transition-colors" onClick={() => onDrillDown('Employee', { name: "Sarah Jenkins" })}>
-                         <td className="p-3 font-bold text-white flex items-center gap-2"><TrendingDown className="w-4 h-4 text-amber-500"/> Deal #19V42</td><td className="p-3 text-text-muted">Slidell</td><td className="p-3 text-gold">Sarah Jenkins</td>
-                      </tr>
-                   </tbody>
-                </table>
-             </div>
+             <GenericDataTable 
+                 data={[
+                    { triggerInstance: 'Deal #84A92', location: 'Baton Rouge', overridingManager: 'Marcus Broussard', trend: 'Up 12%', threshold },
+                    { triggerInstance: 'Deal #19V42', location: 'Slidell', overridingManager: 'Sarah Jenkins', trend: 'Stable', threshold },
+                    { triggerInstance: 'Deal #90X11', location: 'Baton Rouge', overridingManager: 'System Auto', trend: 'Down 3%', threshold }
+                 ]} 
+                 tableName={`${ruleName} Audits`} 
+             />
           </div>
         );
       }
@@ -2089,6 +1747,153 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
                    </div>
                 </div>
              </div>
+          </div>
+        );
+      }
+
+      case 'AgentRecommendation': {
+        const rec = item.data;
+        return (
+          <div className="space-y-6">
+             <div className="border-b border-border pb-4">
+                <div className="flex items-center gap-3 mb-2">
+                   <BrainCircuit className="w-8 h-8 text-gold" />
+                   <h3 className="text-3xl font-playfair text-white">{rec.title}</h3>
+                </div>
+                <p className="text-text-muted text-sm">{rec.description}</p>
+             </div>
+             
+             <div className="bg-charcoal border border-border rounded p-6 shadow-inner relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gold/5 rounded-bl-full pointer-events-none"></div>
+                <h4 className="text-xs text-gold font-mono uppercase tracking-widest mb-4 flex items-center gap-2">
+                   <Command className="w-4 h-4" /> Strategy & Execution Protocol
+                </h4>
+                
+                <div className="prose prose-invert prose-sm max-w-none text-text">
+                   <p className="mb-4"><strong>Strategic Rationale:</strong> The AI Agent ({rec.agentId.replace('ag_','')}) has evaluated current operational conditions and determined this course of action optimal with a <strong>{rec.confidenceScore}% confidence interval</strong>.</p>
+                   
+                   {rec.strategyNotes && (
+                      <div className="mb-6 p-4 bg-black border border-border/50 rounded-lg shadow-inner">
+                         <h5 className="text-white text-sm font-bold mb-2 uppercase tracking-wide border-b border-border/50 pb-2">Detailed Strategic Analysis</h5>
+                         <ul className="list-disc pl-5 space-y-2 mt-3 p-0 mb-0">
+                            {rec.strategyNotes.map((note, i) => <li key={i} className="text-text-muted leading-relaxed">{note}</li>)}
+                         </ul>
+                      </div>
+                   )}
+
+                   {rec.proposedActions?.length > 0 && (
+                      <div>
+                         <h5 className="text-white text-sm font-bold mb-3 uppercase tracking-wide">Proposed Action Sequence</h5>
+                         <div className="space-y-3">
+                            {rec.proposedActions.map((action, i) => (
+                               <div key={i} className="flex items-center justify-between bg-panel p-3 rounded border border-border relative z-10 hover:bg-black transition-colors group">
+                                  <div className="flex items-start gap-4">
+                                     <div className="w-8 h-8 rounded-full bg-gold/10 border border-gold/30 text-gold flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-gold group-hover:text-black transition-colors">{i+1}</div>
+                                     <div>
+                                        <div className="text-white font-mono text-sm font-bold mb-1">{action.actionType.replace(/_/g, ' ')}</div>
+                                        <div className="text-xs text-text-muted font-mono bg-charcoal border border-border px-2 py-1 rounded inline-block shadow-inner break-all">Payload: {JSON.stringify(action.payload)}</div>
+                                     </div>
+                                  </div>
+                                  {action.requiresApproval ? 
+                                    <div className="text-[10px] text-red-500 uppercase tracking-widest font-bold border border-red-500/30 bg-red-900/10 px-2 py-1 rounded whitespace-nowrap">Admin Required</div>
+                                    : <div className="text-[10px] text-green-500 uppercase tracking-widest font-bold border border-green-500/30 bg-green-900/10 px-2 py-1 rounded whitespace-nowrap">Auto-Execute</div>
+                                  }
+                               </div>
+                            ))}
+                         </div>
+                      </div>
+                   )}
+                </div>
+             </div>
+             
+             <div className="flex gap-4">
+                <button className="flex-1 bg-gold hover:bg-gold-light text-black transition-colors px-4 py-3 rounded text-sm font-bold shadow-[0_0_15px_rgba(201,168,76,0.2)] flex items-center justify-center gap-2 uppercase tracking-wide">
+                   <CheckCircle2 className="w-4 h-4"/> Approve & Initiate Sequence
+                </button>
+                <button onClick={() => onClose()} className="bg-charcoal hover:bg-black border border-border text-text hover:text-white transition-colors px-6 py-3 rounded text-sm font-bold uppercase tracking-wide">
+                   Return to Inbox
+                </button>
+             </div>
+          </div>
+        );
+      }
+
+      case 'InventoryUnit': {
+        const payload = item.data?.dataPayload || {};
+        const costStr = payload['Cost'] || payload['Cost '] || '$0.00';
+        const priceStr = payload['Price'] || payload['Price '] || 'TBD';
+        const age = payload['Days Old'] || payload['Age'] || 'New Arrival';
+        const desc = payload['Unit'] || payload['Description'] || 'Unknown Unit';
+        const stockNo = payload['Stock #'] || item.data?.unitId || 'N/A';
+        const status = payload['Status'] || payload['Condition'] || 'Active';
+        
+        // Generate pseudo-data for visual richness
+        const aiScore = Math.floor(Math.random() * 20 + 80);
+        const leads = Math.floor(Math.random() * 5);
+        
+        return (
+          <div className="space-y-6">
+             <div className="flex justify-between items-start border-b border-border pb-4">
+               <div>
+                  <h3 className="text-3xl font-playfair text-white flex items-center gap-3">
+                     <Bike className="w-8 h-8 text-gold" />
+                     {desc}
+                  </h3>
+                  <div className="flex items-center gap-3 mt-2 text-sm font-mono tracking-widest text-text-muted">
+                    <span>{stockNo}</span>
+                    <span className="text-border">|</span>
+                    <span className={status === 'Sold' ? 'text-red-500' : 'text-green-500'}>{status.toUpperCase()}</span>
+                  </div>
+               </div>
+               <div className="text-right">
+                  <div className="text-xs font-mono uppercase text-gold tracking-widest mb-1">AI Attractiveness</div>
+                  <div className="text-3xl font-bold font-mono text-white">{aiScore}/100</div>
+               </div>
+             </div>
+             
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-charcoal border border-border rounded p-4 shadow-inner">
+                   <div className="text-[10px] text-text-muted uppercase tracking-widest mb-1 font-mono">Book Cost</div>
+                   <div className="text-xl font-bold text-red-400 font-mono">{costStr}</div>
+                </div>
+                <div className="bg-charcoal border border-border rounded p-4 shadow-inner">
+                   <div className="text-[10px] text-text-muted uppercase tracking-widest mb-1 font-mono">Retail Ask</div>
+                   <div className="text-xl font-bold text-white font-mono">{priceStr}</div>
+                </div>
+                <div className="bg-charcoal border border-border rounded p-4 shadow-inner">
+                   <div className="text-[10px] text-text-muted uppercase tracking-widest mb-1 font-mono">Aging</div>
+                   <div className={`text-xl font-bold font-mono ${age > 90 ? 'text-red-500' : age > 60 ? 'text-amber-500' : 'text-green-500'}`}>{age} Days</div>
+                </div>
+                <div className="bg-charcoal border border-border rounded p-4 shadow-inner">
+                   <div className="text-[10px] text-text-muted uppercase tracking-widest mb-1 font-mono">Active Ops</div>
+                   <div className="text-xl font-bold text-white font-mono">{leads} Deals</div>
+                </div>
+             </div>
+
+             <div className="bg-black p-6 rounded-lg border border-border shadow-inner mt-4">
+                 <strong className="text-gold text-[10px] uppercase tracking-[0.15em] mb-4 block border-b border-border/50 pb-2 font-mono flex items-center gap-2">
+                    <Command className="w-4 h-4 text-gold" /> Operational Management
+                 </strong>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button className="bg-panel hover:bg-gold hover:text-black border border-border text-white px-4 py-3 rounded text-sm transition-colors font-bold flex justify-between items-center group" onClick={() => onDrillDown('Action', { name: `Initiate Store Transfer for ${stockNo}`, message: `Routing inter-store logistics request protocol...` })}>
+                      <div className="flex items-center gap-2"><MapPin className="w-4 h-4 group-hover:text-black" /> Transfer Location</div>
+                      <ChevronRight className="w-3 h-3 group-hover:text-black opacity-50" />
+                    </button>
+                    <button className="bg-panel hover:bg-gold hover:text-black border border-border text-white px-4 py-3 rounded text-sm transition-colors font-bold flex justify-between items-center group" onClick={() => onDrillDown('Action', { name: `System Markdown on ${stockNo}`, message: `Accessing secure override pricing matrix...` })}>
+                      <div className="flex items-center gap-2"><TrendingDown className="w-4 h-4 group-hover:text-black" /> Apply System Discount</div>
+                      <ChevronRight className="w-3 h-3 group-hover:text-black opacity-50" />
+                    </button>
+                    <button className="bg-panel hover:bg-gold hover:text-black border border-border text-white px-4 py-3 rounded text-sm transition-colors font-bold flex justify-between items-center group" onClick={() => onDrillDown('Action', { name: `Schedule Recon for ${stockNo}`, message: `Creating internal RO for service department...` })}>
+                      <div className="flex items-center gap-2"><Wrench className="w-4 h-4 group-hover:text-black" /> Schedule Recon / RO</div>
+                      <ChevronRight className="w-3 h-3 group-hover:text-black opacity-50" />
+                    </button>
+                    <button className="bg-panel hover:bg-red-900/40 hover:text-red-500 hover:border-red-500/50 border border-border text-white px-4 py-3 rounded text-sm transition-colors font-bold flex justify-between items-center group" onClick={() => onDrillDown('Action', { name: `Mark ${stockNo} as Defected/Stolen`, message: `Locking ledger parameters for catastrophic loss...` })}>
+                      <div className="flex items-center gap-2"><AlertCircle className="w-4 h-4" /> Declare Inventory Loss</div>
+                      <ChevronRight className="w-3 h-3 opacity-50" />
+                    </button>
+                 </div>
+             </div>
+
           </div>
         );
       }

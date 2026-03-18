@@ -120,12 +120,12 @@ export const getKpiStats = () => {
   const totalGross = 487240; // Override with static for demo impact, or use compute: selectTotalGrossMTD();
   
   return [
-    { label: "TOTAL GROSS MTD", value: "$487,240", delta: "↑ 12.4%", color: "text-green" },
-    { label: "UNITS RETAILED MTD", value: "84", delta: "↑ 8.2%", color: "text-green" },
-    { label: "F&I BACKEND / UNIT", value: "$1,247", delta: "↑ 6.1%", color: "text-green" },
-    { label: "AVG FRONT-END GROSS", value: "$892", delta: "↓ 3.2%", color: "text-red" },
-    { label: "OEM BONUS PROJECTED", value: "$74,000", delta: "→ On Track", color: "text-amber" },
-    { label: "LEADS TODAY", value: "23", delta: "↑ 4 vs avg", color: "text-green" }
+    { label: "TOTAL GROSS MTD", value: "$487,240", delta: "↑ 12.4%", color: "text-green", reportId: "DASHBOARD_REVENUE" },
+    { label: "UNITS RETAILED MTD", value: "84", delta: "↑ 8.2%", color: "text-green", reportId: "SALES_UNITS" },
+    { label: "F&I BACKEND / UNIT", value: "$1,247", delta: "↑ 6.1%", color: "text-green", reportId: "FI_PENETRATION" },
+    { label: "AVG FRONT-END GROSS", value: "$892", delta: "↓ 3.2%", color: "text-red", reportId: "SALES_UNITS" },
+    { label: "OEM BONUS PROJECTED", value: "$74,000", delta: "→ On Track", color: "text-amber", reportId: "SALES_UNITS" },
+    { label: "LEADS TODAY", value: "23", delta: "↑ 4 vs avg", color: "text-green", reportId: "LEAD_SOURCE_CONV" }
   ];
 };
 

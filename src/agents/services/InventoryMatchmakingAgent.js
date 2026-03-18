@@ -1,14 +1,14 @@
 import { AgentRegistry } from '../registry/AgentRegistry';
 import { RecommendationEngine } from '../recommendations/RecommendationEngine';
 import { EntityLinker } from '../core/EntityLinker';
-import { LEADS, INVENTORY, DEALS } from '../../data/mockDatabase';
+import { LEADS, INVENTORY, DEALS, AGENT_THRESHOLDS } from '../../data/mockDatabase';
 
 export const InventoryMatchmakingAgent = {
   id: 'inventory_matchmaking_agent',
   name: 'Inventory Matchmaking Agent',
   description: 'Cross-references active leads to physical inventory tracking to recommend backups, pairings, and prevent aged unit stagnation.',
   supportedRoles: ['Sales Associate', 'General Manager'],
-  supportedTriggers: ['APP_BOOT', 'LEAD_CREATED', 'INVENTORY_ADDED', 'DAILY_CRON'],
+  supportedTriggers: ['APP_BOOT', 'LEAD_CREATED', 'INVENTORY_ADDED', 'DAILY_CRON', 'MANUAL'],
 
   async evaluate(trigger, context) {
     const recommendations = [];
@@ -57,7 +57,7 @@ export const InventoryMatchmakingAgent = {
 
     // 3. Aging Inventory Match -> Lead Mapping
     // Who is looking for units that are aging on our lot?
-    const agedInventory = INVENTORY.filter(i => i.ageDays > 60 && i.status === 'Active');
+    const agedInventory = INVENTORY.filter(i => i.ageDays > AGENT_THRESHOLDS.inventoryAged && i.status === 'Active');
     
     agedInventory.forEach(agedUnit => {
       // In a real system, we'd do NLP matching. Here we just brute-force cross-reference categories.
@@ -69,7 +69,7 @@ export const InventoryMatchmakingAgent = {
             recommendations.push(
                RecommendationEngine.generateRecommendation(this, {
                title: `Aged Unit Match: ${agedUnit.year} ${agedUnit.model}`,
-               description: `Unit ${agedUnit.stock} is ${agedUnit.ageDays} days old. We have ${potentialUsedBuyers.length} active leads sourced from the Used Inventory campaign. Recommend sending blast.`,
+               description: `Unit ${agedUnit.stock} is ${agedUnit.ageDays} days old (Threshold: ${AGENT_THRESHOLDS.inventoryAged}). We have ${potentialUsedBuyers.length} active leads sourced from the Used Inventory campaign. Recommend sending blast.`,
                confidenceScore: 88,
                priority: 'HIGH',
                relatedEntities: [ EntityLinker.createLink('Inventory', agedUnit.id, `Aged Stock`) ],

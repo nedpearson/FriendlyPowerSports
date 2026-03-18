@@ -7,7 +7,7 @@ import {
   LayoutDashboard, TrendingUp, CreditCard, Package, Bike, Wrench,
   Clock, DollarSign, Megaphone, Award, FileBarChart, Users as UsersIcon, Settings,
   Bell, Search, ChevronRight, CheckCircle2, ChevronDown, User, Play, Calendar, AlertCircle, Command,
-  Briefcase, Users, BrainCircuit, TrendingDown, Database, Filter, Zap, Layout, Grid3X3
+  Briefcase, Users, BrainCircuit, TrendingDown, Database, Filter, Zap, Layout, Grid3X3, RefreshCw, Activity, X, MessageSquare, Terminal
 } from 'lucide-react';
 
 import {
@@ -21,7 +21,10 @@ import { TrendBadge } from './components/ui/TrendBadge';
 import { AutomatedInsights } from './components/ui/AutomatedInsights';
 import { DrillDownValue } from './components/ui/DrillDownValue';
 import { DrillDownModal } from './components/ui/DrillDownModal';
+import { DetailReportView } from './components/ui/DetailReportView';
 import { AgentWidget } from './components/ui/AgentWidget';
+import { ReportsModule } from './components/ui/ReportsModule';
+import { FIModule } from './components/ui/FIModule';
 import dealerLogo from './assets/logo.png';
 
 // Boot up Super Agent Phase 1 Registry
@@ -31,7 +34,7 @@ import { RecommendationService } from './agents/services/RecommendationService';
 import { AgentMetrics } from './agents/audit/AgentMetrics';
 import { ActionExecutionService } from './agents/services/ActionExecutionService';
 
-import { EMPLOYEES } from './data/mockDatabase';
+import { INVENTORY, DEALS, CUSTOMERS, AGENT_RECOMMENDATIONS, AGENT_ACTIONS, AGENT_AUDIT_LOGS, EMPLOYEES, AGENT_THRESHOLDS } from './data/mockDatabase';
 import { 
   getKpiStats, getLiveLeads, getTopPerformers, getInventoryAging,
   getAlerts, getReconPipeline, getROBoard, getCRMInbox, getCustomer360Data, getPipelineKanban, getAppointmentsTimeline, getPrequalQueue, getManagerOpportunityBoard, getGlobalInventory
@@ -128,8 +131,8 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
   useEffect(() => {
     // Generate background insights via the Super Agent layer manually on boot
     const seedRecommendations = async () => {
-      // Broadcast a manual trigger to awaken all Agents
-      await AgentRegistry.broadcastTrigger({ type: 'MANUAL', timestamp: new Date().toISOString() }, { userId: 'EMP-1', role: 'Owner', locationId: 'ALL' });
+      // Broadcast an APP_BOOT trigger to awaken all Agents
+      await AgentRegistry.broadcastTrigger({ type: 'APP_BOOT', timestamp: new Date().toISOString() }, { userId: 'EMP-1', role: 'Owner', locationId: 'ALL' });
       
       const rawRecommendations = RecommendationService.fetchPending({ userRole: 'Owner' }).slice(0, 3);
       
@@ -485,13 +488,13 @@ const SalesModule = ({ onDrillDown }) => {
               </div>
             </div>
           </div>
-          <div className="bg-black border border-border rounded p-6 flex flex-col justify-between cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Deal', { unit: dealDeskUnit, salePrice, cost, pack, recon, holdback, backend, fpCost, totalEcoProfit })}>
+          <div className="bg-black border border-border rounded p-6 flex flex-col justify-between cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Deal', { unit: dealDeskUnit, salePrice, cost, pack, recon, holdback, backend, fpCost, totalEcoProfit, reportId: 'SALES_UNITS' })}>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-text-muted">Front-End Gross:</span> 
-                <span className="text-white"><DrillDownValue value={`$${frontEnd.toLocaleString()}`} label="Front-End Gross" type="Deal" onDrillDown={onDrillDown} /></span>
+                <span className="text-white"><DrillDownValue value={`$${frontEnd.toLocaleString()}`} label="Front-End Gross" type="Deal" onDrillDown={onDrillDown} reportId="SALES_UNITS" /></span>
               </div>
               <div className="flex justify-between"><span className="text-text-muted">OEM Holdback:</span> 
-                <span className="text-green-500"><DrillDownValue value={`+$${holdback.toLocaleString()}`} label="OEM Holdback" type="Deal" onDrillDown={onDrillDown} color="text-green-500" /></span>
+                <span className="text-green-500"><DrillDownValue value={`+$${holdback.toLocaleString()}`} label="OEM Holdback" type="Deal" onDrillDown={onDrillDown} color="text-green-500" reportId="SALES_UNITS" /></span>
               </div>
               <div className="flex justify-between"><span className="text-text-muted">Floorplan Cost:</span> 
                 <span className="text-red-400"><DrillDownValue value={`-$${fpCost.toLocaleString()}`} label="Floorplan Cost" type="Deal" onDrillDown={onDrillDown} color="text-red-400" /></span>
@@ -522,95 +525,6 @@ const SalesModule = ({ onDrillDown }) => {
   );
 };
 
-const FIModule = ({ onDrillDown }) => {
-  const fiRecs = RecommendationService.fetchPending().filter(r => r.agentId === 'ag_fi_readiness').slice(0, 1);
-  const fiInsights = fiRecs.length > 0 ? fiRecs.map(rec => ({
-    type: rec.priority === 'URGENT' ? 'warning' : 'opportunity',
-    message: <>{rec.title} — <span className="text-text-muted">{rec.description}</span></>,
-    actionText: "Review F&I Structure",
-    onAction: () => onDrillDown('AgentRecommendation', { ...rec })
-  })) : [];
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-         <h1 className="text-2xl font-playfair text-white">F&I & Business Office</h1>
-         <button className="bg-gold hover:bg-gold-light text-black px-4 py-2 rounded text-sm font-bold flex items-center gap-2" onClick={() => onDrillDown('Action', { name: 'Run Credit', message: 'Opening secure credit portal...' })}>
-           <CreditCard className="w-4 h-4" /> Run Credit
-         </button>
-      </div>
-
-      {fiInsights.length > 0 && <AutomatedInsights onDrillDown={onDrillDown} insights={fiInsights} />}
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { label: "Backend/Unit MTD", value: "$1,247", delta: "+$42 vs BM", color: "text-green-500" },
-          { label: "VSC Penetration", value: "62%", delta: "+4% vs Last Mo", color: "text-green-500" },
-          { label: "GAP Penetration", value: "48%", delta: "-2% vs Last Mo", color: "text-amber-500" },
-          { label: "Total Reserve MTD", value: "$18,450", delta: "+$2,100", color: "text-gold" }
-        ].map((m,i) => (
-          <div key={i} className="bg-charcoal p-4 rounded border border-border">
-            <div className="text-xs text-text-muted font-mono mb-1 uppercase tracking-wider">{m.label}</div>
-            <div className={`text-2xl font-bold ${m.label.includes('Reserve') ? 'text-white' : 'text-gold'}`}>
-               <DrillDownValue value={m.value} label={m.label} type="Financials" onDrillDown={onDrillDown} />
-            </div>
-            <div className={`text-xs mt-1 ${m.color} bg-black inline-block px-1 rounded`}>
-               <DrillDownValue value={m.delta} label={`${m.label} Trend`} type="Financials" onDrillDown={onDrillDown} color={m.color} />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="bg-charcoal border border-border rounded p-4">
-        <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase">Deal-by-Deal Log</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left text-text">
-            <thead className="text-xs text-text-muted bg-black font-mono">
-              <tr>
-                <th className="px-4 py-3 rounded-tl">Customer</th>
-                <th className="px-4 py-3">Unit</th>
-                <th className="px-4 py-3">Lender</th>
-                <th className="px-4 py-3">Reserve</th>
-                <th className="px-4 py-3">VSC</th>
-                <th className="px-4 py-3">GAP</th>
-                <th className="px-4 py-3 rounded-tr text-right">Total Backend</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr onClick={() => onDrillDown('Deal', {customer: 'John Davis', unit: '2024 Talon 1000R', lender: 'Sheffield', reserve: '$450', vsc: '$800', gap: 'No', total: '$1,250'})} className="border-b border-border/50 hover:bg-panel transition-colors cursor-pointer group">
-                <td className="px-4 py-3 text-white font-bold group-hover:text-gold transition-colors">John Davis</td>
-                <td className="px-4 py-3">2024 Talon 1000R</td>
-                <td className="px-4 py-3"><DrillDownValue value="Sheffield" label="Sheffield Bank Profile" type="Lender" onDrillDown={onDrillDown} /></td>
-                <td className="px-4 py-3"><DrillDownValue value="$450" label="Reserve Split (Sheffield)" type="Financials" onDrillDown={onDrillDown} /></td>
-                <td className="px-4 py-3"><DrillDownValue value="Yes ($800)" label="VSC Contract Details" type="Financials" onDrillDown={onDrillDown} color="text-green-500 font-bold" /></td>
-                <td className="px-4 py-3"><span className="text-text-muted">No</span></td>
-                <td className="px-4 py-3 text-right font-bold text-gold"><DrillDownValue value="$1,250" label="John Davis Total Backend" type="Financials" onDrillDown={onDrillDown} color="text-gold" /></td>
-              </tr>
-              <tr onClick={() => onDrillDown('Deal', {customer: 'Emily White', unit: '2023 YZF-R7', lender: 'Octane', reserve: '$320', vsc: '$600', gap: '$400', total: '$1,320'})} className="border-b border-border/50 hover:bg-panel transition-colors cursor-pointer group">
-                <td className="px-4 py-3 text-white font-bold group-hover:text-gold transition-colors">Emily White</td>
-                <td className="px-4 py-3">2023 YZF-R7</td>
-                <td className="px-4 py-3"><DrillDownValue value="Octane" label="Octane Bank Profile" type="Lender" onDrillDown={onDrillDown} /></td>
-                <td className="px-4 py-3"><DrillDownValue value="$320" label="Reserve Split (Octane)" type="Financials" onDrillDown={onDrillDown} /></td>
-                <td className="px-4 py-3"><DrillDownValue value="Yes ($600)" label="VSC Contract Details" type="Financials" onDrillDown={onDrillDown} color="text-green-500 font-bold" /></td>
-                <td className="px-4 py-3"><DrillDownValue value="Yes ($400)" label="GAP Contract Details" type="Financials" onDrillDown={onDrillDown} color="text-green-500 font-bold" /></td>
-                <td className="px-4 py-3 text-right font-bold text-gold"><DrillDownValue value="$1,320" label="Emily White Total Backend" type="Financials" onDrillDown={onDrillDown} color="text-gold" /></td>
-              </tr>
-              <tr onClick={() => onDrillDown('Deal', {customer: 'Mark Allen', unit: '2024 Rzr Pro R', lender: 'Synchrony', reserve: '$800', vsc: 'No', gap: 'No', total: '$800'})} className="hover:bg-panel transition-colors cursor-pointer group">
-                <td className="px-4 py-3 text-white font-bold group-hover:text-gold transition-colors">Mark Allen</td>
-                <td className="px-4 py-3">2024 Rzr Pro R</td>
-                <td className="px-4 py-3"><DrillDownValue value="Synchrony" label="Synchrony Bank Profile" type="Lender" onDrillDown={onDrillDown} /></td>
-                <td className="px-4 py-3"><DrillDownValue value="$800" label="Reserve Split (Synchrony)" type="Financials" onDrillDown={onDrillDown} /></td>
-                <td className="px-4 py-3"><span className="text-text-muted">No</span></td>
-                <td className="px-4 py-3"><span className="text-text-muted">No</span></td>
-                <td className="px-4 py-3 text-right font-bold text-gold"><DrillDownValue value="$800" label="Mark Allen Total Backend" type="Financials" onDrillDown={onDrillDown} color="text-gold" /></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const InventoryModule = ({ onDrillDown }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -661,15 +575,15 @@ const InventoryModule = ({ onDrillDown }) => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="bg-charcoal p-4 rounded border border-border flex flex-col items-center justify-center">
           <div className="font-playfair text-5xl text-gold">
-             <DrillDownValue value="830" label="Total Active Units" type="Inventory" onDrillDown={onDrillDown} />
+             <DrillDownValue value="830" label="Total Active Units" type="Inventory" onDrillDown={onDrillDown} reportId="INV_AGING" />
           </div>
           <div className="text-text-muted font-mono mt-2">TOTAL UNITS</div>
           <div className="flex gap-4 mt-4 text-sm">
              <div className="text-green-500 font-bold">
-               <DrillDownValue value="520 New" label="New Inventory" type="Inventory" onDrillDown={onDrillDown} color="text-green-500" />
+               <DrillDownValue value="520 New" label="New Inventory" type="Inventory" onDrillDown={onDrillDown} color="text-green-500" reportId="INV_AGING" />
              </div>
              <div className="text-white">
-               <DrillDownValue value="310 Used" label="Used Inventory" type="Inventory" onDrillDown={onDrillDown} />
+               <DrillDownValue value="310 Used" label="Used Inventory" type="Inventory" onDrillDown={onDrillDown} reportId="INV_AGING" />
              </div>
           </div>
         </div>
@@ -677,11 +591,11 @@ const InventoryModule = ({ onDrillDown }) => {
         <div className="lg:col-span-3 bg-charcoal p-4 rounded border border-border">
            <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase">Brand Mix</h3>
            <div className="flex gap-2 h-12 w-full mt-8 rounded overflow-hidden">
-             <div onClick={() => onDrillDown('Report', { category: 'Inventory Brand Mix', brand: 'Honda', units: 187 })} className="bg-red-600 flex items-center justify-center text-xs font-bold text-white transition-all hover:opacity-80 cursor-pointer" style={{width: '22%'}}>Honda (187)</div>
-             <div onClick={() => onDrillDown('Report', { category: 'Inventory Brand Mix', brand: 'Yamaha', units: 164 })} className="bg-blue-600 flex items-center justify-center text-xs font-bold text-white transition-all hover:opacity-80 cursor-pointer" style={{width: '20%'}}>Yamaha (164)</div>
-             <div onClick={() => onDrillDown('Report', { category: 'Inventory Brand Mix', brand: 'Polaris', units: 142 })} className="bg-gray-200 text-black flex items-center justify-center text-xs font-bold transition-all hover:opacity-80 cursor-pointer" style={{width: '17%'}}>Polaris (142)</div>
-             <div onClick={() => onDrillDown('Report', { category: 'Inventory Brand Mix', brand: 'Kawasaki', units: 89 })} className="bg-green-600 flex items-center justify-center text-xs font-bold text-white transition-all hover:opacity-80 cursor-pointer" style={{width: '11%'}}>Kawasaki (89)</div>
-             <div onClick={() => onDrillDown('Report', { category: 'Inventory Brand Mix', brand: 'Used', units: 220 })} className="bg-panel flex items-center justify-center text-xs font-bold text-white border border-border cursor-pointer hover:opacity-80" style={{width: '30%'}}>Used (220)</div>
+             <div onClick={() => onDrillDown('Report', { reportId: 'INV_AGING', label: 'Honda Inventory (187)', searchTerm: 'Honda' })} className="bg-red-600 flex items-center justify-center text-xs font-bold text-white transition-all hover:opacity-80 cursor-pointer" style={{width: '22%'}}>Honda (187)</div>
+             <div onClick={() => onDrillDown('Report', { reportId: 'INV_AGING', label: 'Yamaha Inventory (164)', searchTerm: 'Yamaha' })} className="bg-blue-600 flex items-center justify-center text-xs font-bold text-white transition-all hover:opacity-80 cursor-pointer" style={{width: '20%'}}>Yamaha (164)</div>
+             <div onClick={() => onDrillDown('Report', { reportId: 'INV_AGING', label: 'Polaris Inventory (142)', searchTerm: 'Polaris' })} className="bg-gray-200 text-black flex items-center justify-center text-xs font-bold transition-all hover:opacity-80 cursor-pointer" style={{width: '17%'}}>Polaris (142)</div>
+             <div onClick={() => onDrillDown('Report', { reportId: 'INV_AGING', label: 'Kawasaki Inventory (89)', searchTerm: 'Kawasaki' })} className="bg-green-600 flex items-center justify-center text-xs font-bold text-white transition-all hover:opacity-80 cursor-pointer" style={{width: '11%'}}>Kawasaki (89)</div>
+             <div onClick={() => onDrillDown('Report', { reportId: 'INV_AGING', label: 'Used Inventory (220)', searchTerm: 'Used' })} className="bg-panel flex items-center justify-center text-xs font-bold text-white border border-border cursor-pointer hover:opacity-80" style={{width: '30%'}}>Used (220)</div>
            </div>
         </div>
       </div>
@@ -879,9 +793,9 @@ const ServicePartsModule = ({ onDrillDown }) => {
       <AutomatedInsights onDrillDown={onDrillDown} insights={serviceInsights} />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-charcoal border border-border rounded p-4 shadow-inner hover:border-gold-dim transition-colors group cursor-pointer" onClick={() => onDrillDown('Report', { name: 'Retention Drilldown' })}>
+        <div className="bg-charcoal border border-border rounded p-4 shadow-inner hover:border-gold-dim transition-colors group cursor-pointer" onClick={() => onDrillDown('Report', { name: 'Retention Drilldown', reportId: 'SVC_RO_VOLUME' })}>
            <div className="flex items-center gap-2 text-blue-500 text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><UsersIcon className="w-4 h-4"/> Automated Retention</div>
-           <div className="text-xl font-bold text-white mb-1"><DrillDownValue value="142 Defectors" label="Retention Risk" type="Report" onDrillDown={onDrillDown}/></div>
+           <div className="text-xl font-bold text-white mb-1"><DrillDownValue value="142 Defectors" label="Retention Risk" type="Report" onDrillDown={onDrillDown} reportId="SVC_RO_VOLUME" /></div>
            <div className="text-xs text-text-muted mb-2">Saved MTD: <span className="text-green-500 font-bold">18 Customers</span></div>
            <div className="text-[10px] text-text-dim leading-relaxed bg-black p-2 rounded">
               AI has queued 142 clients who missed their 12-month service window for automated Twilio outreach.
@@ -1418,85 +1332,7 @@ const ClockInModule = ({ user, onDrillDown }) => {
   );
 }
 
-const ReportsModule = ({ onDrillDown }) => {
-  return (
-    <div className="max-w-6xl mx-auto space-y-6">
-       <div className="flex items-center justify-between border-b border-border pb-4 mb-6">
-         <h1 className="text-3xl font-playfair text-white flex items-center gap-3">
-           <FileBarChart className="w-8 h-8 text-gold" /> Dealership Analytics Hub
-         </h1>
-         <div className="flex gap-2">
-            <button className="bg-charcoal hover:bg-black text-white font-bold py-2 px-4 rounded border border-border transition-colors" onClick={() => onDrillDown('Action', { name: 'Schedule Report', message: 'Opening report scheduler...' })}>
-               Schedule Report
-            </button>
-            <button className="bg-gold hover:bg-gold-light text-black font-bold py-2 px-4 rounded transition-colors shadow-lg shadow-gold/20 flex items-center gap-2" onClick={() => onDrillDown('Action', { name: 'Create Custom Query', message: 'Opening advanced query builder...' })}>
-               + Create Custom Query
-            </button>
-         </div>
-       </div>
 
-       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="md:col-span-1 space-y-2">
-             <div className="text-xs font-mono text-text-muted uppercase tracking-wider mb-2">Saved Views</div>
-             <button className="w-full text-left p-3 rounded bg-panel border-l-2 border-gold text-white font-bold text-sm" onClick={() => onDrillDown('Report', { name: 'Month-End Executive Summary' })}>Month-End Executive Summary</button>
-             <button className="w-full text-left p-3 rounded hover:bg-charcoal text-text-muted hover:text-white transition-colors text-sm" onClick={() => onDrillDown('Report', { name: 'Aged Inventory Liability (90+)' })}>Aged Inventory Liability (90+)</button>
-             <button className="w-full text-left p-3 rounded hover:bg-charcoal text-text-muted hover:text-white transition-colors text-sm" onClick={() => onDrillDown('Report', { name: 'F&I Penetration by Product' })}>F&I Penetration by Product</button>
-             <button className="w-full text-left p-3 rounded hover:bg-charcoal text-text-muted hover:text-white transition-colors text-sm" onClick={() => onDrillDown('Report', { name: 'Service Tech Efficiency YTD' })}>Service Tech Efficiency YTD</button>
-             <button className="w-full text-left p-3 rounded hover:bg-charcoal text-text-muted hover:text-white transition-colors text-sm" onClick={() => onDrillDown('Report', { name: 'Lost Marketing Leads' })}>Lost Marketing Leads</button>
-          </div>
-          
-          <div className="md:col-span-3 space-y-6">
-             <div className="bg-charcoal border border-border rounded p-6">
-               <div className="flex justify-between items-center mb-6">
-                 <div>
-                    <h2 className="text-xl font-playfair text-white">Month-End Executive Summary</h2>
-                    <div className="text-sm text-text-muted">Generated by Dealership OS AI Copilot • 2 mins ago</div>
-                 </div>
-                 <button className="text-gold text-sm border border-gold px-3 py-1 rounded hover:bg-gold hover:text-black transition-colors" onClick={() => onDrillDown('Action', { name: 'Export PDF', message: 'Generating high-res PDF summary...' })}>Export PDF</button>
-               </div>
-               
-               <div className="p-4 bg-black border border-border rounded mb-6 text-sm text-text leading-relaxed">
-                 <span className="font-bold text-white block mb-2 font-mono uppercase tracking-wider text-xs">AI Synthesis:</span>
-                 Overall gross profitability is up <span className="text-green-500 font-bold">14.2%</span> compared to the same period last year, driven entirely by F&I back-end products attached to used non-current inventory. However, service department labor gross has dropped <span className="text-amber-500 font-bold">6%</span> due to an increase in unbilled warranty diagnosis time at the Slidell location. Immediate attention to service writing processes is recommended.
-               </div>
-
-               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                   <div className="bg-panel border border-border p-4 rounded text-center cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Report', {metric: 'Front-End Gross'})}>
-                      <div className="text-xs text-text-dim uppercase tracking-wider mb-1">Front-End Gross</div>
-                      <div className="text-2xl font-bold text-white">
-                         <DrillDownValue value="$412,850" label="Front-End Gross" type="Report" onDrillDown={onDrillDown} />
-                      </div>
-                   </div>
-                   <div className="bg-panel border border-border p-4 rounded text-center cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Report', {metric: 'Back-End Gross'})}>
-                      <div className="text-xs text-text-dim uppercase tracking-wider mb-1">Back-End Gross</div>
-                      <div className="text-2xl font-bold text-green-500">
-                         <DrillDownValue value="$218,440" label="Back-End Gross" type="Report" onDrillDown={onDrillDown} color="text-green-500" />
-                      </div>
-                   </div>
-                   <div className="bg-panel border border-border p-4 rounded text-center cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Report', {metric: 'Fixed Operations'})}>
-                      <div className="text-xs text-text-dim uppercase tracking-wider mb-1">Fixed Ops Gross</div>
-                      <div className="text-2xl font-bold text-red-500">
-                         <DrillDownValue value="$188,200" label="Fixed Ops Gross" type="Report" onDrillDown={onDrillDown} color="text-red-500" />
-                      </div>
-                   </div>
-                   <div className="bg-panel border border-border p-4 rounded text-center cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Report', {metric: 'Total Net Dealership'})}>
-                      <div className="text-xs text-text-dim uppercase tracking-wider mb-1">Total Dealership Net</div>
-                      <div className="text-2xl font-bold text-gold">$124,105</div>
-                   </div>
-               </div>
-             </div>
-
-             <div className="bg-charcoal border border-border rounded p-6 h-64 flex items-center justify-center">
-                <div className="text-center">
-                   <div className="text-text-muted italic mb-2">[Interactive Business Intelligence Graph Rendered Here]</div>
-                   <div className="text-xs text-text-dim">Using Live React/Recharts bindings to dynamic SQL views</div>
-                </div>
-             </div>
-          </div>
-       </div>
-     </div>
-  );
-};
 
 class CRMErrorBoundary extends React.Component {
   constructor(props) {
@@ -1916,22 +1752,22 @@ const OperationalDashboardsModule = ({ onDrillDown, onNavigate, userRole, compan
        return (
          <div className="space-y-6">
            <div className="flex gap-4 overflow-x-auto subtle-scrollbar pb-2">
-             <div className="bg-charcoal border-l-4 border-l-red-500 border border-border rounded p-4 flex-1 min-w-[200px] hover:border-r-red-500 transition-colors cursor-pointer group" onClick={() => onNavigate('AI Command Center')}>
+             <div className="bg-charcoal border-l-4 border-l-red-500 border border-border rounded p-4 flex-1 min-w-[200px] hover:border-r-red-500 transition-colors cursor-pointer group" onClick={() => onNavigate('Omni-Command', { filter: 'URGENT' })}>
                 <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-1 flex justify-between items-center group-hover:text-red-500 transition-colors"><span>Urgent Items</span> <Command className="w-3 h-3 text-red-500"/></div>
                 <div className="text-2xl font-bold text-white mb-1">12</div>
                 <div className="text-[10px] text-text-dim">Action Required Now</div>
              </div>
-             <div className="bg-charcoal border-l-4 border-l-amber-500 border border-border rounded p-4 flex-1 min-w-[200px] hover:border-r-amber-500 transition-colors cursor-pointer group" onClick={() => onNavigate('AI Command Center')}>
+             <div className="bg-charcoal border-l-4 border-l-amber-500 border border-border rounded p-4 flex-1 min-w-[200px] hover:border-r-amber-500 transition-colors cursor-pointer group" onClick={() => onNavigate('Omni-Command', { filter: 'STALLED_OPPS' })}>
                 <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-1 flex justify-between items-center group-hover:text-amber-500 transition-colors"><span>Stalled Opps</span> <TrendingDown className="w-3 h-3 text-amber-500"/></div>
                 <div className="text-2xl font-bold text-white mb-1">24</div>
                 <div className="text-[10px] text-text-dim">Pipeline Risk</div>
              </div>
-             <div className="bg-charcoal border-l-4 border-l-green-500 border border-border rounded p-4 flex-1 min-w-[200px] hover:border-r-green-500 transition-colors cursor-pointer group" onClick={() => onNavigate('AI Command Center')}>
+             <div className="bg-charcoal border-l-4 border-l-green-500 border border-border rounded p-4 flex-1 min-w-[200px] hover:border-r-green-500 transition-colors cursor-pointer group" onClick={() => onNavigate('Omni-Command', { filter: 'HOT_LEADS' })}>
                 <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-1 flex justify-between items-center group-hover:text-green-500 transition-colors"><span>Hot Leads</span> <TrendingUp className="w-3 h-3 text-green-500"/></div>
                 <div className="text-2xl font-bold text-white mb-1">8</div>
                 <div className="text-[10px] text-text-dim">Assign & Call</div>
              </div>
-             <div className="bg-charcoal border-l-4 border-l-blue-500 border border-border rounded p-4 flex-1 min-w-[200px] hover:border-r-blue-500 transition-colors cursor-pointer group" onClick={() => onNavigate('AI Command Center')}>
+             <div className="bg-charcoal border-l-4 border-l-blue-500 border border-border rounded p-4 flex-1 min-w-[200px] hover:border-r-blue-500 transition-colors cursor-pointer group" onClick={() => onNavigate('Omni-Command', { filter: 'FI_BLOCKERS' })}>
                 <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-1 flex justify-between items-center group-hover:text-blue-500 transition-colors"><span>F&I Blockers</span> <CreditCard className="w-3 h-3 text-blue-500"/></div>
                 <div className="text-2xl font-bold text-white mb-1">5</div>
                 <div className="text-[10px] text-text-dim">Pending Docs/Stips</div>
@@ -2534,23 +2370,65 @@ const CopilotModal = ({ isOpen, onClose, onDrillDown }) => {
   );
 };
 
-const OmniCommandModule = ({ onDrillDown }) => {
+const OmniCommandModule = ({ onDrillDown, initialContext }) => {
   const [recommendations, setRecommendations] = useState([]);
   const [view, setView] = useState("Review");
+  const [selectedRecs, setSelectedRecs] = useState(new Set());
+  const [toasts, setToasts] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState(initialContext?.filter || 'ALL');
 
   useEffect(() => {
-    // Generate trigger implicitly
-    const fetchRecs = async () => {
-       await AgentRegistry.broadcastTrigger({ type: 'MANUAL', timestamp: new Date().toISOString() }, { userId: 'EMP-1', role: 'Owner', locationId: 'ALL' });
-       // Fetch everything
-       setRecommendations(RecommendationService.fetchPending({ userRole: 'Owner' }));
-    };
+     if (initialContext?.filter) {
+        setCategoryFilter(initialContext.filter);
+        setView("Review");
+     }
+  }, [initialContext]);
+  
+  // Phase 15.5: AI Interrogation Chat
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [chatHistory, setChatHistory] = useState([
+     { sender: 'AI', text: 'I am the Omni-Command Orchestrator. Ask me to break down any active strategy or agent decision.' }
+  ]);
+
+  const fetchRecs = async () => {
+     await AgentRegistry.broadcastTrigger({ type: 'APP_BOOT', timestamp: new Date().toISOString() }, { userId: 'EMP-1', role: 'Owner', locationId: 'ALL' });
+     setRecommendations(RecommendationService.fetchPending({ userRole: 'Owner' }));
+  };
+
+  useEffect(() => {
     fetchRecs();
+  }, []);
+
+  // Phase 15.4: Live Simulated Pulse Generator
+  useEffect(() => {
+    const TOAST_EVENTS = [
+       { title: 'Neural Signal Intercepted', msg: 'Lead assigned via Fast-Track VIP lane.', agent: 'Lead Intel Agent' },
+       { title: 'Price Floor Triggered', msg: 'Aged Unit 4125 identified. Slingshot queued.', agent: 'Inventory Matchmaker' },
+       { title: 'Background Processing', msg: 'Re-evaluating 45 stalled leads. No anomalies.', agent: 'Sales Desk Copilot' },
+       { title: 'SLA Breach Averted', msg: 'Ghosted Lead manually bumped to General Manager.', agent: 'Lead Intel Agent' }
+    ];
+
+    const generatePulse = () => {
+       const ev = TOAST_EVENTS[Math.floor(Math.random() * TOAST_EVENTS.length)];
+       const id = Date.now();
+       setToasts(prev => [...prev.slice(-4), { id, ...ev }]);
+       
+       // Autodismiss
+       setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 6000);
+
+       // Queue next pulse between 15s - 35s
+       setTimeout(generatePulse, 15000 + Math.random() * 20000);
+    };
+
+    // Kickoff first pulse in 5 seconds
+    const timer = setTimeout(generatePulse, 5000);
+    return () => clearTimeout(timer);
   }, []);
 
   const executeAction = (recId) => {
     // Optimistically update
-    setRecommendations(prev => prev.map(r => r.id === recId ? { ...r, status: 'Approved' } : r));
+    setRecommendations(prev => prev.map(r => r.id === recId ? { ...r, status: 'APPROVED' } : r));
     const execution = ActionExecutionService.executeRecommendation(recId, { userId: 'EMP-1' });
     if (execution.status === 'ERROR') {
        alert("Error executing action: " + execution.error);
@@ -2558,24 +2436,75 @@ const OmniCommandModule = ({ onDrillDown }) => {
   };
 
   const snoozeAction = (recId) => {
-    setRecommendations(prev => prev.map(r => r.id === recId ? { ...r, status: 'Snoozed' } : r));
+    setRecommendations(prev => prev.map(r => r.id === recId ? { ...r, status: 'SNOOZED' } : r));
+  };
+
+  const dismissAction = (recId) => {
+    setRecommendations(prev => prev.map(r => r.id === recId ? { ...r, status: 'DISMISSED' } : r));
+  };
+
+  const deleteAction = (recId) => {
+    setRecommendations(prev => prev.filter(r => r.id !== recId));
   };
 
   const getFilteredRecs = (statusGroup) => {
-     if (statusGroup === 'Review') return recommendations.filter(r => !r.status || r.status === 'Pending' || r.status === 'Unresolved');
-     return recommendations.filter(r => r.status === statusGroup);
+     let filtered = [];
+     if (statusGroup === 'Review') filtered = recommendations.filter(r => !r.status || r.status.toUpperCase() === 'PENDING' || r.status.toUpperCase() === 'UNRESOLVED');
+     else filtered = recommendations.filter(r => r.status.toUpperCase() === statusGroup.toUpperCase());
+     
+     if (categoryFilter !== 'ALL') {
+        if (categoryFilter === 'URGENT') filtered = filtered.filter(r => r.priority === 'URGENT');
+        if (categoryFilter === 'STALLED_OPPS') filtered = filtered.filter(r => r.agentId === 'bdc_followup_agent' || r.agentId === 'sales_desk_agent');
+        if (categoryFilter === 'HOT_LEADS') filtered = filtered.filter(r => r.agentId === 'lead_intelligence_agent');
+        if (categoryFilter === 'FI_BLOCKERS') filtered = filtered.filter(r => r.agentId === 'fi_readiness_agent');
+     }
+     return filtered;
   };
 
-  const renderCard = (rec) => (
-    <div key={rec.id} className="bg-panel border border-border p-4 rounded-lg flex flex-col justify-between shadow">
-       <div>
-         <div className="flex justify-between items-start mb-2">
+  const renderCard = (rec) => {
+    const isSelected = selectedRecs.has(rec.id);
+    const toggleSelection = (e) => {
+      e.stopPropagation();
+      const newSet = new Set(selectedRecs);
+      if (newSet.has(rec.id)) newSet.delete(rec.id);
+      else newSet.add(rec.id);
+      setSelectedRecs(newSet);
+    };
+
+    return (
+      <div key={rec.id} className={`bg-panel border p-4 rounded-lg flex flex-col justify-between shadow hover:shadow-[0_0_15px_rgba(255,255,255,0.05)] transition-all group relative ${isSelected ? 'border-gold shadow-[0_0_10px_rgba(201,168,76,0.2)] bg-gold/5' : 'border-border'}`}>
+         
+         {/* Checkbox for Batch Processing */}
+         {view === "Review" && (
+            <div className="absolute top-3 left-3 z-20">
+               <input 
+                  type="checkbox" 
+                  checked={isSelected} 
+                  onChange={toggleSelection} 
+                  className="w-4 h-4 cursor-pointer accent-gold bg-black/50 border border-border"
+                  title="Select for Batch Process"
+               />
+            </div>
+         )}
+         
+         {/* Top Right Actions */}
+       <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+           <button onClick={(e) => { e.stopPropagation(); deleteAction(rec.id); }} className="text-text-muted hover:text-red-500 p-1 bg-black rounded border border-border" title="Delete Insight">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+           </button>
+           <button onClick={(e) => { e.stopPropagation(); dismissAction(rec.id); }} className="text-text-muted hover:text-amber-500 p-1 bg-black rounded border border-border" title="Dismiss Insight">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m15 9-6 6"></path><path d="m9 9 6 6"></path></svg>
+           </button>
+       </div>
+
+       <div className="cursor-pointer" onClick={() => onDrillDown('AgentRecommendation', rec)}>
+         <div className="flex justify-between items-start mb-2 pr-16" title="Click to Read Strategy Deep-Dive">
             <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border uppercase tracking-widest ${rec.priority === 'URGENT' ? 'bg-red-900/20 text-red-500 border-red-500/30' : rec.priority === 'HIGH' ? 'bg-gold/10 text-gold border-gold/30' : 'bg-green-900/20 text-green-500 border-green-500/30'}`}>
               {rec.priority} PRIORITY
             </span>
             <span className="text-xs text-text-muted">{new Date(rec.generatedAt).toLocaleTimeString()}</span>
          </div>
-         <h4 className="text-white font-bold text-sm mb-1 line-clamp-2" title={rec.title}>{rec.title}</h4>
+         <h4 className="text-white font-bold text-sm mb-1 line-clamp-2 hover:text-gold transition-colors">{rec.title}</h4>
          <p className="text-xs text-text-dim line-clamp-2">{rec.description}</p>
          
          <div className="mt-3 flex gap-2">
@@ -2588,21 +2517,23 @@ const OmniCommandModule = ({ onDrillDown }) => {
          </div>
        </div>
        
-       <div className="mt-4 pt-3 border-t border-border/50 flex flex-wrap gap-2">
+       <div className="mt-4 pt-3 border-t border-border/50 flex flex-wrap gap-2 relative z-10">
           {view === "Review" ? (
              <>
-               <button onClick={() => executeAction(rec.id)} className="flex-1 bg-gold text-black text-xs font-bold py-1.5 rounded hover:bg-gold-light transition-colors">Approve & Execute</button>
-               <button onClick={() => snoozeAction(rec.id)} className="bg-black border border-border text-text hover:text-white text-xs px-3 py-1.5 rounded transition-colors">Snooze</button>
-               <button onClick={() => onDrillDown('AgentRecommendation', rec)} className="bg-black border border-border text-text hover:text-white text-xs px-3 py-1.5 rounded transition-colors" title="Deep inspection"><Search className="w-3.5 h-3.5"/></button>
+               <button onClick={(e) => { e.stopPropagation(); executeAction(rec.id); }} className="flex-1 bg-gold text-black text-xs font-bold py-1.5 rounded hover:bg-gold-light transition-colors">Approve & Execute</button>
+               <button onClick={(e) => { e.stopPropagation(); snoozeAction(rec.id); }} className="bg-black border border-border text-text hover:text-white text-xs px-3 py-1.5 rounded transition-colors">Snooze</button>
              </>
           ) : view === "Approved" ? (
              <div className="w-full text-center text-xs font-bold text-green-500 bg-green-900/20 py-1 rounded border border-green-500/20">Execution Logged</div>
+          ) : view === "Dismissed" ? (
+             <button onClick={(e) => { e.stopPropagation(); setRecommendations(prev => prev.map(r => r.id === rec.id ? { ...r, status: 'PENDING' } : r)); }} className="w-full text-center text-xs font-bold text-amber-500 bg-amber-900/20 py-1 rounded border border-amber-500/20 hover:bg-amber-800 transition-colors">Restore to Inbox</button>
           ) : (
-             <button onClick={() => setRecommendations(prev => prev.map(r => r.id === rec.id ? { ...r, status: 'Pending' } : r))} className="w-full text-center text-xs font-bold text-amber-500 bg-amber-900/20 py-1 rounded border border-amber-500/20 hover:bg-amber-800 transition-colors">Wake from Snooze</button>
+             <button onClick={(e) => { e.stopPropagation(); setRecommendations(prev => prev.map(r => r.id === rec.id ? { ...r, status: 'PENDING' } : r)); }} className="w-full text-center text-xs font-bold text-amber-500 bg-amber-900/20 py-1 rounded border border-amber-500/20 hover:bg-amber-800 transition-colors">Wake from Snooze</button>
           )}
        </div>
     </div>
   );
+};
 
   return (
     <div className="space-y-6 h-full flex flex-col">
@@ -2612,37 +2543,226 @@ const OmniCommandModule = ({ onDrillDown }) => {
                <Zap className="w-6 h-6" />
              </div>
              <div>
-               <h1 className="text-2xl font-playfair text-white">Omni-Command Center</h1>
+               <h1 className="text-2xl font-playfair text-white flex items-center gap-3">
+                 Omni-Command Center
+                 {categoryFilter !== 'ALL' && (
+                    <span className="text-xs font-mono bg-panel border border-gold/50 text-gold px-2 py-1 flex items-center gap-2 rounded">
+                       FILTER: {categoryFilter.replace('_', ' ')}
+                       <button onClick={() => setCategoryFilter('ALL')} className="hover:text-white transition-colors" title="Clear Filter"><X className="w-3 h-3" /></button>
+                    </span>
+                 )}
+               </h1>
                <p className="text-text-muted text-sm border-l-2 border-gold pl-2 ml-1">Global Strategy & Execution Orchestration</p>
              </div>
           </div>
           
           <div className="flex bg-charcoal border border-border rounded overflow-hidden">
-             {['Review', 'Approved', 'Snoozed'].map(tab => (
+             {['Review', 'Approved', 'Snoozed', 'Dismissed', 'Ledger', 'Settings'].map(tab => (
                 <button 
                   key={tab}
                   className={`px-4 py-2 text-sm font-bold transition-colors ${view === tab ? 'bg-gold text-black shadow-inner' : 'text-text-muted hover:bg-panel hover:text-white'}`}
                   onClick={() => setView(tab)}
                 >
-                  {tab} ({getFilteredRecs(tab).length})
+                  {tab} {(tab !== 'Ledger' && tab !== 'Settings') && `(${getFilteredRecs(tab).length})`}
                 </button>
              ))}
           </div>
+
+          <div className="flex items-center gap-3 ml-4">
+             {selectedRecs.size > 0 && (
+                <div className="flex bg-panel border border-gold/50 rounded overflow-hidden shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                   <div className="px-3 py-2 text-sm text-gold font-bold bg-gold/10 border-r border-gold/30">{selectedRecs.size} Selected</div>
+                   <button onClick={() => {
+                      [...selectedRecs].forEach(id => executeAction(id));
+                      setSelectedRecs(new Set());
+                   }} className="px-3 py-2 text-sm hover:bg-gold hover:text-black font-bold text-white transition-colors">Batch Approve</button>
+                   <button onClick={() => {
+                      [...selectedRecs].forEach(id => dismissAction(id));
+                      setSelectedRecs(new Set());
+                   }} className="px-3 py-2 text-sm hover:bg-black hover:text-white text-text-muted transition-colors border-l border-gold/30">Batch Dismiss</button>
+                </div>
+             )}
+             
+             <button onClick={() => {
+                setRecommendations([]); 
+                setSelectedRecs(new Set());
+                fetchRecs();
+             }} className="flex items-center gap-2 bg-black hover:bg-panel border border-border text-white px-4 py-2 rounded text-sm font-bold transition-colors shadow">
+                <RefreshCw className="w-4 h-4 text-gold" /> Rescan Network
+             </button>
+          </div>
        </div>
 
-       <div className="flex-1 bg-charcoal border border-border rounded-xl p-4 overflow-y-auto">
-          {getFilteredRecs(view).length === 0 ? (
-             <div className="h-full flex flex-col items-center justify-center text-text-muted">
-                <CheckCircle2 className="w-16 h-16 text-green-900/50 mb-4" />
-                <p className="text-lg font-playfair text-white mb-1">{view === 'Review' ? "Inbox Zero." : `No ${view.toLowerCase()} actions.`}</p>
-                <p className="text-sm">All agent recommendations have been processed.</p>
+       {view === 'Ledger' ? (
+          <div className="flex-1 bg-charcoal border border-border rounded-xl hidden-scrollbar flex flex-col relative z-0 mt-4">
+             <div className="p-4 border-b border-border bg-black/50 flex justify-between items-center rounded-t-xl shrink-0">
+                <h3 className="text-white font-bold flex items-center gap-2 font-mono uppercase tracking-widest text-sm"><Database className="w-4 h-4 text-gold"/> Master Execution Ledger</h3>
+                <span className="text-xs text-text-muted font-mono bg-panel px-2 py-1 rounded border border-border">{AGENT_AUDIT_LOGS.length} Recorded Operations</span>
              </div>
-          ) : (
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 auto-rows-max">
-               {getFilteredRecs(view).map(renderCard)}
+             <div className="flex-1 overflow-y-auto hidden-scrollbar p-6">
+                <div className="space-y-3">
+                   {[...AGENT_AUDIT_LOGS].reverse().map(log => (
+                      <div key={log.id || Math.random()} className="bg-black border border-border p-4 rounded flex justify-between items-center shadow-sm hover:border-gold/30 transition-colors group">
+                         <div className="flex items-start gap-4">
+                            <div className="mt-1">
+                               {log.eventType === 'ACTION_EXECUTED' ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : log.eventType === 'ACTION_REQUESTED' ? <Clock className="w-5 h-5 text-blue-500" /> : <AlertCircle className="w-5 h-5 text-red-500" />}
+                            </div>
+                            <div>
+                               <div className="text-white font-bold text-sm mb-1 font-mono">{log.eventType}</div>
+                               <div className="text-xs text-text-muted font-mono bg-charcoal inline-block px-1.5 py-0.5 rounded border border-border">Agent: {log.agentId} | User: {log.userId}</div>
+                               <div className="text-[10px] text-text-muted/50 font-mono mt-2 break-all group-hover:text-text-muted transition-colors">ID: {log.details?.actionId || 'N/A'} | Target: {log.details?.actionType || log.details?.reason || 'Unknown'}</div>
+                            </div>
+                         </div>
+                         <div className="text-right">
+                            <div className="text-[10px] text-text-muted font-mono border border-border/50 px-2 py-1 rounded bg-charcoal">
+                               {new Date(log.timestamp).toLocaleString()}
+                            </div>
+                         </div>
+                      </div>
+                   ))}
+                   {AGENT_AUDIT_LOGS.length === 0 && (
+                      <div className="text-center text-text-muted py-12 border border-dashed border-border/50 rounded flex flex-col items-center">
+                         <Database className="w-8 h-8 opacity-20 mb-3" />
+                         <span className="text-sm font-bold uppercase tracking-widest">No Execution History</span>
+                         <span className="text-xs mt-1">Audit ledger is completely barren. Execute an action to begin immutable tracking.</span>
+                      </div>
+                   )}
+                </div>
+             </div>
+          </div>
+       ) : view === 'Settings' ? (
+          <div className="flex-1 bg-charcoal border border-border rounded-xl hidden-scrollbar flex flex-col relative z-0 mt-4 overflow-y-auto p-6">
+             <div className="mb-8">
+                <h3 className="text-white font-playfair text-2xl mb-2 flex items-center gap-3"><Command className="w-6 h-6 text-gold"/> Autonomous Processing Thresholds</h3>
+                <p className="text-text-muted text-sm border-l-2 border-gold pl-3">Manually throttle the routing sensitivity of the neural processing agents. Changes take effect on the next network rescan.</p>
+             </div>
+             
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-black border border-border p-5 rounded-lg shadow-inner">
+                   <div className="flex justify-between items-start mb-4">
+                      <div>
+                         <h4 className="text-gold font-mono uppercase tracking-widest text-xs font-bold mb-1">Lead Intelligence Agent</h4>
+                         <div className="text-white text-sm">VIP Fast-Track Score Threshold</div>
+                      </div>
+                      <div className="bg-charcoal border border-border px-3 py-1 rounded text-white font-bold font-mono">
+                         {AGENT_THRESHOLDS.leadVIP}/100
+                      </div>
+                   </div>
+                   <input type="range" min="50" max="99" defaultValue={AGENT_THRESHOLDS.leadVIP} onChange={(e) => AGENT_THRESHOLDS.leadVIP = Number(e.target.value)} className="w-full accent-gold bg-charcoal" />
+                   <div className="flex justify-between text-[10px] text-text-muted mt-2 font-mono uppercase">
+                      <span>Aggressive (50)</span>
+                      <span>Conservative (99)</span>
+                   </div>
+                   <p className="text-xs text-text-muted mt-4">Lowering this threshold will cause the AI to immediately bump more baseline web-leads to Senior Sales Associates via the VIP queue.</p>
+                </div>
+                
+                <div className="bg-black border border-border p-5 rounded-lg shadow-inner">
+                   <div className="flex justify-between items-start mb-4">
+                      <div>
+                         <h4 className="text-gold font-mono uppercase tracking-widest text-xs font-bold mb-1">Inventory Operations</h4>
+                         <div className="text-white text-sm">Aged Unit Distress Threshold</div>
+                      </div>
+                      <div className="bg-charcoal border border-border px-3 py-1 rounded text-white font-bold font-mono">
+                         {AGENT_THRESHOLDS.inventoryAged} Days
+                      </div>
+                   </div>
+                   <input type="range" min="30" max="180" step="15" defaultValue={AGENT_THRESHOLDS.inventoryAged} onChange={(e) => AGENT_THRESHOLDS.inventoryAged = Number(e.target.value)} className="w-full accent-gold bg-charcoal" />
+                   <div className="flex justify-between text-[10px] text-text-muted mt-2 font-mono uppercase">
+                      <span>Hyper-Active (30)</span>
+                      <span>Passive (180)</span>
+                   </div>
+                   <p className="text-xs text-text-muted mt-4">Lowering this will force the AI to recommend aggressive Slingshot incentives on units much earlier in their lot-life.</p>
+                </div>
+
+             </div>
+          </div>
+       ) : (
+          <div className="flex-1 bg-charcoal border border-border rounded-xl p-4 overflow-y-auto mt-4">
+             {getFilteredRecs(view).length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-text-muted">
+                   <CheckCircle2 className="w-16 h-16 text-green-900/50 mb-4" />
+                   <p className="text-lg font-playfair text-white mb-1">{view === 'Review' ? "Inbox Zero." : `No ${view.toLowerCase()} actions.`}</p>
+                   <p className="text-sm">All agent recommendations have been processed.</p>
+                </div>
+             ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 auto-rows-max">
+                  {getFilteredRecs(view).map(renderCard)}
+                </div>
+             )}
+          </div>
+       )}
+
+       {/* Phase 15.4: Live Pulse Toast Container */}
+       <div className="fixed bottom-6 right-6 w-80 space-y-3 z-50 pointer-events-none">
+          {toasts.map(toast => (
+             <div key={toast.id} className="bg-black/90 backdrop-blur border border-gold/50 p-4 rounded-lg shadow-[0_0_20px_rgba(201,168,76,0.15)] animate-in slide-in-from-right fade-in duration-300 pointer-events-auto group">
+                <div className="flex items-center gap-2 mb-1">
+                   <Activity className="w-4 h-4 text-electric animate-pulse"/>
+                   <span className="text-white font-bold text-sm tracking-wide">{toast.title}</span>
+                </div>
+                <p className="text-xs text-text-muted mt-1">{toast.msg}</p>
+                <div className="flex justify-between items-center mt-3 pt-2 border-t border-border/50">
+                   <span className="text-[10px] font-mono text-gold bg-gold/10 px-1.5 py-0.5 rounded border border-gold/20">{toast.agent}</span>
+                   <span className="text-[10px] text-text-dim">Just now</span>
+                </div>
+                
+                {/* Dismiss button on hover */}
+                <button onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))} className="absolute top-2 right-2 text-text-muted hover:text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                   <X className="w-4 h-4" />
+                </button>
+             </div>
+          ))}
+       </div>
+
+       {/* Phase 15.5: Direct AI Chat Interrogation */}
+       <div className="fixed bottom-6 left-6 z-50 flex flex-col items-start pointer-events-none">
+          {isChatOpen && (
+             <div className="bg-black border border-electric/50 w-96 rounded-t-lg rounded-br-lg shadow-[0_0_30px_rgba(0,195,255,0.15)] flex flex-col pointer-events-auto mb-4 overflow-hidden animate-in slide-in-from-bottom-5 fade-in">
+                <div className="bg-electric/20 p-3 flex justify-between items-center border-b border-electric/30">
+                   <div className="flex items-center gap-2">
+                      <Terminal className="w-4 h-4 text-electric" />
+                      <span className="text-white font-mono text-xs font-bold uppercase tracking-widest">Orchestrator Terminal</span>
+                   </div>
+                   <button onClick={() => setIsChatOpen(false)} className="text-text-muted hover:text-white"><X className="w-4 h-4" /></button>
+                </div>
+                <div className="h-64 p-4 overflow-y-auto space-y-4 hidden-scrollbar bg-charcoal/50">
+                   {chatHistory.map((msg, idx) => (
+                      <div key={idx} className={`flex ${msg.sender === 'USER' ? 'justify-end' : 'justify-start'}`}>
+                         <div className={`max-w-[85%] p-3 rounded-lg text-sm ${msg.sender === 'USER' ? 'bg-gold text-black font-medium rounded-tr-none' : 'bg-panel border border-border text-white rounded-tl-none font-mono text-xs'}`}>
+                            {msg.text}
+                         </div>
+                      </div>
+                   ))}
+                </div>
+                <div className="p-3 bg-black border-t border-border flex items-center">
+                   <input 
+                      type="text" 
+                      value={chatInput} 
+                      onChange={(e) => setChatInput(e.target.value)} 
+                      placeholder="Interrogate neural models..." 
+                      className="flex-1 bg-transparent border-none text-white text-sm outline-none px-2 font-mono"
+                      onKeyDown={(e) => {
+                         if (e.key === 'Enter' && chatInput.trim()) {
+                            setChatHistory(prev => [...prev, { sender: 'USER', text: chatInput }]);
+                            setChatInput("");
+                            setTimeout(() => {
+                               setChatHistory(prev => [...prev, { sender: 'AI', text: "Accessing strategy graph... All agent recommendations map strictly to LTV and current floorplan liabilities. What specific strategy array would you like me to unpack?" }]);
+                            }, 800);
+                         }
+                      }}
+                   />
+                </div>
              </div>
           )}
+          
+          <button 
+             onClick={() => setIsChatOpen(!isChatOpen)}
+             className={`w-14 h-14 rounded-full flex items-center justify-center pointer-events-auto shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all ${isChatOpen ? 'bg-panel border border-border text-white' : 'bg-electric text-black hover:scale-105'}`}
+          >
+             {isChatOpen ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
+          </button>
        </div>
+
     </div>
   );
 };
@@ -2651,12 +2771,45 @@ const OmniCommandModule = ({ onDrillDown }) => {
 const App = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [activeTab, setActiveTab] = useState("Dashboard");
+  const [activeTabContext, setActiveTabContext] = useState(null);
   const [drillDown, setDrillDown] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeCompany, setActiveCompany] = useState("Friendly Powersports");
   const [activeLocation, setActiveLocation] = useState("All Locations");
+  const [activeReportContext, setActiveReportContext] = useState(null);
 
-  const handleDrillDown = (type, data) => setDrillDown({ type, data });
+  const handleNavigate = (tabName, context = null) => {
+     setActiveTabContext(context);
+     setActiveTab(tabName);
+  };
+
+  const handleDrillDown = (type, data) => {
+     let contextData = { ...data };
+     const typeUpper = (type || '').toUpperCase();
+     
+     // Phase 10: Automatic Schema Mapping for Orphaned UI triggers
+     if (!contextData.reportId) {
+         if (typeUpper === 'OEM') {
+             contextData.reportId = 'OEM_INCENTIVES';
+             contextData.searchTerm = contextData.brand || '';
+         }
+         else if (typeUpper === 'FINANCIALS') contextData.reportId = 'FINANCIAL_LEDGER';
+         else if (typeUpper === 'EMPLOYEE') contextData.reportId = 'EMPLOYEE_PERFORMANCE';
+         else if (typeUpper === 'INVENTORY') {
+             contextData.reportId = 'INV_AGING';
+             contextData.searchTerm = contextData.make || contextData.unit || contextData.stock || '';
+         }
+     }
+
+     // If the router matched a dataset, load full-screen Grid
+     if (contextData?.reportId) {
+        setActiveReportContext(contextData);
+        setActiveTab("ReportDetail");
+        return;
+     }
+
+     setDrillDown({ type, data: contextData });
+  };
 
   useEffect(() => {
     const down = (e) => {
@@ -2818,11 +2971,11 @@ const App = () => {
         {/* SCROLLABLE MODULE RENDERER */}
         <div className="flex-1 overflow-y-auto p-6 bg-black">
           <div className="max-w-[1600px] mx-auto">
-            {activeTab === "Dashboard" && <OperationalDashboardsModule onNavigate={setActiveTab} onDrillDown={handleDrillDown} userRole={currentUser?.role} company={activeCompany} location={activeLocation} />}
-            {activeTab === "Sales" && <SalesModule onNavigate={setActiveTab} onDrillDown={handleDrillDown} />}
-            {activeTab === "Omni-Command" && <OmniCommandModule onDrillDown={handleDrillDown} />}
+            {activeTab === "Dashboard" && <OperationalDashboardsModule onNavigate={handleNavigate} onDrillDown={handleDrillDown} userRole={currentUser?.role} company={activeCompany} location={activeLocation} />}
+            {activeTab === "Sales" && <SalesModule onNavigate={handleNavigate} onDrillDown={handleDrillDown} />}
+            {activeTab === "Omni-Command" && <OmniCommandModule onDrillDown={handleDrillDown} initialContext={activeTabContext} />}
             {activeTab === "Customer CRM" && <CustomerCRMModule onDrillDown={handleDrillDown} user={currentUser} />}
-            {activeTab === "AI Command Center" && <AICommandCenterModule onDrillDown={handleDrillDown} userRole={currentUser?.role} />}
+            {activeTab === "AI Command Center" && <AICommandCenterModule onDrillDown={handleDrillDown} userRole={currentUser?.role} initialContext={activeTabContext} />}
             {activeTab === "F&I / Finance" && <FIModule onDrillDown={handleDrillDown} />}
             {activeTab === "Inventory" && <InventoryModule onDrillDown={handleDrillDown} />}
             {activeTab === "Used Bikes / UBD" && <UsedBikesModule onDrillDown={handleDrillDown} />}
@@ -2831,11 +2984,12 @@ const App = () => {
             {activeTab === "OEM Incentives" && <OEMIncentivesModule onDrillDown={handleDrillDown} />}
             {activeTab === "Marketing" && <MarketingModule onDrillDown={handleDrillDown} />}
             {activeTab === "Reports" && <ReportsModule onDrillDown={handleDrillDown} />}
+            {activeTab === "ReportDetail" && <DetailReportView reportPayload={activeReportContext} onNavigate={setActiveTab} onDrillDown={handleDrillDown} />}
             {activeTab === "Accounting & GL" && <AccountingGLModule onDrillDown={handleDrillDown} />}
             {activeTab === "Employee Hub" && <EmployeeHubModule user={currentUser} onDrillDown={handleDrillDown} />}
             {activeTab === "Settings" && <SettingsModule onDrillDown={handleDrillDown} />}
             {activeTab === "Clock In / HR" && <ClockInModule user={currentUser} onDrillDown={handleDrillDown} />}
-            {![ "Dashboard", "Omni-Command", "Sales", "Customer CRM", "AI Command Center", "F&I / Finance", "Inventory", "Used Bikes / UBD", "Service & Parts", "Payroll", "OEM Incentives", "Marketing", "Reports", "Accounting & GL", "Employee Hub", "Settings", "Clock In / HR" ].includes(activeTab) && (
+            {![ "Dashboard", "Omni-Command", "Sales", "Customer CRM", "AI Command Center", "F&I / Finance", "Inventory", "Used Bikes / UBD", "Service & Parts", "Payroll", "OEM Incentives", "Marketing", "Reports", "ReportDetail", "Accounting & GL", "Employee Hub", "Settings", "Clock In / HR" ].includes(activeTab) && (
               <PlaceholderModule title={`${activeTab} Module`} desc={`Select Dashboard, Sales, or Clock In to see full interactive builds. Or ask the agent to render ${activeTab} fully.`} />
             )}
             

@@ -1,5 +1,5 @@
 import { AgentLogger } from '../audit/AgentLogger';
-import { AgentMemory } from '../core/AgentMemory';
+import { RecommendationService } from '../services/RecommendationService';
 import { AgentMetrics } from '../audit/AgentMetrics';
 
 /**
@@ -23,7 +23,7 @@ export const RecommendationEngine = {
       status: 'PENDING'
     };
 
-    const saved = AgentMemory.saveRecommendation(rec);
+    const saved = RecommendationService.create(rec);
     AgentMetrics.trackCreation();
 
     AgentLogger.logEvent({
@@ -40,10 +40,8 @@ export const RecommendationEngine = {
    * Called when humans interact with a recommendation
    */
   resolveRecommendation(recId, status, context) {
-    AgentMemory.updateRecommendationStatus(recId, status, context.userId);
+    const rec = RecommendationService.updateStatus(recId, status, context.userId);
     
-    // Get the agent that spawned it via memory
-    const rec = AgentMemory._memoryStore.recommendations.find(r => r.id === recId);
     if(rec) {
        AgentLogger.logEvent({
          agentId: rec.agentId,

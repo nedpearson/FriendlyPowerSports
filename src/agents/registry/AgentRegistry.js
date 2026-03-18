@@ -60,8 +60,12 @@ export const AgentRegistry = {
     // In Phase 1 we synchronously loop for simplicity
     for (const agent of agents) {
       if (agent.supportedTriggers?.includes(trigger.type) && typeof agent.evaluate === 'function') {
-        const result = await agent.evaluate(trigger, context);
-        if (result) results.push(result);
+        try {
+           const result = await agent.evaluate(trigger, context);
+           if (result) results.push(result);
+        } catch (e) {
+           console.error(`[AgentRegistry] Agent ${agent.id} fatally crashed:`, e);
+        }
       }
     }
 
