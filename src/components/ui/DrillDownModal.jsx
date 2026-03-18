@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { DrillDownValue } from './DrillDownValue';
-import { getCustomer360Data, getInventoryMatches, getQuoteWorkbenchData, getAuditLogs } from '../../data/selectors';
+import { getCustomer360Data, getInventoryMatches, getQuoteWorkbenchData, getAuditLogs, getEmployeeData, getLenderData, getCampaignData, getDepartmentCapacity } from '../../data/selectors';
 import { CreditPrequalAdapter } from '../../data/crmAdapters';
+import { ActionExecutionService } from '../../agents/services/ActionExecutionService';
+import { AgentMetrics } from '../../agents/audit/AgentMetrics';
 import {
   CheckCircle2, TrendingUp, User, Bike, AlertCircle, Command,
   DollarSign, Megaphone, Search, FileBarChart, ChevronRight, TrendingDown, Users as UsersIcon, Clock, Database, BrainCircuit, Wrench, Package, Calculator, Camera, Filter
@@ -19,8 +21,20 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
   // Action Processing States
   const [actionProcessing, setActionProcessing] = useState(false);
   const [actionStep, setActionStep] = useState(0);
+  const [actionPreview, setActionPreview] = useState(null);
+  const [actionResult, setActionResult] = useState(null);
+
+  // Deal Simulator States
+  const [simMsrpDiscount, setSimMsrpDiscount] = useState(0);
+  const [simAcv, setSimAcv] = useState(5000);
+  const [simFiGross, setSimFiGross] = useState(800);
+  const [simTerm, setSimTerm] = useState(60);
 
   useEffect(() => {
+    if (item?.type === 'AgentRecommendation') {
+       AgentMetrics.trackView();
+    }
+
     if (item?.type === 'Agent') {
       setAgentSearching(true);
       setSearchStep(0);
@@ -54,6 +68,221 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
 
   const renderContent = () => {
     switch (item.type) {
+      case 'AgentRecommendation':
+         const isProcessing = actionProcessing;
+         return (
+            <div className="space-y-6 animate-in slide-in-from-right-8 duration-500">
+               <div className="flex justify-between items-start border-b border-border pb-4">
+                  <div>
+                     <div className="text-text-muted uppercase text-[10px] font-mono tracking-widest flex items-center gap-2 mb-2">
+                        <BrainCircuit className="w-3 h-3 text-gold"/> COMMAND CENTER AI 
+                        {item.data.priority === 'URGENT' || item.data.urgency === 'High' ? <span className="bg-red-500 text-white px-1.5 py-0.5 rounded text-[9px] animate-pulse">URGENT</span> : <span className="bg-panel border border-border text-text-muted px-1.5 py-0.5 rounded text-[9px]">{item.data.priority || item.data.urgency || 'NORMAL'}</span>}
+                     </div>
+                     <h3 className="text-2xl font-playfair text-white flex items-center gap-3">
+                        {item.data.title}
+                     </h3>
+                  </div>
+                  <div className="text-right">
+                     <div className="text-[10px] text-text-muted uppercase tracking-widest font-mono mb-1">Confidence</div>
+                     <div className={`text-2xl font-bold font-mono ${item.data.confidenceScore > 85 ? 'text-green-500' : 'text-gold'}`}>{item.data.confidenceScore || 92}%</div>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 space-y-6">
+                     <div className="bg-charcoal border border-border rounded p-6">
+                        <h4 className="text-gold text-sm font-bold mb-4 border-b border-border/50 pb-2">Analysis Context & Explanation</h4>
+                        <div className="text-sm text-text-muted leading-relaxed font-mono whitespace-pre-wrap">
+                           {item.data.description || item.data.context}
+                        </div>
+                     </div>
+
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-black border border-border rounded p-5 shadow-inner">
+                           <h4 className="text-[10px] text-text-dim uppercase tracking-widest font-mono mb-3">Assignment</h4>
+                           <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-charcoal border border-border flex items-center justify-center text-lg text-gold font-bold">
+                                 {(item.data.assignedOwner || "BTR Pool").charAt(0)}
+                              </div>
+                              <div>
+                                 <div className="text-white font-bold text-sm">{item.data.assignedOwner || "BTR Pool"}</div>
+                                 <div className="text-[10px] text-text-dim uppercase flex items-center gap-1 mt-0.5"><Clock className="w-3 h-3"/> Due: {item.data.dueDate || "Today"}</div>
+                              </div>
+                           </div>
+                        </div>
+
+                        {(item.data.relatedEntities?.length > 0 || (item.data.dataPayload && Object.keys(item.data.dataPayload).length > 0)) && (
+                           <div className="bg-black border border-border rounded p-5 shadow-inner">
+                              <h4 className="text-[10px] text-text-dim uppercase tracking-widest font-mono mb-3">Linked Entities</h4>
+                              <div className="space-y-2">
+                                 {item.data.relatedEntities?.map(ent => (
+                                    <div key={ent.entityId} className="bg-charcoal p-2 rounded border border-border/50 flex justify-between items-center group cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Action', { name: `Drill to: ${ent.label}` })}>
+                                       <div className="text-white font-bold text-xs truncate">{ent.label}</div>
+                                       <ChevronRight className="w-3 h-3 text-text-muted group-hover:text-gold transition-colors" />
+                                    </div>
+                                 ))}
+                                 {item.data.dataPayload && Object.entries(item.data.dataPayload).map(([k, v]) => (
+                                    <div key={k} className="bg-charcoal p-2 rounded border border-border/50 flex justify-between items-center group cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Action', { name: `Drill to: ${k}` })}>
+                                       <div className="text-white font-bold text-xs truncate"><span className="text-[9px] text-text-muted uppercase tracking-widest font-mono mr-2">{k}</span> {String(v)}</div>
+                                       <ChevronRight className="w-3 h-3 text-text-muted group-hover:text-gold transition-colors" />
+                                    </div>
+                                 ))}
+                              </div>
+                           </div>
+                        )}
+                     </div>
+                  </div>
+
+                  <div className="space-y-6">
+                     <div className="bg-charcoal border border-border rounded p-5 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-2 opacity-10"><Command className="w-16 h-16 text-gold"/></div>
+                        <h4 className="text-gold text-xs uppercase tracking-widest font-mono mb-4 border-b border-border/50 pb-2 flex justify-between">
+                           Resolution Path & Actions
+                        </h4>
+                        
+                        {isProcessing ? (
+                           <div className="space-y-4 animate-in fade-in duration-300">
+                              <div className="bg-black border border-gold-dim p-4 rounded text-center">
+                                 <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                                 <div className="text-gold text-xs font-mono uppercase tracking-widest animate-pulse">Executing Action...</div>
+                                 <div className="text-xs text-text-muted mt-2">Checking Permissions & Emitting Audit Event</div>
+                              </div>
+                           </div>
+                        ) : actionResult ? (
+                           <div className="space-y-4 animate-in zoom-in-95 duration-300">
+                              <div className={`border p-4 rounded text-center ${actionResult.success ? 'bg-green-900/10 border-green-500/30' : 'bg-red-900/10 border-red-500/30'}`}>
+                                 {actionResult.success ? <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-2"/> : <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2"/>}
+                                 <div className={`text-sm font-bold ${actionResult.success ? 'text-green-500' : 'text-red-500'}`}>{actionResult.success ? 'Action Successful' : 'Action Failed'}</div>
+                                 <div className="text-xs text-text-muted mt-1">{actionResult.success ? actionResult.data?.status || 'Executed' : actionResult.reason}</div>
+                                 
+                                 {actionResult.auditId && (
+                                   <div className="text-[9px] text-text-dim font-mono uppercase tracking-widest mt-4 pt-2 border-t border-border/50">
+                                     Audit ID: {actionResult.auditId}
+                                   </div>
+                                 )}
+                              </div>
+                              <button 
+                                 className="w-full bg-panel hover:bg-black border border-border transition-colors px-4 py-2 rounded text-xs text-text-muted hover:text-white font-bold"
+                                 onClick={onClose}
+                              >
+                                 Dismiss
+                              </button>
+                           </div>
+                        ) : actionPreview ? (
+                           <div className="space-y-4 animate-in zoom-in duration-300">
+                              <div className="bg-black border border-gold-dim p-4 rounded">
+                                 <div className="text-[10px] text-gold uppercase tracking-widest font-mono mb-2">Preview Execution</div>
+                                 <div className="text-sm text-text-muted font-mono whitespace-pre-wrap">{actionPreview.preview}</div>
+                              </div>
+                              <div className="flex gap-2">
+                                 <button 
+                                    className="flex-1 bg-gold hover:bg-gold-light text-black transition-colors px-4 py-2.5 rounded text-sm font-bold"
+                                    onClick={async () => {
+                                       setActionProcessing(true);
+                                       const res = await ActionExecutionService.executeAction(actionPreview.actionType, actionPreview.actionData, { userId: 'U-100', userRole });
+                                       setActionResult(res);
+                                       setActionProcessing(false);
+                                    }}
+                                 >
+                                    Confirm Execute
+                                 </button>
+                                 <button 
+                                    className="flex-1 border border-border bg-black hover:bg-panel transition-colors px-4 py-2.5 rounded text-sm text-white font-bold"
+                                    onClick={() => setActionPreview(null)}
+                                 >
+                                    Cancel
+                                 </button>
+                              </div>
+                           </div>
+                        ) : (
+                           <div className="space-y-3 relative z-10 hidden-scrollbar overflow-y-auto max-h-[300px]">
+                              {item.data.proposedActions?.map(action => (
+                                 <button 
+                                    key={action.id}
+                                    className="w-full bg-gold hover:bg-gold-light text-black transition-colors px-4 py-3 rounded text-sm font-bold shadow-[0_0_15px_rgba(201,168,76,0.2)] flex items-center justify-center gap-2"
+                                    onClick={async () => {
+                                       setActionProcessing(true);
+                                       const res = await ActionExecutionService.previewAction(action.actionType, action.payload, { userId: 'U-100', userRole });
+                                       if (res.success && res.preview) {
+                                          setActionPreview({ ...res, actionType: action.actionType, actionData: action.payload });
+                                       } else {
+                                          setActionResult(res); // Will show permission error immediately if block
+                                       }
+                                       setActionProcessing(false);
+                                    }}
+                                 >
+                                    <CheckCircle2 className="w-4 h-4"/> {action.actionType.replace(/_/g, ' ')}
+                                 </button>
+                              ))}
+
+                              {/* Fallback legacy execution behavior if no specific registered proposedActions exist */}
+                              {(!item.data.proposedActions || item.data.proposedActions.length === 0) && (
+                                <button 
+                                   className="w-full bg-gold hover:bg-gold-light text-black transition-colors px-4 py-3 rounded text-sm font-bold shadow-[0_0_15px_rgba(201,168,76,0.2)] flex items-center justify-center gap-2"
+                                   onClick={() => {
+                                      if (item.data.onExecute) item.data.onExecute();
+                                      onDrillDown('Action', { name: `Execute: ${item.data.title}` });
+                                   }}
+                                >
+                                   <CheckCircle2 className="w-4 h-4"/> Approve & Execute
+                                </button>
+                              )}
+
+                              <button 
+                                 className="w-full border border-border bg-black hover:bg-panel transition-colors px-4 py-2.5 rounded text-sm text-white font-bold flex items-center justify-center gap-2"
+                                 onClick={async () => {
+                                    setActionProcessing(true);
+                                    const actionType = 'SNOOZE_RECOMMENDATION';
+                                    const actionData = { recommendationId: item.data.id || item.data.title, durationDays: 1 };
+                                    const res = await ActionExecutionService.executeAction(actionType, actionData, { userId: 'U-100', userRole });
+                                    setActionResult(res);
+                                    setActionProcessing(false);
+                                 }}
+                              >
+                                 <Clock className="w-4 h-4 text-emerald-500"/> Snooze Action
+                              </button>
+
+                              <button 
+                                 className="w-full border border-border bg-black hover:bg-panel transition-colors px-4 py-2.5 rounded text-sm text-white font-bold flex items-center justify-center gap-2"
+                                 onClick={async () => {
+                                    setActionProcessing(true);
+                                    const actionType = 'REASSIGN_OWNER';
+                                    const actionData = { entityId: item.data.id || item.data.title, newOwnerId: 'EMP-4' }; // Mock target
+                                    const res = await ActionExecutionService.executeAction(actionType, actionData, { userId: 'U-100', userRole });
+                                    setActionResult(res);
+                                    setActionProcessing(false);
+                                 }}
+                              >
+                                 <UsersIcon className="w-4 h-4 text-blue-500"/> Reassign Owner
+                              </button>
+                              
+                              <button 
+                                 className="w-full bg-panel hover:bg-black border border-border transition-colors px-4 py-2.5 rounded text-sm text-text-muted hover:text-white font-bold flex items-center justify-center gap-2 mt-4"
+                                 onClick={() => {
+                                    AgentMetrics.trackDismissal();
+                                    if (item.data.onDismiss) item.data.onDismiss();
+                                    onClose();
+                                 }}
+                              >
+                                 Dismiss Suggestion
+                              </button>
+                           </div>
+                        )}
+                     </div>
+
+                     <div className="bg-charcoal border border-border rounded p-5 opacity-70">
+                        <div className="text-[10px] text-text-muted uppercase tracking-widest font-mono mb-2">Audit Subroutine</div>
+                        <div className="text-[10px] text-text-dim font-mono space-y-1">
+                           <div>Timestamp: {new Date(item.data.timestamp || Date.now()).toLocaleString()}</div>
+                           <div>Category: {item.data.category || item.data.agentId}</div>
+                           <div>Session ID: {item.data.id || Math.random().toString(36).substring(7).toUpperCase()}</div>
+                           <div>Engine: SuperAgent_v2</div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         );
       case 'Agent':
         if (agentSearching) {
            const steps = [
@@ -390,7 +619,7 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
                                 <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-charcoal bg-panel text-gold shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 transition-transform group-hover:scale-110">
                                    {c.direction === 'in' ? <User className="w-4 h-4"/> : <Megaphone className="w-4 h-4"/>}
                                 </div>
-                                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-black border border-border p-4 rounded-xl shadow cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Action', {name: 'View Conversation'})}>
+                                 <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-black border border-border p-4 rounded-xl shadow cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('TimelineEvent', c)}>
                                    <div className="flex flex-col mb-1">
                                       <div className="text-xs font-bold text-white mb-1 flex justify-between">
                                          <span>{c.type} {c.direction === 'in' ? 'Received' : 'Sent'}</span>
@@ -1308,8 +1537,429 @@ export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown 
              </div>
            </div>
          );
+      case 'Employee': {
+        const emp = getEmployeeData(item.data?.id || item.data?.name || item.data);
+        if (!emp) return <div className="p-8 text-white">Employee details not found.</div>;
+        return (
+          <div className="space-y-6">
+             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
+                <div className="flex items-center gap-3"><UsersIcon className="w-7 h-7" /> Employee 360: {emp.name}</div>
+                <div className="flex gap-2">
+                  <span className="text-[10px] font-mono bg-panel border border-border px-2 py-1 rounded text-text-muted">{emp.role}</span>
+                  <span className="text-[10px] font-mono bg-green-900/10 border border-green-500/30 px-2 py-1 rounded text-green-500">ACTIVE</span>
+                </div>
+             </h3>
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-charcoal p-4 rounded border border-border">
+                   <div className="text-[10px] uppercase text-text-muted tracking-widest font-mono mb-2">Close Rate MTD</div>
+                   <div className="text-3xl font-playfair text-white">{emp.performance?.closeRate || 0}%</div>
+                </div>
+                <div className="bg-charcoal p-4 rounded border border-border">
+                   <div className="text-[10px] uppercase text-text-muted tracking-widest font-mono mb-2">Avg Front Gross</div>
+                   <div className="text-3xl font-playfair text-green-400">${emp.performance?.avgFrontGross || 0}</div>
+                </div>
+                <div className="bg-charcoal p-4 rounded border border-border">
+                   <div className="text-[10px] uppercase text-text-muted tracking-widest font-mono mb-2">Avg Back Gross</div>
+                   <div className="text-3xl font-playfair text-gold">${emp.performance?.avgBackGross || 0}</div>
+                </div>
+                <div className="bg-charcoal p-4 border border-gold-dim rounded shadow-[0_0_15px_rgba(201,168,76,0.1)] relative overflow-hidden">
+                   <div className="absolute top-0 right-0 w-16 h-16 bg-gold/10 rounded-full blur-xl translate-x-4 -translate-y-4"></div>
+                   <div className="text-[10px] uppercase text-gold tracking-widest font-mono mb-2 flex items-center gap-1"><BrainCircuit className="w-3 h-3"/> AI Adoption Rate</div>
+                   <div className="text-3xl font-playfair text-white relative z-10">{emp.performance?.aiAdoptionRate || 0}%</div>
+                </div>
+             </div>
+             
+             <div className="bg-black p-6 rounded-lg border border-border shadow-inner">
+                 <strong className="text-white text-[10px] uppercase tracking-[0.15em] mb-4 block border-b border-border/50 pb-2 font-mono flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-500" /> Active System Rules & Interventions
+                 </strong>
+                 <div className="space-y-2">
+                    <button className="w-full text-left bg-panel hover:bg-black border border-border px-4 py-3 rounded text-sm transition-colors text-white font-bold flex justify-between items-center group" onClick={() => onDrillDown('Action', { name: `View Active Task Queue for ${emp.name}`, message: `Fetching task execution queue...` })}>
+                      <span>View Open Agent-Assigned Tasks</span>
+                      <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-gold transition-colors" />
+                    </button>
+                    <button className="w-full text-left bg-panel hover:bg-black border border-border px-4 py-3 rounded text-sm transition-colors text-white font-bold flex justify-between items-center group" onClick={() => onDrillDown('Action', { name: `Execute Training/Coaching Module`, message: `Triggering AI coaching module for ${emp.name}...` })}>
+                      <span>Dispatch AI Coaching / Training Payload</span>
+                      <BrainCircuit className="w-4 h-4 text-text-muted group-hover:text-gold transition-colors" />
+                    </button>
+                 </div>
+             </div>
+          </div>
+        );
+      }
+      
+      case 'Lender': {
+        const lender = getLenderData(item.data?.name || item.data);
+        if (!lender) return <div className="p-8 text-white">Lender details not found.</div>;
+        return (
+          <div className="space-y-6">
+             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
+                <div className="flex items-center gap-3"><DollarSign className="w-7 h-7" /> Bank Profile: {lender.name}</div>
+                <div className="flex gap-2">
+                  <span className="text-[10px] font-mono bg-panel border border-border px-2 py-1 rounded text-text-muted">{lender.type}</span>
+                </div>
+             </h3>
+             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="bg-charcoal p-4 rounded border border-border">
+                   <div className="text-[10px] uppercase text-text-muted tracking-widest font-mono mb-2">Approval Ratio MTD</div>
+                   <div className="text-3xl font-playfair text-white">{lender.metrics?.approvalRatio || 0}%</div>
+                </div>
+                <div className="bg-charcoal p-4 rounded border border-border">
+                   <div className="text-[10px] uppercase text-text-muted tracking-widest font-mono mb-2">Look-To-Book</div>
+                   <div className="text-3xl font-playfair text-white">{lender.metrics?.lookToBook || 0}%</div>
+                </div>
+                <div className="bg-charcoal p-4 rounded border border-border">
+                   <div className="text-[10px] uppercase text-text-muted tracking-widest font-mono mb-2">Avg Funding Speed</div>
+                   <div className="text-3xl font-playfair text-white">{lender.metrics?.avgFundingTimeDays || 0} <span className="text-lg text-text-muted">Days</span></div>
+                </div>
+             </div>
+             <div className="bg-black p-6 border border-gold-dim rounded shadow-[0_0_15px_rgba(201,168,76,0.1)] relative overflow-hidden group">
+                 <div className="absolute inset-0 bg-gradient-to-br from-gold/5 via-transparent to-transparent opacity-100"></div>
+                 <strong className="text-gold text-[10px] uppercase tracking-[0.15em] mb-4 block border-b border-border/50 pb-2 font-mono flex items-center gap-2">
+                    <BrainCircuit className="w-4 h-4 text-gold" /> Advanced F&I Intelligence
+                 </strong>
+                 <p className="text-white text-sm leading-relaxed mb-4 relative z-10">
+                    {lender.metrics?.aiInsight || "No specific insights at this time."}
+                 </p>
+                 <button className="text-[10px] text-gold uppercase tracking-widest border border-gold/30 hover:bg-gold/10 px-3 py-1.5 rounded transition-all font-bold w-max relative z-10" onClick={() => onDrillDown('Action', { name: `View ${lender.name} Tier Sheets` })}>View Program Guidelines →</button>
+             </div>
+          </div>
+        );
+      }
+
+      case 'Campaign': {
+        const camp = getCampaignData(item.data?.name || item.data);
+        return (
+          <div className="space-y-6">
+             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
+                <div className="flex items-center gap-3"><Megaphone className="w-7 h-7" /> Campaign ROI: {camp.name}</div>
+                <div className="flex gap-2">
+                  <span className="text-[10px] font-mono bg-panel border border-border px-2 py-1 rounded text-text-muted">{camp.type}</span>
+                </div>
+             </h3>
+             <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-6">
+                <div className="bg-charcoal p-3 rounded border border-border text-center flex flex-col justify-center">
+                   <div className="text-[9px] uppercase text-text-muted tracking-widest font-mono mb-1">Spend</div>
+                   <div className="text-lg font-bold text-red-400">${camp.funnel?.spend?.toLocaleString()}</div>
+                </div>
+                <div className="hidden lg:flex items-center justify-center"><ChevronRight className="text-border" /></div>
+                
+                <div className="bg-charcoal p-3 rounded border border-border text-center flex flex-col justify-center">
+                   <div className="text-[9px] uppercase text-text-muted tracking-widest font-mono mb-1">Leads</div>
+                   <div className="text-lg font-bold text-white">{camp.funnel?.leads?.toLocaleString()}</div>
+                </div>
+                <div className="hidden lg:flex items-center justify-center"><ChevronRight className="text-border" /></div>
+
+                <div className="bg-charcoal p-3 rounded border border-border text-center flex flex-col justify-center">
+                   <div className="text-[9px] uppercase text-text-muted tracking-widest font-mono mb-1">Shows</div>
+                   <div className="text-lg font-bold text-white">{camp.funnel?.shows?.toLocaleString()}</div>
+                </div>
+                <div className="hidden lg:flex items-center justify-center"><ChevronRight className="text-border" /></div>
+
+                <div className="bg-charcoal p-3 rounded border border-border text-center flex flex-col justify-center">
+                   <div className="text-[9px] uppercase text-text-muted tracking-widest font-mono mb-1">Sold</div>
+                   <div className="text-lg font-bold text-white">{camp.funnel?.sold?.toLocaleString()}</div>
+                </div>
+                <div className="hidden lg:flex items-center justify-center"><ChevronRight className="text-border" /></div>
+
+                <div className="bg-black p-3 rounded border border-gold shadow-[0_0_15px_rgba(201,168,76,0.15)] text-center flex flex-col justify-center">
+                   <div className="text-[9px] uppercase text-gold tracking-widest font-mono mb-1">Gross Gen</div>
+                   <div className="text-lg font-bold text-green-400">${camp.funnel?.grossGenerated?.toLocaleString()}</div>
+                </div>
+             </div>
+             
+             <div className="bg-charcoal border border-border p-6 rounded shadow-inner">
+                <strong className="text-white text-[10px] uppercase tracking-[0.15em] mb-4 block border-b border-border/50 pb-2 font-mono flex items-center gap-2">
+                   <FileBarChart className="w-4 h-4 text-text-muted" /> Automated Campaign Actions
+                </strong>
+                <div className="space-y-2">
+                   <button className="w-full text-left bg-panel hover:bg-black border border-border px-4 py-3 rounded text-sm transition-colors text-white font-bold flex justify-between items-center group" onClick={() => onDrillDown('Action', { name: `Pause Campaign`, message: `Sending signals to ad managers to halt spend on ${camp.name}...` })}>
+                     <span className="text-red-400">Halt Campaign Spend (Low ROI)</span>
+                     <TrendingDown className="w-4 h-4 text-text-muted group-hover:text-red-400 transition-colors" />
+                   </button>
+                   <button className="w-full text-left bg-panel hover:bg-black border border-border px-4 py-3 rounded text-sm transition-colors text-white font-bold flex justify-between items-center group" onClick={() => onDrillDown('Action', { name: `Reallocate Budget`, message: `Scaling budget up for ${camp.name}...` })}>
+                     <span className="text-green-400">Scale Campaign Spend (High ROI)</span>
+                     <TrendingUp className="w-4 h-4 text-text-muted group-hover:text-green-400 transition-colors" />
+                   </button>
+                </div>
+             </div>
+          </div>
+        );
+      }
+
+      case 'Department': {
+        const deptPayload = getDepartmentCapacity(item.data?.location || 'LOC-1', item.data?.department || item.data);
+        if (!deptPayload) return <div className="p-8 text-white">Department capacity data not found.</div>;
+        
+        return (
+          <div className="space-y-6">
+             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
+                <div className="flex items-center gap-3"><Database className="w-7 h-7" /> {deptPayload.location.name} : {deptPayload.department.name} Capacity</div>
+             </h3>
+             <div className="grid grid-cols-2 gap-4">
+                {Object.entries(deptPayload.capacity).filter(([k]) => k !== 'type').map(([k,v]) => (
+                   <div key={k} className="bg-charcoal p-4 rounded border border-border">
+                      <div className="text-[10px] uppercase text-text-muted tracking-widest font-mono mb-2">{k.replace(/([A-Z])/g, ' $1').trim()}</div>
+                      <div className="text-3xl font-playfair text-white">{k.toLowerCase().includes('dollar') ? `$${v.toLocaleString()}` : v}</div>
+                   </div>
+                ))}
+             </div>
+          </div>
+        );
+      }
+
+      case 'TimelineEvent': {
+        return (
+          <div className="space-y-6">
+             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
+                <div className="flex items-center gap-3"><Database className="w-7 h-7" /> Target Event Payload</div>
+                <span className="text-[10px] font-mono bg-panel border border-border px-2 py-1 rounded text-text-muted">ID: {item.data?.id || `EVT-${Math.floor(Math.random() * 89999) + 10000}`}</span>
+             </h3>
+             <div className="bg-black p-4 rounded border border-border overflow-x-auto shadow-inner">
+                <pre className="text-xs text-green-400 font-mono leading-relaxed">
+                   {JSON.stringify(item.data, null, 2)}
+                </pre>
+             </div>
+             <p className="text-xs text-text-muted italic border-l-2 border-gold/30 pl-3">This forensic view represents the exact payload executed at the time of the event. Immutability guaranteed.</p>
+          </div>
+        );
+      }
+
+      case 'DealSimulator': {
+         const baseMsrp = item.data?.msrp || 15000;
+         const baseInvoice = item.data?.invoice || 13500;
+         const dealCustomer = item.data?.customer || "Walk-In Structuring";
+         
+         const curMsrpValue = baseMsrp - simMsrpDiscount;
+         const frontGross = curMsrpValue - baseInvoice;
+         const tradeGross = 6000 - simAcv; // Assume retail value is 6000
+         const totalBackend = simFiGross + (simTerm * 10); // Fake reserve calculation based on term
+         const totalEconomicProfit = frontGross + tradeGross + totalBackend;
+
+         let aiStance = "OPTIMAL YIELD";
+         let aiColor = "text-green-500";
+         if (totalEconomicProfit < 1000) { aiStance = "MARGIN RISK - PUSH BACK"; aiColor = "text-red-500"; }
+         else if (frontGross < 0) { aiStance = "BACKEND HEAVY - SECURE STIPS"; aiColor = "text-amber-500"; }
+
+         return (
+            <div className="space-y-6">
+              <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
+                 <div className="flex items-center gap-3"><Calculator className="w-7 h-7" /> AI Deal Simulator</div>
+                 <span className="text-[10px] font-mono bg-panel border border-border px-2 py-1 rounded text-text-muted">{dealCustomer}</span>
+              </h3>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                 {/* Controls */}
+                 <div className="bg-charcoal p-6 border border-border rounded space-y-6 shadow-inner">
+                    <strong className="text-white text-[10px] uppercase tracking-[0.15em] mb-4 block border-b border-border/50 pb-2 font-mono flex items-center gap-2">
+                       <CheckCircle2 className="w-4 h-4 text-text-muted" /> Live Variables
+                    </strong>
+                    
+                    <div className="space-y-4">
+                       <div>
+                          <div className="flex justify-between text-xs text-text-muted font-bold mb-2"><span>MSRP Discount</span><span className="text-white font-mono">${simMsrpDiscount}</span></div>
+                          <input type="range" min="0" max="3000" step="100" value={simMsrpDiscount} onChange={(e) => setSimMsrpDiscount(Number(e.target.value))} className="w-full accent-gold cursor-pointer" />
+                       </div>
+                       <div>
+                          <div className="flex justify-between text-xs text-text-muted font-bold mb-2"><span>Trade ACV Allowance</span><span className="text-white font-mono">${simAcv}</span></div>
+                          <input type="range" min="2000" max="8000" step="500" value={simAcv} onChange={(e) => setSimAcv(Number(e.target.value))} className="w-full accent-gold cursor-pointer" />
+                       </div>
+                       <div>
+                          <div className="flex justify-between text-xs text-text-muted font-bold mb-2"><span>F&I VSC/GAP Gross</span><span className="text-white font-mono">${simFiGross}</span></div>
+                          <input type="range" min="0" max="2500" step="100" value={simFiGross} onChange={(e) => setSimFiGross(Number(e.target.value))} className="w-full accent-gold cursor-pointer" />
+                       </div>
+                       <div>
+                          <div className="flex justify-between text-xs text-text-muted font-bold mb-2"><span>Term Length (Months)</span><span className="text-white font-mono">{simTerm} mos</span></div>
+                          <input type="range" min="24" max="84" step="12" value={simTerm} onChange={(e) => setSimTerm(Number(e.target.value))} className="w-full accent-gold cursor-pointer" />
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* Results */}
+                 <div className="space-y-4">
+                    <div className="bg-black p-6 border border-gold shadow-[0_0_15px_rgba(201,168,76,0.15)] rounded text-center relative overflow-hidden group">
+                       <div className="absolute top-0 right-0 w-16 h-16 bg-gold/10 rounded-full blur-xl translate-x-4 -translate-y-4"></div>
+                       <div className="text-[10px] uppercase text-gold tracking-widest font-mono mb-2">Total Economic Profit</div>
+                       <div className="text-5xl font-playfair font-bold text-white relative z-10 drop-shadow-md">${totalEconomicProfit.toLocaleString()}</div>
+                    </div>
+
+                    <div className="bg-charcoal p-4 border border-border rounded grid grid-cols-2 gap-4 shadow-inner">
+                       <div>
+                          <div className="text-[9px] uppercase text-text-muted tracking-widest font-mono mb-1">Front Gross</div>
+                          <div className={`text-2xl font-playfair font-bold ${frontGross < 0 ? 'text-red-500' : 'text-white'}`}>${frontGross.toLocaleString()}</div>
+                       </div>
+                       <div>
+                          <div className="text-[9px] uppercase text-text-muted tracking-widest font-mono mb-1">Back Gross (Inc Res)</div>
+                          <div className="text-2xl font-playfair font-bold text-white">${totalBackend.toLocaleString()}</div>
+                       </div>
+                    </div>
+
+                    <div className="bg-panel border border-border p-4 rounded shadow-inner relative overflow-hidden">
+                       <div className="absolute inset-0 bg-gradient-to-br from-gold/5 via-transparent to-transparent opacity-100"></div>
+                       <strong className="text-white text-[10px] uppercase tracking-[0.15em] mb-2 block font-mono flex items-center gap-2 relative z-10">
+                          <BrainCircuit className="w-4 h-4 text-gold" /> AI Agent Stance
+                       </strong>
+                       <div className={`text-lg font-bold tracking-wider relative z-10 ${aiColor}`}>{aiStance}</div>
+                    </div>
+                 </div>
+              </div>
+            </div>
+         );
+      }
+
+      case 'ActionMetrics': {
+        return (
+          <div className="space-y-6">
+             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
+                <div className="flex items-center gap-3"><Command className="w-7 h-7" /> {item.label}</div>
+                <span className="text-[10px] font-mono bg-panel border border-border px-2 py-1 rounded text-text-muted">Metric Count: {item.value}</span>
+             </h3>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[...Array(Math.max(1, Math.min(6, Number(item.value) || 3)))].map((_, i) => (
+                   <div key={i} className="bg-black p-4 rounded border border-border hover:border-gold transition-colors cursor-pointer group" onClick={() => onDrillDown('TimelineEvent', { id: `EVT-ACT-${Math.floor(Math.random() * 9000) + 1000}` })}>
+                      <div className="flex justify-between items-center mb-2 text-xs font-mono uppercase tracking-widest text-text-muted">
+                        <span><Clock className="w-3 h-3 inline mr-1 text-gold"/> {Math.floor(Math.random() * 24) + 1} hours ago</span>
+                        <span className="bg-green-900/20 border border-green-500/30 text-green-500 px-1 rounded font-bold">SUCCESS</span>
+                      </div>
+                      <div className="font-bold text-white text-sm mb-1 group-hover:text-gold transition-colors">{item.label?.replace(' Audit', '') || "Action Extracted"}</div>
+                      <div className="text-xs text-text-dim truncate">Triggered by Agent Engine · Audit ID: {Math.floor(Math.random() * 90000) + 10000}</div>
+                   </div>
+                ))}
+             </div>
+          </div>
+        );
+      }
+
+      case 'AIScoreAnalysis': {
+        const score = Number(item.value);
+        return (
+          <div className="space-y-6">
+             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
+                <div className="flex items-center gap-3"><BrainCircuit className="w-7 h-7" /> AI Confidence Scoring</div>
+                <div className={`text-xl font-playfair font-bold px-3 py-1 rounded border shadow-inner ${score > 75 ? 'bg-green-900/20 text-green-500 border-green-500/30' : score > 50 ? 'bg-blue-900/20 text-blue-400 border-blue-500/30' : 'bg-amber-900/20 text-amber-500 border-amber-500/30'}`}>{score} Score</div>
+             </h3>
+             <div className="bg-charcoal p-5 border border-border rounded shadow-inner">
+                <h4 className="text-xs text-text-muted font-mono uppercase tracking-widest mb-4">Factor Breakdown Matrix</h4>
+                <div className="space-y-3">
+                   <div className="flex justify-between items-center p-3 bg-black border border-border/50 rounded hover:border-gold/50 transition-colors">
+                      <div className="text-sm font-bold text-white flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500"/> Verified Trade-In Interest</div>
+                      <div className="text-green-500 font-mono font-bold">+25 pts</div>
+                   </div>
+                   <div className="flex justify-between items-center p-3 bg-black border border-border/50 rounded hover:border-gold/50 transition-colors">
+                      <div className="text-sm font-bold text-white flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500"/> Repeated Website Activity (Pricing)</div>
+                      <div className="text-green-500 font-mono font-bold">+15 pts</div>
+                   </div>
+                   <div className="flex justify-between items-center p-3 bg-black border border-border/50 rounded hover:border-gold/50 transition-colors">
+                      <div className="text-sm font-bold text-white flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500"/> High FICO Demographics (Zip Code)</div>
+                      <div className="text-green-500 font-mono font-bold">+10 pts</div>
+                   </div>
+                   <div className="flex justify-between items-center p-3 bg-black border border-border/50 rounded hover:border-gold/50 transition-colors">
+                      <div className="text-sm font-bold text-white flex items-center gap-2"><AlertCircle className="w-4 h-4 text-amber-500"/> Invalid Phone Number format</div>
+                      <div className="text-amber-500 font-mono font-bold">-10 pts</div>
+                   </div>
+                </div>
+             </div>
+          </div>
+        );
+      }
+
+      case 'RuleAudit': {
+        const threshold = item.value;
+        const ruleName = item.label || "Enterprise Rule";
+        return (
+          <div className="space-y-6">
+             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
+                <div className="flex items-center gap-3"><AlertCircle className="w-7 h-7" /> {ruleName}</div>
+             </h3>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-black p-4 border border-border rounded text-center shadow-inner">
+                   <div className="text-[10px] uppercase text-text-muted font-mono tracking-widest mb-1">Global Target</div>
+                   <div className="text-2xl font-bold text-white">{threshold}</div>
+                </div>
+                <div className="bg-black p-4 border border-border rounded text-center shadow-inner">
+                   <div className="text-[10px] uppercase text-text-muted font-mono tracking-widest mb-1">30-Day Triggers</div>
+                   <div className="text-2xl font-bold text-gold">142</div>
+                </div>
+                <div className="bg-black p-4 border border-border rounded text-center shadow-inner">
+                   <div className="text-[10px] uppercase text-text-muted font-mono tracking-widest mb-1">Trend</div>
+                   <div className="text-2xl font-bold text-amber-500 flex items-center justify-center gap-1"><TrendingUp className="w-5 h-5"/> 12%</div>
+                </div>
+             </div>
+             <div className="bg-charcoal border border-border rounded flex-1 overflow-x-auto">
+                <table className="w-full text-sm text-left whitespace-nowrap">
+                   <thead className="text-xs text-text-muted font-mono uppercase tracking-widest bg-black border-b border-border">
+                      <tr><th className="p-3">Trigger Instance</th><th className="p-3">Location</th><th className="p-3">Overriding Manager</th></tr>
+                   </thead>
+                   <tbody className="divide-y divide-border">
+                      <tr className="hover:bg-panel cursor-pointer transition-colors" onClick={() => onDrillDown('Employee', { name: "Marcus Broussard" })}>
+                         <td className="p-3 font-bold text-white flex items-center gap-2"><TrendingDown className="w-4 h-4 text-amber-500"/> Deal #84A92</td><td className="p-3 text-text-muted">Baton Rouge</td><td className="p-3 text-gold">Marcus Broussard</td>
+                      </tr>
+                      <tr className="hover:bg-panel cursor-pointer transition-colors" onClick={() => onDrillDown('Employee', { name: "Sarah Jenkins" })}>
+                         <td className="p-3 font-bold text-white flex items-center gap-2"><TrendingDown className="w-4 h-4 text-amber-500"/> Deal #19V42</td><td className="p-3 text-text-muted">Slidell</td><td className="p-3 text-gold">Sarah Jenkins</td>
+                      </tr>
+                   </tbody>
+                </table>
+             </div>
+          </div>
+        );
+      }
+
+      case 'StageVelocity': {
+        const stage = item.value || "Pipeline Stage";
+        const avgDwell = stage === 'New' ? '45 mins' : stage === 'Appt' ? '2.4 days' : stage === 'Finance' ? '4.8 hours' : '1.2 days';
+        const targetDwell = stage === 'New' ? '30 mins' : stage === 'Appt' ? '3.0 days' : stage === 'Finance' ? '2.0 hours' : '1.0 days';
+        const isWarning = stage === 'Finance' || stage === 'New';
+        return (
+          <div className="space-y-6">
+             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
+                <div className="flex items-center gap-3"><Clock className="w-7 h-7" /> Stage Velocity: {stage}</div>
+                <div className={`text-sm font-bold font-mono px-3 py-1 rounded border ${isWarning ? 'bg-red-900/20 text-red-500 border-red-500/30' : 'bg-green-900/20 text-green-500 border-green-500/30'}`}>
+                   Avg Dwell: {avgDwell}
+                </div>
+             </h3>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-charcoal p-5 border border-border rounded shadow-inner">
+                   <h4 className="text-xs text-text-muted font-mono uppercase tracking-widest mb-4">Performance vs Target</h4>
+                   <div className="space-y-4">
+                      <div>
+                         <div className="flex justify-between text-xs mb-1 font-bold">
+                            <span className="text-white">Actual: {avgDwell}</span>
+                            <span className="text-text-muted">Target: {targetDwell}</span>
+                         </div>
+                         <div className="w-full bg-black h-2 rounded-full overflow-hidden border border-border">
+                            <div className={`h-full ${isWarning ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: isWarning ? '95%' : '65%' }}></div>
+                         </div>
+                      </div>
+                      <p className="text-sm text-text-muted italic border-l-2 border-gold/30 pl-3">
+                         {isWarning ? `Attention: Deals are stalling in the ${stage} stage longer than the algorithmic target, creating pipeline friction.` : `Healthy Flow: Deals are advancing through the ${stage} stage matching or beating the target velocity.`}
+                      </p>
+                   </div>
+                </div>
+                <div className="bg-charcoal p-5 border border-border rounded shadow-inner">
+                   <h4 className="text-xs text-text-muted font-mono uppercase tracking-widest mb-4">Slowest Aging Deals in {stage}</h4>
+                   <div className="space-y-3">
+                      <div className="bg-black p-3 border border-red-500/30 rounded flex justify-between items-center cursor-pointer hover:border-red-500 transition-colors" onClick={() => onDrillDown('CRM_Customer360', { customerId: 'C-001' })}>
+                         <div>
+                            <div className="text-white font-bold text-sm">John Davis</div>
+                            <div className="text-xs text-text-muted flex items-center gap-1"><User className="w-3 h-3"/> Jake Fontenot</div>
+                         </div>
+                         <div className="text-red-500 font-bold font-mono bg-red-900/10 px-2 py-1 rounded border border-red-500/20">2.0x Target</div>
+                      </div>
+                      <div className="bg-black p-3 border border-amber-500/30 rounded flex justify-between items-center cursor-pointer hover:border-amber-500 transition-colors" onClick={() => onDrillDown('CRM_Customer360', { customerId: 'C-002' })}>
+                         <div>
+                            <div className="text-white font-bold text-sm flex items-center gap-2">Emily White</div>
+                            <div className="text-xs text-text-muted flex items-center gap-1"><User className="w-3 h-3"/> Sarah Jenkins</div>
+                         </div>
+                         <div className="text-amber-500 font-bold font-mono bg-amber-900/10 px-2 py-1 rounded border border-amber-500/20">1.5x Target</div>
+                      </div>
+                   </div>
+                </div>
+             </div>
+          </div>
+        );
+      }
+
       case 'OEM':
-      case 'Campaign':
       default:
         // Enhanced robust default view for unmapped or generic data points
         const genericName = item.data.name || item.data.label || item.type;

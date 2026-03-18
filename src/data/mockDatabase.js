@@ -197,3 +197,14 @@ export const CRM_AUDIT_LOGS = [
 export const AGENT_RECOMMENDATIONS = [];
 export const AGENT_ACTIONS = [];
 export const AGENT_AUDIT_LOGS = [];
+
+export const CAPACITY_METRICS = {
+  'LOC-1': {
+    'DEPT-1': { type: 'Sales', showroomTraffic: 12, activeReps: 4, waitingForFI: 2, avgWaitTimeMins: 18 },
+    'DEPT-3': { type: 'Service', activeBays: 8, occupiedBays: 6, idleTechs: 1, wipDollarAmount: 14500 }
+  },
+  'LOC-2': {
+    'DEPT-1': { type: 'Sales', showroomTraffic: 4, activeReps: 2, waitingForFI: 0, avgWaitTimeMins: 0 },
+    'DEPT-3': { type: 'Service', activeBays: 4, occupiedBays: 4, idleTechs: 0, wipDollarAmount: 8200 }
+  }
+};

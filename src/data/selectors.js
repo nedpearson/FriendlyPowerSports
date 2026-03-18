@@ -2,7 +2,7 @@ import {
   DEALS, LENDERS, INVENTORY, APPRAISALS, BRANDS, CAMPAIGNS,
   CUSTOMERS, DEPARTMENTS, EMPLOYEES, LEADS, LOCATIONS, SERVICE_ORDERS, TASKS_AND_ALERTS,
   CRM_ACTIVITIES, CRM_APPOINTMENTS, CRM_COMMUNICATIONS, CRM_HOUSEHOLDS, CRM_OPPORTUNITIES,
-  CRM_QUOTES, CRM_QUOTE_SCENARIOS, CRM_TAGS, CRM_TRADE_INS, CRM_PREQUAL_APPLICATIONS, CRM_PREQUAL_RESULTS, CRM_PREQUAL_CONSENTS, CRM_AUDIT_LOGS
+  CRM_QUOTES, CRM_QUOTE_SCENARIOS, CRM_TAGS, CRM_TRADE_INS, CRM_PREQUAL_APPLICATIONS, CRM_PREQUAL_RESULTS, CRM_PREQUAL_CONSENTS, CRM_AUDIT_LOGS, CAPACITY_METRICS
 } from './mockDatabase';
 import { LeadScoringService, NextBestActionService } from './crmAdapters';
 
@@ -22,6 +22,89 @@ export const selectFIPerUnit = () => {
   if (units === 0) return 0;
   const fiTotal = DEALS.reduce((acc, deal) => acc + deal.reserve + deal.vscPrice - deal.vscCost + deal.gapPrice - deal.gapCost, 0);
   return fiTotal / units;
+};
+
+// Global mutation map for Phase 9 demo state since mock database is static per load.
+// We intercept state here.
+const agentRecommendationLocalState = {};
+
+export const setAgentRecommendationStatus = (recId, status, details) => {
+   agentRecommendationLocalState[recId] = { status, details, timestamp: new Date().toISOString() };
+   console.log(`[Demo State] Updated Recommendation ${recId} -> ${status}`);
+   return true;
+};
+
+/* --- NEW SELECTORS FOR GLOBAL DRILLDOWNS (PHASE 11) --- */
+
+export const getEmployeeData = (id) => {
+  const emp = EMPLOYEES.find(e => e.id === id || e.name === id);
+  if (!emp) return null;
+  const pseudoRandom = emp.name.length;
+  // Generate deterministic mock performance stats
+  return {
+    ...emp,
+    performance: {
+      closeRate: 15 + pseudoRandom, // e.g., 20-30%
+      avgFrontGross: 800 + (pseudoRandom * 50),
+      avgBackGross: 400 + (pseudoRandom * 30),
+      aiAdoptionRate: Math.min(60 + (pseudoRandom * 3), 98) // e.g., 60-98%
+    }
+  };
+};
+
+export const getLenderData = (nameOrId) => {
+  const lender = LENDERS.find(l => l.name === nameOrId || l.id === nameOrId);
+  if (!lender) return null;
+  const pseudoRandom = lender.name.length;
+  return {
+    ...lender,
+    metrics: {
+      approvalRatio: 40 + (pseudoRandom * 3), // e.g., 50-70%
+      lookToBook: 20 + (pseudoRandom * 2), // e.g., 25-45%
+      avgFundingTimeDays: 1 + (pseudoRandom % 3),
+      aiInsight: lender.type === 'Subprime'
+        ? 'High stipulation requirements. Ensure full proof of income before submitting.'
+        : 'Aggressive rates on UTVs this month. Prefer for high-credit SXS buyers.'
+    }
+  };
+};
+
+export const getCampaignData = (nameOrId) => {
+  const camp = CAMPAIGNS.find(c => c.name === nameOrId || c.id === nameOrId) || CAMPAIGNS[0];
+  const spend = camp.spendMTD || 1000;
+  return {
+    ...camp,
+    funnel: {
+      spend: spend,
+      impressions: spend * 120,
+      clicks: spend * 4,
+      leads: Math.floor(spend / 40),
+      shows: Math.floor(spend / 120),
+      sold: Math.floor(spend / 400),
+      grossGenerated: Math.floor(spend / 400) * 1800
+    }
+  };
+};
+
+export const getDepartmentCapacity = (locationId, deptId) => {
+  // If locationId corresponds to a string like "Baton Rouge", find the LOC first
+  let loc = LOCATIONS.find(l => l.id === locationId || l.name === locationId);
+  if (!loc) return null;
+  let dept = DEPARTMENTS.find(d => d.id === deptId || d.name === deptId);
+  if (!dept) return null;
+
+  if (CAPACITY_METRICS[loc.id] && CAPACITY_METRICS[loc.id][dept.id]) {
+    return {
+      location: loc,
+      department: dept,
+      capacity: CAPACITY_METRICS[loc.id][dept.id]
+    };
+  }
+  return null;
+};
+
+export const getAgentRecommendationStatus = (recId) => {
+   return agentRecommendationLocalState[recId];
 };
 
 export const selectFrontEndGrossAvg = () => {

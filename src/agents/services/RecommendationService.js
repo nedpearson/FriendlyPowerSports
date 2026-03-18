@@ -37,6 +37,20 @@ export const RecommendationService = {
   },
 
   /**
+   * Fetch all snoozed recommendations.
+   */
+  fetchSnoozed(context = {}) {
+    let results = AGENT_RECOMMENDATIONS.filter(r => r.status === 'SNOOZED');
+    
+    if (context.agentId) {
+       results = results.filter(r => r.agentId === context.agentId);
+    }
+    
+    const priorityWeights = { 'URGENT': 4, 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
+    return results.sort((a, b) => priorityWeights[b.priority] - priorityWeights[a.priority] || b.confidenceScore - a.confidenceScore);
+  },
+
+  /**
    * Fetch by a related business record (e.g. Lead ID).
    */
   fetchByEntity(entityType, entityId) {

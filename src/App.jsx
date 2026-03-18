@@ -7,11 +7,11 @@ import {
   LayoutDashboard, TrendingUp, CreditCard, Package, Bike, Wrench,
   Clock, DollarSign, Megaphone, Award, FileBarChart, Users as UsersIcon, Settings,
   Bell, Search, ChevronRight, CheckCircle2, ChevronDown, User, Play, Calendar, AlertCircle, Command,
-  Briefcase, Users, BrainCircuit, TrendingDown, Database, Filter, Zap
+  Briefcase, Users, BrainCircuit, TrendingDown, Database, Filter, Zap, Layout
 } from 'lucide-react';
 
 import {
-  getSalesDashboardData, getManagerDashboardData, getFinanceDashboardData, getRetentionDashboardData, getAutomationEngineRules
+  getSalesDashboardData, getManagerDashboardData, getFinanceDashboardData, getRetentionDashboardData
 } from './data/selectors';
 
 import { KPICard } from './components/ui/KPICard';
@@ -27,6 +27,9 @@ import dealerLogo from './assets/logo.png';
 // Boot up Super Agent Phase 1 Registry
 import './agents/services/index.js';
 import { AgentRegistry } from './agents/registry/AgentRegistry';
+import { RecommendationService } from './agents/services/RecommendationService';
+import { AgentMetrics } from './agents/audit/AgentMetrics';
+import { ActionExecutionService } from './agents/services/ActionExecutionService';
 
 import { EMPLOYEES } from './data/mockDatabase';
 import { 
@@ -120,9 +123,32 @@ const AuthGate = ({ onLogin }) => {
 /* --- MAIN MODULES --- */
 
 const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
+  const [dashboardInsights, setDashboardInsights] = useState([]);
+
   useEffect(() => {
     // Generate background insights via the Super Agent layer manually on boot
-    AgentRegistry.broadcastTrigger({ type: 'MANUAL', timestamp: new Date().toISOString() }, { userId: 'EMP-1', role: 'Owner', locationId: 'ALL' });
+    const seedRecommendations = async () => {
+      // Broadcast a manual trigger to awaken all Agents
+      await AgentRegistry.broadcastTrigger({ type: 'MANUAL', timestamp: new Date().toISOString() }, { userId: 'EMP-1', role: 'Owner', locationId: 'ALL' });
+      
+      const rawRecommendations = RecommendationService.fetchPending({ userRole: 'Owner' }).slice(0, 3);
+      
+      if (rawRecommendations.length > 0) {
+        setDashboardInsights(rawRecommendations.map(rec => ({
+          type: rec.priority === 'URGENT' ? 'warning' : rec.priority === 'HIGH' ? 'opportunity' : 'action',
+          message: <>{rec.title} — <span className="text-text-muted">{rec.description}</span></>,
+          actionText: "Review Intelligence",
+          onAction: () => onDrillDown('AgentRecommendation', { ...rec })
+        })));
+      } else {
+        setDashboardInsights([
+          { type: "warning", message: <>Yamaha Q3 Volume Tier: You are <DrillDownValue value="4 units" label="Pipeline Need" type="Report" onDrillDown={onDrillDown} /> away from unlocking the $74,000 retroactive bonus. Tier expires in 6 days.</>, actionText: "View Eligible Pipeline" },
+          { type: "opportunity", message: <>Baton Rouge F&I backend is pacing <DrillDownValue value="$315 per unit" label="F&I Margin Delta" type="Report" onDrillDown={onDrillDown} color="text-gold" /> higher than Slidell MTD. Reviewing Rachel Tran's pitch structure with the Slidell team is recommended.</>, actionText: "Compare F&I Scorecards" },
+          { type: "action", message: <>There are exactly <DrillDownValue value="8 units" label="Aged Units" type="Inventory" onDrillDown={onDrillDown} /> across both locations aging past 120 days. Current floorplan carry cost for these units is $640/week.</>, actionText: "Review Aged Inventory" }
+        ]);
+      }
+    };
+    seedRecommendations();
   }, []);
 
   return (
@@ -142,11 +168,7 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
         </div>
       </div>
 
-      <AutomatedInsights onDrillDown={onDrillDown} insights={[
-        { type: "warning", message: <>Yamaha Q3 Volume Tier: You are <DrillDownValue value="4 units" label="Pipeline Need" type="Report" onDrillDown={onDrillDown} /> away from unlocking the $74,000 retroactive bonus. Tier expires in 6 days.</>, actionText: "View Eligible Pipeline" },
-        { type: "opportunity", message: <>Baton Rouge F&I backend is pacing <DrillDownValue value="$315 per unit" label="F&I Margin Delta" type="Report" onDrillDown={onDrillDown} color="text-gold" /> higher than Slidell MTD. Reviewing Rachel Tran's pitch structure with the Slidell team is recommended.</>, actionText: "Compare F&I Scorecards" },
-        { type: "action", message: <>There are exactly <DrillDownValue value="8 units" label="Aged Units" type="Inventory" onDrillDown={onDrillDown} /> across both locations aging past 120 days. Current floorplan carry cost for these units is $640/week.</>, actionText: "Review Aged Inventory" }
-      ]} />
+      <AutomatedInsights onDrillDown={onDrillDown} insights={dashboardInsights} />
 
       <AgentWidget userContext={{ userId: 'EMP-1', role: 'Owner' }} />
 
@@ -170,7 +192,7 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
           <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase"><DrillDownValue value="Total Gross by Week" label="Chart Context" type="Report" onDrillDown={onDrillDown} color="text-text-muted" /></h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={WEEKLY_GROSS} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
+              <AreaChart data={WEEKLY_GROSS} margin={{ top: 5, right: 0, left: 0, bottom: 0 }} onClick={(e) => { if(e) onDrillDown('Report', { name: "Total Gross Details", action: 'View all historical transaction strips' }); }}>
                 <defs>
                   <linearGradient id="colorBR" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#c9a84c" stopOpacity={0.8}/>
@@ -230,7 +252,9 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {SCORECARDS.map((sc, i) => (
           <div key={i} className="bg-charcoal p-3 rounded border border-border hover:border-gold cursor-pointer transition-colors" onClick={(e) => { e.stopPropagation(); onDrillDown('Report', { category: 'Department Performance', name: sc.dept, summary: `${sc.v1} | ${sc.v2}`, goalTrend: sc.goal }); }}>
-            <h4 className="text-white font-bold mb-1">{sc.dept}</h4>
+            <h4 className="text-white font-bold mb-1">
+               <DrillDownValue value={sc.dept} label={`${sc.dept} Capacity`} type="Department" onDrillDown={onDrillDown} />
+            </h4>
             <div className="text-sm text-text-muted">
                <DrillDownValue value={sc.v1} label={`${sc.dept} Metric 1`} type="Report" onDrillDown={onDrillDown} />
             </div>
@@ -290,7 +314,7 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
                     {l.urgent && <AlertCircle className="w-3 h-3 text-red-500" />}
                   </div>
                   <div className="text-xs text-text-dim mt-1">
-                     <DrillDownValue value={l.source} label={`${l.name} Lead Source`} type="Lead" onDrillDown={onDrillDown} color="text-text-dim" />
+                     <DrillDownValue value={l.source} label={`${l.name} Lead Source`} type="Campaign" onDrillDown={onDrillDown} color="text-text-dim" />
                      <span className="mx-1">·</span> 
                      <DrillDownValue value={l.rep} label={`${l.name} Assigned Rep`} type="Employee" onDrillDown={onDrillDown} color="text-text-dim" />
                   </div>
@@ -402,20 +426,29 @@ const SalesModule = ({ onDrillDown }) => {
   const frontEnd = salePrice - cost - pack - recon;
   const totalEcoProfit = frontEnd + holdback + dealerCash - fpCost + backend;
 
+  const salesRecs = RecommendationService.fetchPending().filter(r => r.agentId === 'ag_sales_desk').slice(0, 2);
+  const salesInsights = salesRecs.length > 0 ? salesRecs.map(rec => ({
+    type: rec.priority === 'URGENT' ? 'warning' : 'opportunity',
+    message: <>{rec.title} — <span className="text-text-muted">{rec.description}</span></>,
+    actionText: "Review Deal",
+    onAction: () => onDrillDown('AgentRecommendation', { ...rec })
+  })) : [
+    { type: "warning", message: <>Alex in Baton Rouge has a <DrillDownValue value="12% closing ratio" label="Alex Closing Ratio" type="Employee" onDrillDown={onDrillDown} color="text-red-400" /> on web leads this week (Benchmark: 25%). 8 leads went unresponsive.</>, actionText: "Review Lost Leads" },
+    { type: "opportunity", message: <>A deal penciled by Jake for a 2024 MT-07 has <DrillDownValue value="$0 back-end gross" label="Jack Deal Margin" type="Deal" onDrillDown={onDrillDown} />. Adding GAP and Tire/Wheel brings this deal to standard profitability.</>, actionText: "Review Deal Structure" }
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-playfair text-white">Sales & Deal Pipeline</h2>
         <div className="flex gap-2">
           <button className="bg-charcoal border border-border px-3 py-1 rounded text-sm text-text-muted hover:text-white" onClick={() => onDrillDown('Action', { name: 'Filter Deals', message: 'Opening advanced filtering modal.' })}>Filter</button>
+          <button className="bg-panel border border-border px-4 py-1 rounded text-sm text-white hover:text-gold transition-colors font-bold flex items-center gap-2" onClick={() => onDrillDown('DealSimulator', { msrp: 18500, invoice: 16000, customer: "Pending Structure" })}>AI Simulator</button>
           <button className="bg-gold text-black px-4 py-1 rounded text-sm font-bold shadow-[0_0_10px_rgba(201,168,76,0.2)]" onClick={() => onDrillDown('Agent', { intent: 'Cross-Database Deal Synthesis' })}>Write New Deal</button>
         </div>
       </div>
 
-      <AutomatedInsights onDrillDown={onDrillDown} insights={[
-        { type: "warning", message: <>Alex in Baton Rouge has a <DrillDownValue value="12% closing ratio" label="Alex Closing Ratio" type="Employee" onDrillDown={onDrillDown} color="text-red-400" /> on web leads this week (Benchmark: 25%). 8 leads went unresponsive.</>, actionText: "Review Lost Leads" },
-        { type: "opportunity", message: <>A deal penciled by Jake for a 2024 MT-07 has <DrillDownValue value="$0 back-end gross" label="Jack Deal Margin" type="Deal" onDrillDown={onDrillDown} />. Adding GAP and Tire/Wheel brings this deal to standard profitability.</>, actionText: "Review Deal Structure" }
-      ]} />
+      <AutomatedInsights onDrillDown={onDrillDown} insights={salesInsights} />
 
       {/* Deal Desk Calculator */}
       <div className="bg-charcoal border border-border rounded p-6">
@@ -490,6 +523,14 @@ const SalesModule = ({ onDrillDown }) => {
 };
 
 const FIModule = ({ onDrillDown }) => {
+  const fiRecs = RecommendationService.fetchPending().filter(r => r.agentId === 'ag_fi_readiness').slice(0, 1);
+  const fiInsights = fiRecs.length > 0 ? fiRecs.map(rec => ({
+    type: rec.priority === 'URGENT' ? 'warning' : 'opportunity',
+    message: <>{rec.title} — <span className="text-text-muted">{rec.description}</span></>,
+    actionText: "Review F&I Structure",
+    onAction: () => onDrillDown('AgentRecommendation', { ...rec })
+  })) : [];
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -498,6 +539,8 @@ const FIModule = ({ onDrillDown }) => {
            <CreditCard className="w-4 h-4" /> Run Credit
          </button>
       </div>
+
+      {fiInsights.length > 0 && <AutomatedInsights onDrillDown={onDrillDown} insights={fiInsights} />}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
@@ -537,7 +580,7 @@ const FIModule = ({ onDrillDown }) => {
               <tr onClick={() => onDrillDown('Deal', {customer: 'John Davis', unit: '2024 Talon 1000R', lender: 'Sheffield', reserve: '$450', vsc: '$800', gap: 'No', total: '$1,250'})} className="border-b border-border/50 hover:bg-panel transition-colors cursor-pointer group">
                 <td className="px-4 py-3 text-white font-bold group-hover:text-gold transition-colors">John Davis</td>
                 <td className="px-4 py-3">2024 Talon 1000R</td>
-                <td className="px-4 py-3">Sheffield</td>
+                <td className="px-4 py-3"><DrillDownValue value="Sheffield" label="Sheffield Bank Profile" type="Lender" onDrillDown={onDrillDown} /></td>
                 <td className="px-4 py-3"><DrillDownValue value="$450" label="Reserve Split (Sheffield)" type="Financials" onDrillDown={onDrillDown} /></td>
                 <td className="px-4 py-3"><DrillDownValue value="Yes ($800)" label="VSC Contract Details" type="Financials" onDrillDown={onDrillDown} color="text-green-500 font-bold" /></td>
                 <td className="px-4 py-3"><span className="text-text-muted">No</span></td>
@@ -546,7 +589,7 @@ const FIModule = ({ onDrillDown }) => {
               <tr onClick={() => onDrillDown('Deal', {customer: 'Emily White', unit: '2023 YZF-R7', lender: 'Octane', reserve: '$320', vsc: '$600', gap: '$400', total: '$1,320'})} className="border-b border-border/50 hover:bg-panel transition-colors cursor-pointer group">
                 <td className="px-4 py-3 text-white font-bold group-hover:text-gold transition-colors">Emily White</td>
                 <td className="px-4 py-3">2023 YZF-R7</td>
-                <td className="px-4 py-3">Octane</td>
+                <td className="px-4 py-3"><DrillDownValue value="Octane" label="Octane Bank Profile" type="Lender" onDrillDown={onDrillDown} /></td>
                 <td className="px-4 py-3"><DrillDownValue value="$320" label="Reserve Split (Octane)" type="Financials" onDrillDown={onDrillDown} /></td>
                 <td className="px-4 py-3"><DrillDownValue value="Yes ($600)" label="VSC Contract Details" type="Financials" onDrillDown={onDrillDown} color="text-green-500 font-bold" /></td>
                 <td className="px-4 py-3"><DrillDownValue value="Yes ($400)" label="GAP Contract Details" type="Financials" onDrillDown={onDrillDown} color="text-green-500 font-bold" /></td>
@@ -555,7 +598,7 @@ const FIModule = ({ onDrillDown }) => {
               <tr onClick={() => onDrillDown('Deal', {customer: 'Mark Allen', unit: '2024 Rzr Pro R', lender: 'Synchrony', reserve: '$800', vsc: 'No', gap: 'No', total: '$800'})} className="hover:bg-panel transition-colors cursor-pointer group">
                 <td className="px-4 py-3 text-white font-bold group-hover:text-gold transition-colors">Mark Allen</td>
                 <td className="px-4 py-3">2024 Rzr Pro R</td>
-                <td className="px-4 py-3">Synchrony</td>
+                <td className="px-4 py-3"><DrillDownValue value="Synchrony" label="Synchrony Bank Profile" type="Lender" onDrillDown={onDrillDown} /></td>
                 <td className="px-4 py-3"><DrillDownValue value="$800" label="Reserve Split (Synchrony)" type="Financials" onDrillDown={onDrillDown} /></td>
                 <td className="px-4 py-3"><span className="text-text-muted">No</span></td>
                 <td className="px-4 py-3"><span className="text-text-muted">No</span></td>
@@ -570,6 +613,17 @@ const FIModule = ({ onDrillDown }) => {
 };
 
 const InventoryModule = ({ onDrillDown }) => {
+  const invRecs = RecommendationService.fetchPending().filter(r => r.agentId === 'ag_inventory_match').slice(0, 2);
+  const invInsights = invRecs.length > 0 ? invRecs.map(rec => ({
+    type: rec.priority === 'URGENT' ? 'warning' : 'action',
+    message: <>{rec.title} — <span className="text-text-muted">{rec.description}</span></>,
+    actionText: "Review Match",
+    onAction: () => onDrillDown('AgentRecommendation', { ...rec })
+  })) : [
+    { type: "action", message: <>3 Polaris RZRs in Slidell have been in stock for <DrillDownValue value="115 days" label="Slidell Aged RZRs" type="Inventory" onDrillDown={onDrillDown} color="text-amber-500" />. Baton Rouge has turned the same model 4 times in the last 60 days.</>, actionText: "Initiate Transfer" },
+    { type: "negative", message: <>Floorplan interest for 'Used Bikes Direct' inventory is currently pacing <DrillDownValue value="14% higher" label="Floorplan Interest Variance" type="Financials" onDrillDown={onDrillDown} color="text-red-400" /> than last month due to aged Harley-Davidson units.</>, actionText: "View Markdown Recommendations" }
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-6">
@@ -580,10 +634,7 @@ const InventoryModule = ({ onDrillDown }) => {
         </div>
       </div>
 
-      <AutomatedInsights onDrillDown={onDrillDown} insights={[
-        { type: "action", message: <>3 Polaris RZRs in Slidell have been in stock for <DrillDownValue value="115 days" label="Slidell Aged RZRs" type="Inventory" onDrillDown={onDrillDown} color="text-amber-500" />. Baton Rouge has turned the same model 4 times in the last 60 days.</>, actionText: "Initiate Transfer" },
-        { type: "negative", message: <>Floorplan interest for 'Used Bikes Direct' inventory is currently pacing <DrillDownValue value="14% higher" label="Floorplan Interest Variance" type="Financials" onDrillDown={onDrillDown} color="text-red-400" /> than last month due to aged Harley-Davidson units.</>, actionText: "View Markdown Recommendations" }
-      ]} />
+      <AutomatedInsights onDrillDown={onDrillDown} insights={invInsights} />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="bg-charcoal p-4 rounded border border-border flex flex-col items-center justify-center">
@@ -703,11 +754,22 @@ const UsedBikesModule = ({ onDrillDown }) => {
 };
 
 const ServicePartsModule = ({ onDrillDown }) => {
+  const serviceRecs = RecommendationService.fetchPending().filter(r => r.agentId === 'ag_service_advisor').slice(0, 1);
+  const serviceInsights = serviceRecs.length > 0 ? serviceRecs.map(rec => ({
+    type: rec.priority === 'URGENT' ? 'warning' : 'opportunity',
+    message: <>{rec.title} — <span className="text-text-muted">{rec.description}</span></>,
+    actionText: "Review Service Plan",
+    onAction: () => onDrillDown('AgentRecommendation', { ...rec })
+  })) : [
+    { type: "opportunity", message: <>Service to Sales AI has identified <DrillDownValue value="12 customers" label="Equity Candidates" type="Report" /> with positive equity currently in the active Service bay. Target them before ticket close.</>, actionText: "View Lane Conquests" }
+  ];
+
   return (
     <div className="space-y-6">
        <div className="flex justify-between items-center">
          <h1 className="text-2xl font-playfair text-white">Service & Parts</h1>
       </div>
+      <AutomatedInsights onDrillDown={onDrillDown} insights={serviceInsights} />
        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-charcoal border border-border rounded p-6">
           <h2 className="text-gold font-playfair text-xl mb-6">Technician Efficiency</h2>
@@ -1042,7 +1104,7 @@ const SettingsModule = ({ onDrillDown }) => {
              <div className="space-y-4">
                 <div className="flex justify-between items-center bg-black p-3 rounded border border-border">
                    <div>
-                      <div className="text-sm font-bold text-white flex items-center gap-2"><TrendingDown className="w-4 h-4 text-amber-500"/> Margin Floor Override</div>
+                      <div className="text-sm font-bold text-white flex items-center gap-2"><TrendingDown className="w-4 h-4 text-amber-500"/> <DrillDownValue value="Margin Floor Override" label="Enterprise Rule Audit" type="RuleAudit" onDrillDown={onDrillDown} color="text-white" /></div>
                       <div className="text-xs text-text-muted">Deals below this <DrillDownValue value="%" label="Margin Floor Explanation" type="Settings" onDrillDown={onDrillDown} color="text-text-muted hover:text-white" /> require GM pin</div>
                    </div>
                    <div className="flex items-center gap-2">
@@ -1052,7 +1114,7 @@ const SettingsModule = ({ onDrillDown }) => {
                 </div>
                 <div className="flex justify-between items-center bg-black p-3 rounded border border-border">
                    <div>
-                      <div className="text-sm font-bold text-white flex items-center gap-2"><DollarSign className="w-4 h-4 text-red-500"/> Max Allowed Discount ($)</div>
+                      <div className="text-sm font-bold text-white flex items-center gap-2"><DollarSign className="w-4 h-4 text-red-500"/> <DrillDownValue value="Max Allowed Discount ($)" label="Enterprise Rule Audit" type="RuleAudit" onDrillDown={onDrillDown} color="text-white" /></div>
                       <div className="text-xs text-text-muted">Hard cap on rep discounting without approval</div>
                    </div>
                    <div className="flex items-center gap-2">
@@ -1068,7 +1130,7 @@ const SettingsModule = ({ onDrillDown }) => {
              <div className="space-y-4">
                 <div className="flex justify-between items-center bg-black p-3 rounded border border-border">
                    <div>
-                      <div className="text-sm font-bold text-white flex items-center gap-2"><AlertCircle className="w-4 h-4 text-amber-500"/> Warning Threshold</div>
+                      <div className="text-sm font-bold text-white flex items-center gap-2"><AlertCircle className="w-4 h-4 text-amber-500"/> <DrillDownValue value="Warning Threshold" label="Enterprise Rule Audit" type="RuleAudit" onDrillDown={onDrillDown} color="text-white" /></div>
                       <div className="text-xs text-text-muted">Triggers dashboard alerts and copilot suggestions</div>
                    </div>
                    <div className="flex items-center gap-2">
@@ -1078,7 +1140,7 @@ const SettingsModule = ({ onDrillDown }) => {
                 </div>
                 <div className="flex justify-between items-center bg-black p-3 rounded border border-border">
                    <div>
-                      <div className="text-sm font-bold text-white flex items-center gap-2"><AlertCircle className="w-4 h-4 text-red-500"/> Critical Flag</div>
+                      <div className="text-sm font-bold text-white flex items-center gap-2"><AlertCircle className="w-4 h-4 text-red-500"/> <DrillDownValue value="Critical Flag" label="Enterprise Rule Audit" type="RuleAudit" onDrillDown={onDrillDown} color="text-white" /></div>
                       <div className="text-xs text-text-muted">Pushes automated markdown request to GM</div>
                    </div>
                    <div className="flex items-center gap-2">
@@ -1310,6 +1372,14 @@ const CustomerCRMModuleInner = ({ onDrillDown, user }) => {
 
   const displayLeads = inbox.filter(l => filter === 'All' || l.status === filter);
 
+  const crmRecs = RecommendationService.fetchPending().filter(r => r.agentId === 'ag_lead_response' || r.agentId === 'ag_sales_desk').slice(0, 2);
+  const crmInsights = crmRecs.length > 0 ? crmRecs.map(rec => ({
+    type: rec.priority === 'URGENT' ? 'warning' : 'action',
+    message: <>{rec.title} — <span className="text-text-muted">{rec.description}</span></>,
+    actionText: "View CRM Action",
+    onAction: () => onDrillDown('AgentRecommendation', { ...rec })
+  })) : [];
+
   return (
     <div className="space-y-6 h-full flex flex-col">
       <div className="flex justify-between items-center bg-charcoal p-4 rounded border border-border">
@@ -1333,6 +1403,8 @@ const CustomerCRMModuleInner = ({ onDrillDown, user }) => {
             </button>
          </div>
       </div>
+
+      {crmInsights.length > 0 && <AutomatedInsights onDrillDown={onDrillDown} insights={crmInsights} />}
 
       {activeView === 'Inbox' && (
          <div className="bg-charcoal border border-border rounded overflow-hidden flex-1 flex flex-col">
@@ -1373,7 +1445,7 @@ const CustomerCRMModuleInner = ({ onDrillDown, user }) => {
                     <div className="col-span-2">
                        <div className="flex items-center gap-2 mb-1">
                           <div className={`text-xs font-bold px-1.5 py-0.5 rounded ${l.aiScore > 75 ? 'bg-green-900/30 text-green-500' : l.aiScore > 50 ? 'bg-blue-900/30 text-blue-400' : 'bg-amber-900/30 text-amber-500'}`}>
-                             {l.aiScore}
+                             <DrillDownValue value={l.aiScore} label="AI Confidence Scoring" type="AIScoreAnalysis" onDrillDown={onDrillDown} color={l.aiScore > 75 ? 'text-green-500' : l.aiScore > 50 ? 'text-blue-400' : 'text-amber-500'} />
                           </div>
                           <span className="text-[10px] text-text-muted truncate" title={l.scoreReason}>{l.scoreReason}</span>
                        </div>
@@ -1419,7 +1491,7 @@ const CustomerCRMModuleInner = ({ onDrillDown, user }) => {
                           {col.id === 'Appt' && <Calendar className="w-4 h-4 text-blue-500"/>}
                           {col.id === 'Finance' && <DollarSign className="w-4 h-4 text-green-500"/>}
                           {col.id === 'Sold' && <Award className="w-4 h-4 text-gold"/>}
-                          {col.title}
+                          <DrillDownValue value={col.title} label={`${col.title} Pipeline Velocity`} type="StageVelocity" onDrillDown={onDrillDown} color="text-white hover:text-gold transition-colors" />
                        </div>
                        <div className="bg-panel px-2 py-0.5 rounded text-xs font-mono text-text-muted border border-border">{col.count}</div>
                     </div>
@@ -1670,12 +1742,38 @@ const RETENTION_TREND = [
   { month: 'W4', reactivation: 22, loyalty: 15 }
 ];
 
-const OperationalDashboardsModule = ({ onDrillDown, userRole, company, location }) => {
+const OperationalDashboardsModule = ({ onDrillDown, onNavigate, userRole, company, location }) => {
   const [activeTab, setActiveTab] = useState('Overview');
   
   const renderContent = () => {
     if (activeTab === 'Overview') {
-       return <DashboardModule onDrillDown={onDrillDown} company={company} location={location} />;
+       return (
+         <div className="space-y-6">
+           <div className="flex gap-4 overflow-x-auto subtle-scrollbar pb-2">
+             <div className="bg-charcoal border-l-4 border-l-red-500 border border-border rounded p-4 flex-1 min-w-[200px] hover:border-r-red-500 transition-colors cursor-pointer group" onClick={() => onNavigate('AI Command Center')}>
+                <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-1 flex justify-between items-center group-hover:text-red-500 transition-colors"><span>Urgent Items</span> <Command className="w-3 h-3 text-red-500"/></div>
+                <div className="text-2xl font-bold text-white mb-1">12</div>
+                <div className="text-[10px] text-text-dim">Action Required Now</div>
+             </div>
+             <div className="bg-charcoal border-l-4 border-l-amber-500 border border-border rounded p-4 flex-1 min-w-[200px] hover:border-r-amber-500 transition-colors cursor-pointer group" onClick={() => onNavigate('AI Command Center')}>
+                <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-1 flex justify-between items-center group-hover:text-amber-500 transition-colors"><span>Stalled Opps</span> <TrendingDown className="w-3 h-3 text-amber-500"/></div>
+                <div className="text-2xl font-bold text-white mb-1">24</div>
+                <div className="text-[10px] text-text-dim">Pipeline Risk</div>
+             </div>
+             <div className="bg-charcoal border-l-4 border-l-green-500 border border-border rounded p-4 flex-1 min-w-[200px] hover:border-r-green-500 transition-colors cursor-pointer group" onClick={() => onNavigate('AI Command Center')}>
+                <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-1 flex justify-between items-center group-hover:text-green-500 transition-colors"><span>Hot Leads</span> <TrendingUp className="w-3 h-3 text-green-500"/></div>
+                <div className="text-2xl font-bold text-white mb-1">8</div>
+                <div className="text-[10px] text-text-dim">Assign & Call</div>
+             </div>
+             <div className="bg-charcoal border-l-4 border-l-blue-500 border border-border rounded p-4 flex-1 min-w-[200px] hover:border-r-blue-500 transition-colors cursor-pointer group" onClick={() => onNavigate('AI Command Center')}>
+                <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-1 flex justify-between items-center group-hover:text-blue-500 transition-colors"><span>F&I Blockers</span> <CreditCard className="w-3 h-3 text-blue-500"/></div>
+                <div className="text-2xl font-bold text-white mb-1">5</div>
+                <div className="text-[10px] text-text-dim">Pending Docs/Stips</div>
+             </div>
+           </div>
+           <DashboardModule onDrillDown={onDrillDown} company={company} location={location} />
+         </div>
+       );
     }
     if (activeTab === 'Sales') {
       const db = getSalesDashboardData();
@@ -1925,54 +2023,211 @@ const OperationalDashboardsModule = ({ onDrillDown, userRole, company, location 
   );
 };
 
-const AutomationEngineModule = ({ onDrillDown }) => {
-  const rules = getAutomationEngineRules();
+const AICommandCenterModule = ({ onDrillDown, userRole }) => {
+  const [activeFilter, setActiveFilter] = useState('All');
+  const [activePriority, setActivePriority] = useState('All Priorities');
+  const [activeTab, setActiveTab] = useState('Pending'); // Pending, Snoozed, Metrics
+  const [recommendations, setRecommendations] = useState([]);
+  const [metrics, setMetrics] = useState(null);
+
+  useEffect(() => {
+    const syncRecommendations = () => {
+      let data = activeTab === 'Snoozed' ? RecommendationService.fetchSnoozed() : RecommendationService.fetchPending();
+      if (userRole !== 'Owner' && userRole !== 'General Manager') {
+         data = data.filter(r => 
+           !r.agentId.includes('audit') && !r.agentId.includes('fi_readiness')
+         );
+      }
+      setRecommendations(data);
+      setMetrics(AgentMetrics.getMetricsSummary());
+    };
+
+    syncRecommendations();
+    const interval = setInterval(syncRecommendations, 3000);
+    return () => clearInterval(interval);
+  }, [userRole, activeTab]);
+
+  const filtered = recommendations.filter(r => {
+    if (activeFilter !== 'All') {
+       if (activeFilter === 'Sales/BDC' && !r.agentId.includes('sales') && !r.agentId.includes('lead')) return false;
+       if (activeFilter === 'F&I' && !r.agentId.includes('fi_')) return false;
+       if (activeFilter === 'Service' && !r.agentId.includes('service') && !r.agentId.includes('parts')) return false;
+    }
+    if (activePriority !== 'All Priorities') {
+       if (r.priority !== activePriority) return false;
+    }
+    return true;
+  });
+
+  const handleBulkApprove = async () => {
+     for (const rec of filtered) {
+        // Simple auto-assign simulation for bulk approve
+        RecommendationService.updateStatus(rec.id, 'APPROVED', 'EMP-1', 'Bulk Approved via Command Center');
+     }
+     // Re-sync happens on interval or we can trigger it
+     setActivePriority('All Priorities'); // Just to tickle a render, interval will catch it
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-         <h1 className="text-2xl font-playfair text-white flex items-center gap-3"><Zap className="w-6 h-6 text-gold"/> Automation Engine</h1>
-         <button className="bg-gold text-black font-bold text-sm px-4 py-2 rounded hover:bg-gold-light transition-colors shadow" onClick={() => onDrillDown('Action', { name: 'Create Rule Builder' })}>
-            + Built New Flow
-         </button>
+         <h1 className="text-2xl font-playfair text-white flex items-center gap-3"><Command className="w-6 h-6 text-gold"/> AI Command Center</h1>
+         <div className="flex gap-2 text-xs font-mono text-text-dim">
+           <span className="bg-charcoal px-2 py-1 border border-border rounded">TOTAL {activeTab.toUpperCase()}: {recommendations.length}</span>
+           {activeTab === 'Pending' && <span className="bg-red-900/40 text-red-500 border border-red-500 px-2 py-1 rounded">URGENT: {recommendations.filter(r=>r.priority === 'URGENT').length}</span>}
+         </div>
       </div>
+
+      <div className="flex gap-4 border-b border-border pb-2 mb-2 overflow-x-auto subtle-scrollbar">
+        {['Pending', 'Snoozed', 'Metrics'].map(tab => (
+          <button key={tab} className={`text-sm font-bold px-4 py-2 transition-colors border-b-2 whitespace-nowrap ${activeTab === tab ? 'text-white border-b-gold' : 'text-text-muted border-b-transparent hover:text-white'}`} onClick={() => setActiveTab(tab)}>
+            {tab === 'Pending' ? 'Active Insights' : tab === 'Snoozed' ? 'Snoozed' : 'Action Metrics'}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'Metrics' ? (
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-500">
+            <div className="bg-charcoal p-6 border border-border rounded">
+               <h3 className="text-gold font-playfair text-xl mb-4">Volume & Engagement</h3>
+               <div className="space-y-4">
+                  <div className="flex justify-between border-b border-border pb-2"><span className="text-text-muted">Total Insights Spawned</span><span className="text-white font-bold">{metrics?.recommendationCreatedCount || 0}</span></div>
+                  <div className="flex justify-between border-b border-border pb-2"><span className="text-text-muted">View Rate</span><span className="text-white font-bold">{metrics?.derived?.viewRate || '0%'}</span></div>
+                  <div className="flex justify-between border-b border-border pb-2"><span className="text-text-muted">Approval Rate</span><span className="text-green-500 font-bold">{metrics?.derived?.approvalRate || '0%'}</span></div>
+                  <div className="flex justify-between"><span className="text-text-muted">Action Failures</span><span className="text-red-500 font-bold">{metrics?.actionFailureCount || 0}</span></div>
+               </div>
+            </div>
+            <div className="bg-charcoal p-6 border border-border rounded md:col-span-2">
+               <h3 className="text-gold font-playfair text-xl mb-4">Attribution Drivers (Global OS)</h3>
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-black p-3 border border-border rounded">
+                     <div className="text-xs tracking-widest text-text-muted uppercase mb-1">Hot Leads Saved</div>
+                     <div className="text-2xl font-bold text-white">
+                       <DrillDownValue value={metrics?.hotLeadsSaved || 0} label="Hot Leads Saved Audit" type="ActionMetrics" onDrillDown={onDrillDown} color="text-white" />
+                     </div>
+                  </div>
+                  <div className="bg-black p-3 border border-border rounded">
+                     <div className="text-xs tracking-widest text-text-muted uppercase mb-1">Overdue Follow-ups Recovered</div>
+                     <div className="text-2xl font-bold text-white">
+                       <DrillDownValue value={metrics?.overdueFollowUpsRecovered || 0} label="Follow-ups Recovered Audit" type="ActionMetrics" onDrillDown={onDrillDown} color="text-white" />
+                     </div>
+                  </div>
+                  <div className="bg-black p-3 border border-border rounded">
+                     <div className="text-xs tracking-widest text-text-muted uppercase mb-1">F&I Blockers Resolved</div>
+                     <div className="text-2xl font-bold text-white">
+                       <DrillDownValue value={metrics?.financeBlockersResolved || 0} label="F&I Blockers Resolved Audit" type="ActionMetrics" onDrillDown={onDrillDown} color="text-white" />
+                     </div>
+                  </div>
+                  <div className="bg-black p-3 border border-border rounded">
+                     <div className="text-xs tracking-widest text-text-muted uppercase mb-1">System Health</div>
+                     <div className="text-2xl font-bold text-green-500">
+                       <DrillDownValue value={metrics?.derived?.systemHealth || 'Optimal'} label="System Health Audit" type="ActionMetrics" onDrillDown={onDrillDown} color="text-green-500" />
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      ) : (
+        <>
+          <div className="bg-charcoal border border-border p-4 rounded mb-6 flex flex-wrap gap-4 items-center animate-in fade-in duration-500">
+            <div className="flex items-center gap-2 text-text-muted font-bold tracking-widest text-xs uppercase mr-4">
+              <Filter className="w-4 h-4 text-gold"/> Filter Feed
+            </div>
+            <select 
+              className="bg-black border border-border text-white text-xs px-3 py-1.5 rounded outline-none focus:border-gold cursor-pointer"
+              value={activePriority}
+              onChange={(e) => setActivePriority(e.target.value)}
+            >
+               <option value="All Priorities">All Priorities</option>
+               <option value="URGENT">URGENT</option>
+               <option value="High">High</option>
+               <option value="Medium">Medium</option>
+               <option value="Low">Low</option>
+            </select>
+            <select 
+              className="bg-black border border-border text-white text-xs px-3 py-1.5 rounded outline-none focus:border-gold cursor-pointer"
+              value={activeFilter}
+              onChange={(e) => setActiveFilter(e.target.value)}
+            >
+               <option value="All">All Departments</option>
+               <option value="Sales/BDC">Sales/BDC</option>
+               <option value="F&I">F&I</option>
+               <option value="Service">Service</option>
+            </select>
+            {activeTab === 'Pending' && filtered.length > 0 && (
+              <button onClick={handleBulkApprove} className="text-xs font-bold text-black border border-gold bg-gold hover:bg-gold-light px-4 py-1.5 rounded transition-colors ml-auto flex items-center gap-1">
+                 <Zap className="w-3 h-3"/> Bulk Approve ({filtered.length})
+              </button>
+            )}
+          </div>
 
       <div className="bg-charcoal border border-border rounded overflow-hidden">
          <div className="grid grid-cols-12 gap-4 p-4 border-b border-border bg-black text-xs font-bold text-text-muted uppercase tracking-widest">
-            <div className="col-span-1 text-center">Active</div>
-            <div className="col-span-3">Flow Name / Trigger</div>
-            <div className="col-span-3">Condition</div>
-            <div className="col-span-4">Action Pipeline</div>
-            <div className="col-span-1">Owner</div>
+            <div className="col-span-1 text-center">Priority</div>
+            <div className="col-span-3">Agent / Title</div>
+            <div className="col-span-3">Insight / Reasoning</div>
+            <div className="col-span-2">Assigned Owner</div>
+            <div className="col-span-2">Suggested Actions</div>
+            <div className="col-span-1 text-right">Confidence</div>
          </div>
          <div className="divide-y divide-border">
-            {rules.map(rule => (
-              <div key={rule.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-black/40 transition-colors cursor-pointer" onClick={() => onDrillDown('Action', { name: `Edit Rule: ${rule.name}` })}>
+            {filtered.length === 0 && (
+               <div className="p-8 text-center text-text-muted text-sm font-mono">No active recommendations map to the current filters.</div>
+            )}
+            {filtered.map(rec => (
+              <div key={rec.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-black/40 transition-colors cursor-pointer group border-l-4 border-l-transparent hover:border-l-gold" onClick={() => onDrillDown('AgentRecommendation', rec)}>
                  <div className="col-span-1 flex justify-center">
-                    {rule.active ? (
-                      <div className="w-10 h-5 bg-green-500/20 rounded-full border border-green-500 flex items-center px-1"><div className="w-3 h-3 bg-green-500 rounded-full ml-auto shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div></div>
+                    {rec.priority === 'URGENT' ? (
+                       <div className="w-8 h-8 rounded-full bg-red-900/20 border border-red-500 flex items-center justify-center">
+                          <AlertCircle className="w-4 h-4 text-red-500 animate-pulse" />
+                       </div>
                     ) : (
-                      <div className="w-10 h-5 bg-panel rounded-full border border-border flex items-center px-1"><div className="w-3 h-3 bg-text-dim rounded-full mr-auto"></div></div>
+                       <div className="text-[10px] font-bold tracking-widest text-text-dim uppercase">{rec.priority}</div>
                     )}
                  </div>
                  <div className="col-span-3">
-                    <div className="font-bold text-white text-sm truncate">{rule.name}</div>
-                    <div className="text-[10px] text-gold uppercase tracking-widest font-mono mt-1 w-fit bg-gold/10 px-1.5 py-0.5 rounded border border-gold/30">{rule.trigger}</div>
-                 </div>
-                 <div className="col-span-3">
-                    <code className="text-xs text-text-muted bg-black border border-border px-2 py-1 rounded line-clamp-2 leading-relaxed">{rule.condition}</code>
-                 </div>
-                 <div className="col-span-4 flex items-center gap-2">
-                    <ChevronRight className="w-4 h-4 text-text-dim shrink-0"/>
-                    <div className="text-xs font-bold text-green-400 bg-green-900/20 border border-green-900/50 px-2 py-1 rounded line-clamp-2">
-                       {rule.action}
+                    <div className="font-bold text-white text-sm truncate group-hover:text-gold transition-colors">{rec.title}</div>
+                    <div className="text-[10px] text-text-dim uppercase tracking-widest font-mono mt-1 w-fit bg-panel px-1.5 py-0.5 rounded border border-border flex items-center gap-1">
+                       <BrainCircuit className="w-2 h-2 text-gold"/> {rec.agentId.replace(/_/g, ' ')}
                     </div>
                  </div>
-                 <div className="col-span-1 text-xs text-text-muted font-mono">{rule.owner}</div>
+                 <div className="col-span-3">
+                    <div className="text-xs text-text-muted line-clamp-2 leading-relaxed">{rec.description}</div>
+                    {rec.relatedEntities?.length > 0 && (
+                       <div className="flex gap-1 mt-1 flex-wrap">
+                         {rec.relatedEntities.map(ent => (
+                            <span key={ent.entityId} className="text-[9px] text-text-dim bg-black border border-border/50 px-1 rounded flex items-center gap-1 max-w-[120px] truncate">
+                              <ChevronRight className="w-2 h-2 shrink-0"/> {ent.label}
+                            </span>
+                         ))}
+                       </div>
+                    )}
+                 </div>
+                 <div className="col-span-2">
+                    <div className="text-xs font-bold text-white flex items-center gap-2"><User className="w-3 h-3 text-text-dim"/> {rec.assignedOwner || "BTR Pool"}</div>
+                    {rec.priority === 'URGENT' && <div className="text-[10px] text-red-500 font-mono mt-1 font-bold">Due: Today</div>}
+                    <div className="text-[9px] text-text-dim border border-border px-1.5 py-0.5 rounded uppercase font-bold mt-1.5 w-max bg-black">{rec.status || 'Unresolved'}</div>
+                 </div>
+                 <div className="col-span-2">
+                    {rec.proposedActions?.slice(0, 1).map(act => (
+                      <div key={act.id} className="text-[10px] font-bold text-green-400 bg-green-900/20 border border-green-900/50 px-1.5 py-1 rounded truncate pointer-events-none w-max">
+                         {act.actionType}
+                      </div>
+                    ))}
+                    {rec.proposedActions?.length > 1 && <div className="text-[9px] text-text-dim mt-0.5 ml-1">+{rec.proposedActions.length - 1} options</div>}
+                 </div>
+                 <div className="col-span-1 text-right flex flex-col items-end">
+                     <span className={`text-xs font-mono font-bold px-2 py-1 rounded border ${rec.confidenceScore > 85 ? 'text-green-500 border-green-500/30 bg-green-900/10' : 'text-gold border-gold/30 bg-gold/10'}`}>
+                       {rec.confidenceScore}%
+                     </span>
+                 </div>
               </div>
             ))}
          </div>
       </div>
+      {/* End Table wrapper */}
+        </>
+      )}
     </div>
   );
 };
@@ -2147,7 +2402,7 @@ const App = () => {
     { name: "Dashboard", icon: LayoutDashboard },
     { name: "Sales", icon: TrendingUp },
     { name: "Customer CRM", icon: Users },
-    { name: "Automation Engine", icon: Zap },
+    { name: "AI Command Center", icon: Command },
     { name: "F&I / Finance", icon: CreditCard },
     { name: "Inventory", icon: Package },
     { name: "Used Bikes / UBD", icon: Bike },
@@ -2216,6 +2471,7 @@ const App = () => {
         
         <div className="flex-1 overflow-y-auto py-4">
           {NAV_ITEMS.map((item) => {
+            if (item.name === "AI Command Center" && currentUser.systemRole === "Employee") return null;
             const Icon = item.icon;
             const active = activeTab === item.name;
             return (
@@ -2283,10 +2539,10 @@ const App = () => {
         {/* SCROLLABLE MODULE RENDERER */}
         <div className="flex-1 overflow-y-auto p-6 bg-black">
           <div className="max-w-[1600px] mx-auto">
-            {activeTab === "Dashboard" && <OperationalDashboardsModule onDrillDown={handleDrillDown} userRole={currentUser?.role} company={activeCompany} location={activeLocation} />}
+            {activeTab === "Dashboard" && <OperationalDashboardsModule onNavigate={setActiveTab} onDrillDown={handleDrillDown} userRole={currentUser?.role} company={activeCompany} location={activeLocation} />}
             {activeTab === "Sales" && <SalesModule onNavigate={setActiveTab} onDrillDown={handleDrillDown} />}
             {activeTab === "Customer CRM" && <CustomerCRMModule onDrillDown={handleDrillDown} user={currentUser} />}
-            {activeTab === "Automation Engine" && <AutomationEngineModule onDrillDown={handleDrillDown} />}
+            {activeTab === "AI Command Center" && <AICommandCenterModule onDrillDown={handleDrillDown} userRole={currentUser?.role} />}
             {activeTab === "F&I / Finance" && <FIModule onDrillDown={handleDrillDown} />}
             {activeTab === "Inventory" && <InventoryModule onDrillDown={handleDrillDown} />}
             {activeTab === "Used Bikes / UBD" && <UsedBikesModule onDrillDown={handleDrillDown} />}
@@ -2299,7 +2555,7 @@ const App = () => {
             {activeTab === "Employee Hub" && <EmployeeHubModule user={currentUser} onDrillDown={handleDrillDown} />}
             {activeTab === "Settings" && <SettingsModule onDrillDown={handleDrillDown} />}
             {activeTab === "Clock In / HR" && <ClockInModule user={currentUser} onDrillDown={handleDrillDown} />}
-            {![ "Dashboard", "Sales", "Customer CRM", "Automation Engine", "F&I / Finance", "Inventory", "Used Bikes / UBD", "Service & Parts", "Payroll", "OEM Incentives", "Marketing", "Reports", "Accounting & GL", "Employee Hub", "Settings", "Clock In / HR" ].includes(activeTab) && (
+            {![ "Dashboard", "Sales", "Customer CRM", "AI Command Center", "F&I / Finance", "Inventory", "Used Bikes / UBD", "Service & Parts", "Payroll", "OEM Incentives", "Marketing", "Reports", "Accounting & GL", "Employee Hub", "Settings", "Clock In / HR" ].includes(activeTab) && (
               <PlaceholderModule title={`${activeTab} Module`} desc={`Select Dashboard, Sales, or Clock In to see full interactive builds. Or ask the agent to render ${activeTab} fully.`} />
             )}
             

@@ -1,8 +1,9 @@
 import React from 'react';
 import { AlertCircle, TrendingDown, Lightbulb, ArrowRight, Zap } from 'lucide-react';
 import { DrillDownValue } from './DrillDownValue';
+import { ErrorBoundary } from './ErrorBoundary';
 
-export const AutomatedInsights = ({ insights, onDrillDown }) => {
+const AutomatedInsightsInner = ({ insights, onDrillDown }) => {
   if (!insights || insights.length === 0) return null;
 
   const getIcon = (type) => {
@@ -48,3 +49,9 @@ export const AutomatedInsights = ({ insights, onDrillDown }) => {
     </div>
   );
 };
+
+export const AutomatedInsights = (props) => (
+  <ErrorBoundary>
+    <AutomatedInsightsInner {...props} />
+  </ErrorBoundary>
+);

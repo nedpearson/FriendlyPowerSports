@@ -12,6 +12,7 @@ import './ServiceRetentionAgent.js';
 import './PartsProfitAgent.js';
 import './CustomerLTVAgent.js';
 import './AuditComplianceAgent.js';
+import { ActionExecutionService } from './ActionExecutionService.js';
 
 /**
  * Base template for registering an Agent.

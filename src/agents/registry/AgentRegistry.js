@@ -1,5 +1,6 @@
 import { isAgentEnabled } from '../config/features.js';
 import { EventBus } from '../core/EventBus.js';
+import { AgentOrchestrator } from './AgentOrchestrator.js';
 
 export const AgentRegistry = {
   _agents: new Map(),
@@ -63,6 +64,14 @@ export const AgentRegistry = {
         if (result) results.push(result);
       }
     }
+
+    // Phase 12: Cross-Agent Orchestration Pass
+    try {
+       await AgentOrchestrator.synthesize(context);
+    } catch (e) {
+       console.warn("[AgentRegistry] Orchestrator synthesis failed:", e.message);
+    }
+
     return results;
   }
 };
