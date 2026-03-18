@@ -7,7 +7,7 @@ import { CreditPrequalAdapter } from '../../data/crmAdapters';
 import { ActionExecutionService } from '../../agents/services/ActionExecutionService';
 import { AgentMetrics } from '../../agents/audit/AgentMetrics';
 import {
-  CheckCircle2, TrendingUp, User, Bike, AlertCircle, Command,
+  CheckCircle2, TrendingUp, User, Bike, AlertCircle, Command, Settings,
   DollarSign, Megaphone, Search, FileBarChart, ChevronRight, TrendingDown, Users as UsersIcon, Clock, Database, BrainCircuit, Wrench, Package, Calculator, Camera, Filter, MapPin
 } from 'lucide-react';
 
@@ -1070,6 +1070,62 @@ const UniversalReportView = ({ item }) => {
             )}
           </div>
         );
+      case 'Settings':
+         return (
+             <div className="space-y-6">
+                 <h3 className="text-2xl font-playfair text-white border-b border-border pb-2 flex items-center gap-3"><Settings className="w-6 h-6 text-gold"/> System Configuration</h3>
+                 <div className="bg-charcoal p-6 rounded border border-border">
+                    <div className="text-gold uppercase tracking-widest text-[10px] font-mono mb-4">Editing Node: {item.data.label || item.data.action || 'Configuration Block'}</div>
+                    <pre className="text-xs text-text-muted font-mono bg-black p-4 rounded overflow-auto border border-border/50 max-h-[400px]">
+                       {JSON.stringify(item.data, null, 2)}
+                    </pre>
+                 </div>
+                 <div className="flex justify-end pt-4"><button className="bg-gold text-black px-6 py-2 rounded text-sm font-bold shadow hover:bg-gold-light" onClick={onClose}>Close Editor</button></div>
+             </div>
+         );
+      case 'Employee': {
+         const empName = item.data.name || item.data.value || 'Employee Profile';
+         return (
+             <div className="space-y-6">
+                 <h3 className="text-2xl font-playfair text-white border-b border-border pb-2 flex items-center gap-3"><UsersIcon className="w-6 h-6 text-blue-400"/> Personnel Record</h3>
+                 <div className="bg-charcoal p-6 rounded border border-border grid grid-cols-2 gap-6">
+                    <div>
+                       <div className="text-text-muted text-[10px] uppercase font-mono tracking-widest mb-1">Identity Node</div>
+                       <div className="text-2xl font-bold text-white mb-2">{empName}</div>
+                       <div className="bg-black border border-border p-3 rounded text-sm">
+                          <div className="flex justify-between mb-2"><span className="text-text-muted">Security Role</span><span className="text-gold font-bold">{item.data.role || item.data.emp?.role || 'Staff'}</span></div>
+                          <div className="flex justify-between"><span className="text-text-muted">Auth Status</span><span className="text-green-500 font-bold whitespace-nowrap">Active Token</span></div>
+                       </div>
+                    </div>
+                    <div>
+                       <div className="text-text-muted text-[10px] uppercase font-mono tracking-widest mb-1">System Activity</div>
+                       <div className="bg-black border border-border p-3 rounded text-sm space-y-2">
+                           <div className="flex justify-between"><span className="text-text-muted">Active Sessions</span><span className="text-white font-mono">1</span></div>
+                           <div className="flex justify-between"><span className="text-text-muted">Last Logged</span><span className="text-white font-mono">2 mins ago</span></div>
+                       </div>
+                    </div>
+                 </div>
+                 <div className="flex justify-end pt-4"><button className="bg-panel text-white hover:bg-black border border-border px-6 py-2 rounded text-sm font-bold shadow" onClick={onClose}>Acknowledge</button></div>
+             </div>
+         );
+      }
+      case 'Lender':
+         return (
+             <div className="space-y-6">
+                 <h3 className="text-2xl font-playfair text-gold border-b border-border pb-2 flex items-center gap-3"><DollarSign className="w-6 h-6"/> Financial Institution Routing</h3>
+                 <div className="bg-charcoal p-6 rounded border border-border grid grid-cols-2 gap-6">
+                    <div>
+                       <div className="text-text-muted text-[10px] uppercase font-mono tracking-widest mb-1">API Integration</div>
+                       <div className="text-2xl font-bold text-white mb-2">{item.data.name || 'Bank Link'}</div>
+                       <div className="bg-black border border-border p-3 rounded text-sm">
+                          <div className="flex justify-between mb-2"><span className="text-text-muted">Connection Level</span><span className="text-green-500 font-bold">Tier 1 Push</span></div>
+                          <div className="flex justify-between"><span className="text-text-muted">Latency</span><span className="text-gold font-mono">45ms</span></div>
+                       </div>
+                    </div>
+                 </div>
+                 <div className="flex justify-end pt-4"><button className="bg-panel text-white hover:bg-black border border-border px-6 py-2 rounded text-sm font-bold shadow" onClick={onClose}>Close Routing Matrix</button></div>
+             </div>
+         );
       case 'Deal':
          return (
           <div className="space-y-6">

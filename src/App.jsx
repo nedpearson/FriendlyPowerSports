@@ -25,6 +25,7 @@ import { DetailReportView } from './components/ui/DetailReportView';
 import { AgentWidget } from './components/ui/AgentWidget';
 import { ReportsModule } from './components/ui/ReportsModule';
 import { FIModule } from './components/ui/FIModule';
+import { SettingsModule } from './components/ui/SettingsModule';
 import dealerLogo from './assets/logo.png';
 
 // Boot up Super Agent Phase 1 Registry
@@ -1166,126 +1167,6 @@ const PlaceholderModule = ({ title, desc }) => (
   </div>
 );
 
-const SettingsModule = ({ onDrillDown }) => {
-  return (
-    <div className="max-w-5xl mx-auto space-y-6">
-       <div className="flex items-center justify-between border-b border-border pb-4 mb-6">
-         <h1 className="text-3xl font-playfair text-white flex items-center gap-3">
-           <Settings className="w-8 h-8 text-gold" /> Enterprise Configuration & Rules
-         </h1>
-         <button className="bg-gold hover:bg-gold-light text-black font-bold py-2 px-4 rounded transition-colors shadow-lg shadow-gold/20 flex items-center gap-2" onClick={() => onDrillDown('Action', { name: 'Save Global Policy', message: 'Applying enterprise configuration changes...' })}>
-            <CheckCircle2 className="w-4 h-4" /> Save Global Policy
-         </button>
-       </div>
-       
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-charcoal p-6 rounded border border-border">
-             <h2 className="text-xl font-bold text-white mb-4 border-b border-border pb-2">Deal Approval Thresholds</h2>
-             <div className="space-y-4">
-                <div className="flex justify-between items-center bg-black p-3 rounded border border-border">
-                   <div>
-                      <div className="text-sm font-bold text-white flex items-center gap-2"><TrendingDown className="w-4 h-4 text-amber-500"/> <DrillDownValue value="Margin Floor Override" label="Enterprise Rule Audit" type="RuleAudit" onDrillDown={onDrillDown} color="text-white" /></div>
-                      <div className="text-xs text-text-muted">Deals below this <DrillDownValue value="%" label="Margin Floor Explanation" type="Settings" onDrillDown={onDrillDown} color="text-text-muted hover:text-white" /> require GM pin</div>
-                   </div>
-                   <div className="flex items-center gap-2">
-                     <DrillDownValue value="12" label="Margin Override Threshold" type="Settings" onDrillDown={onDrillDown} color="text-white font-bold" />
-                     <span className="text-text-muted text-sm">%</span>
-                   </div>
-                </div>
-                <div className="flex justify-between items-center bg-black p-3 rounded border border-border">
-                   <div>
-                      <div className="text-sm font-bold text-white flex items-center gap-2"><DollarSign className="w-4 h-4 text-red-500"/> <DrillDownValue value="Max Allowed Discount ($)" label="Enterprise Rule Audit" type="RuleAudit" onDrillDown={onDrillDown} color="text-white" /></div>
-                      <div className="text-xs text-text-muted">Hard cap on rep discounting without approval</div>
-                   </div>
-                   <div className="flex items-center gap-2">
-                     <span className="text-text-muted text-sm">$</span>
-                     <span className="text-white font-bold"><DrillDownValue value="500" label="Max Discount Cap" type="Settings" onDrillDown={onDrillDown} color="text-white" /></span>
-                   </div>
-                </div>
-             </div>
-          </div>
-
-          <div className="bg-charcoal p-6 rounded border border-border">
-             <h2 className="text-xl font-bold text-white mb-4 border-b border-border pb-2">Inventory Aging Actions</h2>
-             <div className="space-y-4">
-                <div className="flex justify-between items-center bg-black p-3 rounded border border-border">
-                   <div>
-                      <div className="text-sm font-bold text-white flex items-center gap-2"><AlertCircle className="w-4 h-4 text-amber-500"/> <DrillDownValue value="Warning Threshold" label="Enterprise Rule Audit" type="RuleAudit" onDrillDown={onDrillDown} color="text-white" /></div>
-                      <div className="text-xs text-text-muted">Triggers dashboard alerts and copilot suggestions</div>
-                   </div>
-                   <div className="flex items-center gap-2">
-                     <span className="text-white font-bold"><DrillDownValue value="90" label="Aging Warning Flag" type="Settings" onDrillDown={onDrillDown} color="text-white" /></span>
-                     <span className="text-text-muted text-sm">Days</span>
-                   </div>
-                </div>
-                <div className="flex justify-between items-center bg-black p-3 rounded border border-border">
-                   <div>
-                      <div className="text-sm font-bold text-white flex items-center gap-2"><AlertCircle className="w-4 h-4 text-red-500"/> <DrillDownValue value="Critical Flag" label="Enterprise Rule Audit" type="RuleAudit" onDrillDown={onDrillDown} color="text-white" /></div>
-                      <div className="text-xs text-text-muted">Pushes automated markdown request to GM</div>
-                   </div>
-                   <div className="flex items-center gap-2">
-                     <span className="text-white font-bold"><DrillDownValue value="120" label="Aging Critical Flag" type="Settings" onDrillDown={onDrillDown} color="text-white" /></span>
-                     <span className="text-text-muted text-sm">Days</span>
-                   </div>
-                </div>
-             </div>
-          </div>
-
-          <div className="bg-charcoal p-6 rounded border border-border md:col-span-2">
-             <div className="flex justify-between items-center border-b border-border pb-2 mb-4">
-               <h2 className="text-xl font-bold text-white">Automated Copilot Escalations</h2>
-               <div className="bg-panel text-gold border border-gold-dim px-2 py-0.5 rounded text-xs font-mono tracking-widest uppercase">Active Agents</div>
-             </div>
-             
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 xl:gap-6">
-               <div className="bg-black p-4 rounded border border-border relative overflow-hidden group hover:border-gold-dim transition-colors">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm font-bold text-white text-wrap">Unanswered Web Lead</span>
-                    <input type="checkbox" defaultChecked className="accent-gold w-4 h-4 cursor-pointer mt-1" />
-                  </div>
-                  <div className="text-xs text-text-muted mb-4 opacity-80">Trigger: No comms in 15+ mins</div>
-                  <strong className="text-xs text-text-dim block mb-1">ACTION:</strong>
-                  <select className="w-full bg-panel border border-border text-xs text-white p-2 text-wrap rounded outline-none focus:border-gold">
-                    <option>SMS General Manager</option>
-                    <option>Reassign to Next Round-Robin Rep</option>
-                    <option>Fire Auto-Responder Bot</option>
-                  </select>
-               </div>
-               
-               <div className="bg-black p-4 rounded border border-border relative overflow-hidden group hover:border-gold-dim transition-colors">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-purple-500"></div>
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm font-bold text-white">F&I Penetration Drop</span>
-                    <input type="checkbox" defaultChecked className="accent-gold w-4 h-4 cursor-pointer mt-1" />
-                  </div>
-                  <div className="text-xs text-text-muted mb-4 opacity-80">Trigger: WTD pacing {"<"} 40%</div>
-                  <strong className="text-xs text-text-dim block mb-1">ACTION:</strong>
-                  <select className="w-full bg-panel border border-border text-xs text-white p-2 rounded outline-none focus:border-gold">
-                     <option>Alert Global F&I Director</option>
-                     <option>Require Desk Review on Cash Deals</option>
-                  </select>
-               </div>
-
-               <div className="bg-black p-4 rounded border border-border relative overflow-hidden group hover:border-gold-dim transition-colors">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm font-bold text-white text-wrap">Service Bay Blockage</span>
-                    <input type="checkbox" defaultChecked className="accent-gold w-4 h-4 cursor-pointer mt-1" />
-                  </div>
-                  <div className="text-xs text-text-muted mb-4 opacity-80">Trigger: 90% Bay Capacity</div>
-                  <strong className="text-xs text-text-dim block mb-1">ACTION:</strong>
-                  <select className="w-full bg-panel border border-border text-xs text-white p-2 rounded outline-none focus:border-gold text-wrap">
-                    <option>Throttle Online Appointment Scheduler</option>
-                    <option>Alert Service Manager to Block Walk-Ins</option>
-                  </select>
-               </div>
-             </div>
-          </div>
-       </div>
-    </div>
-  );
-};
 
 const ClockInModule = ({ user, onDrillDown }) => {
   const [clockedIn, setClockedIn] = useState(false);
