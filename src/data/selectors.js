@@ -162,6 +162,35 @@ export const getLiveLeads = () => {
   });
 };
 
+export const getGlobalInventory = () => {
+   return INVENTORY.map(inv => {
+      const brand = BRANDS.find(b => b.id === inv.brandId);
+      const loc = LOCATIONS.find(l => l.id === inv.locationId);
+      
+      // Look for active running leads/deals on this stock
+      const activeDeals = DEALS.filter(d => d.inventoryId === inv.id && d.status !== 'Funded' && d.status !== 'Dead');
+      const activeOpps = CRM_OPPORTUNITIES.filter(o => o.inventoryId === inv.id && o.status !== 'Lost' && o.status !== 'Sold');
+      
+      const frontMargin = inv.price ? (inv.price - inv.cost) : 0;
+      
+      // Synthetic pack assumption (e.g. $400 flat pack added natively here for display margins)
+      const trueCost = inv.cost + 400; 
+
+      return {
+         ...inv,
+         brandName: brand ? brand.name : 'Unknown',
+         locationName: loc ? loc.name : 'Unknown',
+         locationCode: loc ? loc.code : '??',
+         frontMargin: frontMargin,
+         trueCost: trueCost,
+         activeDealCount: activeDeals.length,
+         activeOppCount: activeOpps.length,
+         isAged: inv.ageDays > 90,
+         totalFpCost: inv.ageDays * inv.fpCostPerDay
+      };
+   });
+};
+
 export const getInventoryAging = () => {
   const buckets = {
     '0-30 days': { count: 0, color: 'bg-green-600', maxVal: 30, minVal: 0 },

@@ -34,7 +34,7 @@ import { ActionExecutionService } from './agents/services/ActionExecutionService
 import { EMPLOYEES } from './data/mockDatabase';
 import { 
   getKpiStats, getLiveLeads, getTopPerformers, getInventoryAging,
-  getAlerts, getReconPipeline, getROBoard, getCRMInbox, getCustomer360Data, getPipelineKanban, getAppointmentsTimeline, getPrequalQueue, getManagerOpportunityBoard
+  getAlerts, getReconPipeline, getROBoard, getCRMInbox, getCustomer360Data, getPipelineKanban, getAppointmentsTimeline, getPrequalQueue, getManagerOpportunityBoard, getGlobalInventory
 } from './data/selectors';
 
 /* --- MOCK DATA FOR CHARTS/GRAPHS --- */
@@ -613,6 +613,11 @@ const FIModule = ({ onDrillDown }) => {
 };
 
 const InventoryModule = ({ onDrillDown }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterBrand, setFilterBrand] = useState('All');
+  const [filterCondition, setFilterCondition] = useState('All');
+  const [filterStatus, setFilterStatus] = useState('Active');
+
   const invRecs = RecommendationService.fetchPending().filter(r => r.agentId === 'ag_inventory_match').slice(0, 2);
   const invInsights = invRecs.length > 0 ? invRecs.map(rec => ({
     type: rec.priority === 'URGENT' ? 'warning' : 'action',
@@ -623,6 +628,23 @@ const InventoryModule = ({ onDrillDown }) => {
     { type: "action", message: <>3 Polaris RZRs in Slidell have been in stock for <DrillDownValue value="115 days" label="Slidell Aged RZRs" type="Inventory" onDrillDown={onDrillDown} color="text-amber-500" />. Baton Rouge has turned the same model 4 times in the last 60 days.</>, actionText: "Initiate Transfer" },
     { type: "negative", message: <>Floorplan interest for 'Used Bikes Direct' inventory is currently pacing <DrillDownValue value="14% higher" label="Floorplan Interest Variance" type="Financials" onDrillDown={onDrillDown} color="text-red-400" /> than last month due to aged Harley-Davidson units.</>, actionText: "View Markdown Recommendations" }
   ];
+
+  const allInv = getGlobalInventory();
+  
+  const filteredInv = allInv.filter(inv => {
+    if (filterBrand !== 'All' && inv.brandName !== filterBrand) return false;
+    if (filterCondition !== 'All' && inv.condition !== filterCondition) return false;
+    if (filterStatus !== 'All' && inv.status !== filterStatus) return false;
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      return (
+        inv.stock.toLowerCase().includes(term) ||
+        inv.vin.toLowerCase().includes(term) ||
+        inv.model.toLowerCase().includes(term)
+      );
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-6">
@@ -668,45 +690,114 @@ const InventoryModule = ({ onDrillDown }) => {
         <div className="flex justify-between items-center mb-4">
            <h3 className="text-sm font-mono text-text-muted tracking-wide uppercase">Live Inventory Ledger</h3>
            <div className="flex gap-2">
-             <button className="bg-black border border-border text-xs px-3 py-1 rounded hover:text-white" onClick={() => onDrillDown('Action', { name: 'Filter Inventory', message: 'Opening ledger filtering...' })}>Filter</button>
              <button className="bg-black border border-border text-xs px-3 py-1 rounded hover:text-white" onClick={() => onDrillDown('Action', { name: 'Export Inventory', message: 'Exporting ledger to CSV...' })}>Export</button>
            </div>
         </div>
+        
+        {/* Advanced Filter Bar */}
+        <div className="flex flex-wrap gap-3 mb-4 bg-black p-3 rounded border border-border">
+          <div className="flex-1 min-w-[200px] relative">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-text-muted" />
+            <input 
+              type="text" 
+              placeholder="Search Stock, VIN, or Model..." 
+              className="w-full bg-charcoal border border-border rounded pl-9 pr-3 py-1.5 text-sm text-text focus:outline-none focus:border-gold"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <select 
+            className="bg-charcoal border border-border rounded px-3 py-1.5 text-sm text-text focus:outline-none focus:border-gold"
+            value={filterBrand}
+            onChange={(e) => setFilterBrand(e.target.value)}
+          >
+            <option value="All">All Brands</option>
+            <option value="Yamaha">Yamaha</option>
+            <option value="Honda">Honda</option>
+            <option value="Polaris">Polaris</option>
+            <option value="Kawasaki">Kawasaki</option>
+          </select>
+          <select 
+            className="bg-charcoal border border-border rounded px-3 py-1.5 text-sm text-text focus:outline-none focus:border-gold"
+            value={filterCondition}
+            onChange={(e) => setFilterCondition(e.target.value)}
+          >
+            <option value="All">All Conditions</option>
+            <option value="New">New</option>
+            <option value="Used">Used</option>
+          </select>
+          <select 
+            className="bg-charcoal border border-border rounded px-3 py-1.5 text-sm text-text focus:outline-none focus:border-gold"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="All">All Statuses</option>
+            <option value="Active">Active</option>
+            <option value="Pending">Pending (Stalls/Deals)</option>
+            <option value="Recon">In Recon</option>
+            <option value="Inspection">Needs Inspection</option>
+          </select>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left text-text">
             <thead className="text-xs text-text-muted bg-black font-mono">
               <tr>
                 <th className="px-4 py-3 rounded-tl">Stock#</th>
                 <th className="px-4 py-3">Unit</th>
-                <th className="px-4 py-3">Category</th>
                 <th className="px-4 py-3">Loc</th>
-                <th className="px-4 py-3">Cost</th>
-                <th className="px-4 py-3">List Price</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Price / Cost</th>
+                <th className="px-4 py-3 text-center">Open Deals</th>
                 <th className="px-4 py-3">Days</th>
                 <th className="px-4 py-3 rounded-tr text-right">Action</th>
               </tr>
             </thead>
             <tbody>
-              <tr onClick={() => onDrillDown('Inventory', {stock: 'Y1102', unit: '2023 YZF-R7', category: 'Motorcycle', loc: 'Slidell', cost: '$7,800', price: '$8,999', days: 92})} className="border-b border-border/50 hover:bg-panel transition-colors bg-red-900/10 cursor-pointer">
-                <td className="px-4 py-3 text-red-500 font-bold">Y1102</td>
-                <td className="px-4 py-3 text-white">2023 YZF-R7</td>
-                <td className="px-4 py-3 text-text-muted">Motorcycle</td>
-                <td className="px-4 py-3">Slidell</td>
-                <td className="px-4 py-3">$7,800</td>
-                <td className="px-4 py-3 font-bold">$8,999</td>
-                <td className="px-4 py-3 text-red-400 font-bold">92</td>
-                <td className="px-4 py-3 text-right"><button className="text-xs bg-red-900/40 text-red-300 border border-red-800 px-2 py-1 rounded hover:bg-red-800">MARKDOWN</button></td>
-              </tr>
-              <tr onClick={() => onDrillDown('Inventory', {stock: 'H8842', unit: '2024 Talon 1000R', category: 'SxS', loc: 'BTR', cost: '$21,500', price: '$23,699', days: 14})} className="border-b border-border/50 hover:bg-panel transition-colors cursor-pointer">
-                <td className="px-4 py-3 font-mono text-text-dim">H8842</td>
-                <td className="px-4 py-3 text-white">2024 Talon 1000R</td>
-                <td className="px-4 py-3 text-text-muted">SxS</td>
-                <td className="px-4 py-3">BTR</td>
-                <td className="px-4 py-3">$21,500</td>
-                <td className="px-4 py-3 font-bold">$23,699</td>
-                <td className="px-4 py-3 text-green-500">14</td>
-                <td className="px-4 py-3 text-right"><button className="text-xs bg-panel border border-border px-2 py-1 rounded hover:text-white">VIEW</button></td>
-              </tr>
+              {filteredInv.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="px-4 py-8 text-center text-text-muted">No inventory matches these filters.</td>
+                </tr>
+              ) : (
+                filteredInv.map((inv) => (
+                  <tr 
+                    key={inv.id}
+                    onClick={() => onDrillDown('Inventory', { invId: inv.id, stock: inv.stock, unit: `${inv.year} ${inv.model}` })} 
+                    className={`border-b border-border/50 hover:bg-panel transition-colors cursor-pointer ${inv.isAged ? 'bg-red-900/10' : ''}`}
+                  >
+                    <td className={`px-4 py-3 font-mono font-bold ${inv.isAged ? 'text-red-500' : 'text-text-dim'}`}>{inv.stock}</td>
+                    <td className="px-4 py-3 text-white">
+                      {inv.year} {inv.brandName} {inv.model}
+                      <div className="text-xs text-text-muted">{inv.condition} • {inv.category}</div>
+                    </td>
+                    <td className="px-4 py-3">{inv.locationCode}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded text-xs ${inv.status === 'Active' ? 'bg-green-900/30 text-green-400 border border-green-800' : inv.status === 'Pending' ? 'bg-amber-900/30 text-amber-400 border border-amber-800' : 'bg-gray-800 text-gray-400 border border-gray-700'}`}>
+                        {inv.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-bold">{inv.price ? `$${inv.price.toLocaleString()}` : 'N/A'}</div>
+                      <div className="text-xs text-text-muted text-red-400">Cost: ${inv.cost.toLocaleString()}</div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {inv.activeDealCount > 0 || inv.activeOppCount > 0 ? (
+                        <span className="text-amber-500 font-bold">{inv.activeDealCount + inv.activeOppCount}</span>
+                      ) : (
+                        <span className="text-text-muted">-</span>
+                      )}
+                    </td>
+                    <td className={`px-4 py-3 font-bold ${inv.isAged ? 'text-red-400' : 'text-green-500'}`}>{inv.ageDays}</td>
+                    <td className="px-4 py-3 text-right">
+                      {inv.isAged ? (
+                        <button className="text-xs bg-red-900/40 text-red-300 border border-red-800 px-2 py-1 rounded hover:bg-red-800">MARKDOWN</button>
+                      ) : (
+                        <button className="text-xs bg-panel border border-border px-2 py-1 rounded hover:text-white">VIEW</button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
