@@ -7,7 +7,7 @@ import {
   LayoutDashboard, TrendingUp, CreditCard, Package, Bike, Wrench,
   Clock, DollarSign, Megaphone, Award, FileBarChart, Users as UsersIcon, Settings,
   Bell, Search, ChevronRight, CheckCircle2, ChevronDown, User, Play, Calendar, AlertCircle, Command,
-  Briefcase, Users, BrainCircuit, TrendingDown, Database, Filter, Zap, Layout
+  Briefcase, Users, BrainCircuit, TrendingDown, Database, Filter, Zap, Layout, Grid3X3
 } from 'lucide-react';
 
 import {
