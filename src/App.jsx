@@ -7,12 +7,13 @@ import {
   LayoutDashboard, TrendingUp, CreditCard, Package, Bike, Wrench,
   Clock, DollarSign, Megaphone, Award, FileBarChart, Users as UsersIcon, Settings,
   Bell, Search, ChevronRight, CheckCircle2, ChevronDown, User, Play, Calendar, AlertCircle, Command,
-  Briefcase, Users, BrainCircuit, TrendingDown, Database, Filter, Zap, Layout, Grid3X3, RefreshCw, Activity, X, MessageSquare, Terminal, Phone, PhoneCall, PhoneForwarded, MessageSquareText
+  Briefcase, Users, BrainCircuit, TrendingDown, Database, Filter, Zap, Layout, Grid3X3, RefreshCw, Activity, X, MessageSquare, Terminal, Phone, PhoneCall, PhoneForwarded, MessageSquareText, Menu
 } from 'lucide-react';
 
 import {
   getSalesDashboardData, getManagerDashboardData, getFinanceDashboardData, getRetentionDashboardData
 } from './data/selectors';
+import { fetchMockData } from './api/mockClient';
 
 import { KPICard } from './components/ui/KPICard';
 import { SectionHeader } from './components/ui/SectionHeader';
@@ -136,8 +137,22 @@ const AuthGate = ({ onLogin }) => {
 
 const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
   const [dashboardInsights, setDashboardInsights] = useState([]);
+  const [kpiStats, setKpiStats] = useState([]);
+  const [loadingKpis, setLoadingKpis] = useState(true);
 
   useEffect(() => {
+    const loadKpis = async () => {
+      try {
+        const data = await fetchMockData(getKpiStats);
+        setKpiStats(data);
+      } catch (error) {
+        console.error("Failed to load KPIs", error);
+      } finally {
+        setLoadingKpis(false);
+      }
+    };
+    loadKpis();
+
     // Generate background insights via the Super Agent layer manually on boot
     const seedRecommendations = async () => {
       // Broadcast an APP_BOOT trigger to awaken all Agents
@@ -184,16 +199,26 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
 
       {/* KPI Mega Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {getKpiStats().map((kpi, i) => (
-          <KPICard 
-            key={i} 
-            label={kpi.label} 
-            value={kpi.value} 
-            delta={kpi.delta} 
-            color={kpi.color} 
-            onClick={() => onDrillDown('KPI', kpi)} 
-          />
-        ))}
+        {loadingKpis ? (
+          [...Array(6)].map((_, i) => (
+            <div key={i} className="animate-pulse bg-charcoal p-4 rounded border border-border h-28 flex flex-col justify-between">
+               <div className="h-3 bg-panel rounded w-1/2"></div>
+               <div className="h-8 bg-panel rounded w-3/4"></div>
+               <div className="h-3 bg-panel rounded w-1/3"></div>
+            </div>
+          ))
+        ) : (
+          kpiStats.map((kpi, i) => (
+            <KPICard 
+              key={i} 
+              label={kpi.label} 
+              value={kpi.value} 
+              delta={kpi.delta} 
+              color={kpi.color} 
+              onClick={() => onDrillDown('KPI', kpi)} 
+            />
+          ))
+        )}
       </div>
 
       {/* Charts Row */}
@@ -762,100 +787,6 @@ const OEMIncentivesModule = ({ onDrillDown }) => {
 };
 
 
-const EmployeeHubModule = ({ user, onDrillDown }) => {
-  const leaderboard = [
-    { name: "Jake Fontenot", units: 24, target: 30, gross: "$104k", curTier: "Gold", nextTier: "Platinum" },
-    { name: user?.name || "CurrentUser", units: 18, target: 20, gross: "$82k", curTier: "Silver", nextTier: "Gold", isMe: true },
-    { name: "Marcus Broussard", units: 14, target: 20, gross: "$61k", curTier: "Bronze", nextTier: "Silver" },
-    { name: "Tony Guillory", units: 9, target: 15, gross: "$38k", curTier: "Base", nextTier: "Bronze" }
-  ];
-
-  return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-       <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-charcoal p-6 rounded border border-border">
-          <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-full bg-panel border-4 border-gold-dim flex items-center justify-center text-3xl font-bold text-gold">
-              {user?.avatar || "U"}
-            </div>
-            <div>
-              <h1 className="text-3xl font-playfair text-white mb-1">{user?.name}</h1>
-              <div className="flex items-center gap-3 text-sm">
-                <span className="text-text-muted uppercase tracking-wider">{user?.role} · {user?.location}</span>
-                <span className="bg-black border border-border px-2 py-0.5 rounded text-green-500 font-bold flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> Active</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-4">
-             <div className="bg-black p-4 rounded border border-border text-center min-w-[120px]">
-               <div className="text-3xl font-bold text-white mb-1"><DrillDownValue value="#2" label="Store Rank" type="Employee" onDrillDown={onDrillDown} /></div>
-               <div className="text-xs text-text-muted font-mono uppercase tracking-wider">Store Rank</div>
-             </div>
-             <div className="bg-black p-4 rounded border border-border border-b-2 border-b-gold text-center min-w-[120px]">
-               <div className="text-3xl font-bold text-gold mb-1"><DrillDownValue value="18" label="Units MTD" type="Employee" onDrillDown={onDrillDown} color="text-gold" /></div>
-               <div className="text-xs text-text-muted font-mono uppercase tracking-wider">Units MTD</div>
-             </div>
-          </div>
-       </div>
-
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-         <div className="md:col-span-2 space-y-6">
-           <div className="bg-charcoal border border-border rounded p-6">
-             <div className="flex justify-between items-center mb-6">
-               <h2 className="text-gold font-playfair text-xl flex items-center gap-2"><Award className="w-5 h-5"/> Regional Leaderboard</h2>
-               <DateRangePicker />
-             </div>
-             
-             <div className="space-y-4">
-                {leaderboard.map((rep, idx) => (
-                   <div key={idx} className={`bg-black p-4 rounded border ${rep.isMe ? 'border-gold shadow-[0_0_15px_rgba(201,168,76,0.15)]' : 'border-border'} flex flex-col gap-3 relative overflow-hidden hover:border-gold-dim transition-colors cursor-pointer`} onClick={() => onDrillDown('Employee', {name: rep.name, role: 'Sales', location: 'Baton Rouge'})}>
-                      {rep.isMe && <div className="absolute top-0 right-0 bg-gold text-black text-[10px] font-bold px-2 py-0.5 rounded-bl">YOU</div>}
-                      <div className="flex justify-between items-center">
-                         <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${idx === 0 ? 'bg-amber-500 text-black' : idx === 1 ? 'bg-slate-300 text-black' : idx === 2 ? 'bg-amber-700 text-white' : 'bg-panel text-white'}`}>
-                              #{idx + 1}
-                            </div>
-                            <span className="font-bold text-white text-lg">{rep.name}</span>
-                         </div>
-                         <div className="text-right">
-                            <div className="font-bold text-white text-xl">{rep.units} <span className="text-sm font-normal text-text-muted">Units</span></div>
-                         </div>
-                      </div>
-                      
-                      <div>
-                         <div className="flex justify-between text-xs mb-1">
-                            <span className="text-text-muted">Current: <span className="text-white">{rep.curTier}</span></span>
-                            <span className="text-gold font-bold">{rep.target - rep.units} units to {rep.nextTier} Bonus</span>
-                         </div>
-                         <div className="w-full bg-panel h-2 rounded-full overflow-hidden">
-                            <div className="bg-gradient-to-r from-gold-dim to-gold h-full rounded-full" style={{ width: `${(rep.units / rep.target) * 100}%`}}></div>
-                         </div>
-                      </div>
-                   </div>
-                ))}
-             </div>
-           </div>
-         </div>
-         
-         <div className="space-y-6">
-           <div className="bg-charcoal border border-border rounded p-6">
-             <h2 className="text-gold font-playfair text-xl mb-4 text-center">Commission Pacing</h2>
-             <div className="text-center mb-6">
-                <div className="text-5xl font-bold text-white mb-2">
-                   <DrillDownValue value="$8,400" label="Projected Commission" type="Employee" onDrillDown={onDrillDown} />
-                </div>
-                <div className="text-sm text-green-500 flex items-center justify-center gap-1"><TrendingUp className="w-4 h-4"/> 
-                   <DrillDownValue value="+$1,200 vs Last Month" label="Commission Delta" type="Employee" onDrillDown={onDrillDown} color="text-green-500" />
-                </div>
-             </div>
-             <button className="w-full bg-panel border border-border hover:bg-black hover:border-gold transition-colors text-white py-2 rounded text-sm font-bold" onClick={() => onDrillDown('Action', { name: 'View Commission Statement', message: 'Pulling real-time commission payout records...' })}>View Commission Statement</button>
-           </div>
-         </div>
-       </div>
-    </div>
-  );
-};
-
-/* Provide simple placeholders for the other tabs, or robust ones when needed */
 const PlaceholderModule = ({ title, desc }) => (
   <div className="flex flex-col items-center justify-center h-96 text-center border border-dashed border-border rounded">
     <Wrench className="w-12 h-12 text-text-muted mb-4" />
@@ -2499,6 +2430,7 @@ const App = () => {
   const [enableDashboardV2, setEnableDashboardV2] = useState(false);
   const [isCommsOpen, setIsCommsOpen] = useState(false);
   const [incomingCall, setIncomingCall] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -2517,6 +2449,7 @@ const App = () => {
   const handleNavigate = (tabName, context = null) => {
      setActiveTabContext(context);
      setActiveTab(tabName);
+     setIsMobileMenuOpen(false); // Auto-close mobile menu on navigation
   };
 
   const handleDrillDown = (type, data) => {
@@ -2587,8 +2520,16 @@ const App = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-black text-white">
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* SIDEBAR */}
-      <div className="w-64 bg-charcoal border-r border-border flex flex-col hidden md:flex">
+      <div className={`w-64 bg-charcoal border-r border-border flex flex-col fixed md:relative z-50 h-full transition-transform transform ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}>
         <div className="p-4 border-b border-border flex flex-col items-center py-6">
            <img 
              src={dealerLogo} 
@@ -2677,10 +2618,16 @@ const App = () => {
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* TOP BAR */}
-        <div className="h-16 bg-charcoal border-b border-border flex items-center justify-between px-6 z-10">
+        <div className="h-16 bg-charcoal border-b border-border flex items-center justify-between px-4 md:px-6 z-10">
           <div className="flex items-center text-sm font-mono text-text-dim">
-            <span className="hover:text-white cursor-pointer" onClick={() => setActiveTab('Dashboard')}>Dashboard</span>
-            <ChevronRight className="w-4 h-4 mx-2" />
+            <button 
+              className="md:hidden mr-3 text-white hover:text-gold transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <span className="hover:text-white cursor-pointer hidden sm:inline" onClick={() => setActiveTab('Dashboard')}>Dashboard</span>
+            <ChevronRight className="w-4 h-4 mx-2 hidden sm:inline" />
             <span className="text-gold">{activeTab}</span>
             {activeTab === 'Dashboard' && (
                <button 
@@ -2808,3 +2755,5 @@ const AppWrapper = () => (
 );
 
 export default AppWrapper;
+
+import { EmployeeHubModule } from './components/ui/EmployeeHubModule';

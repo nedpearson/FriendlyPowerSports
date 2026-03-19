@@ -4,21 +4,31 @@ import { DrillDownValue } from './DrillDownValue';
 import { KPICard } from './KPICard';
 import { AutomatedInsights } from './AutomatedInsights';
 
+import { fetchMockData } from '../../api/mockClient';
+
 export const InventoryModule = ({ onDrillDown }) => {
   const [filterType, setFilterType] = useState('All');
   const [filterCondition, setFilterCondition] = useState('All');
+  const [isLoading, setIsLoading] = useState(true);
+  const [globalStock, setGlobalStock] = useState([]);
 
-  // Hardcoded Mock Data for the ultimate drilldown experience
-  const inventoryStock = [
-    { stock: 'H8842', year: 2024, brand: 'Honda', model: 'Talon 1000R', condition: 'New', type: 'SXS', price: 23500, cost: 21000, days: 12, fpCost: 50 },
-    { stock: 'Y1102', year: 2023, brand: 'Yamaha', model: 'YZF-R7', condition: 'Used', type: 'Motorcycle', price: 8200, cost: 6500, days: 45, fpCost: 180 },
-    { stock: 'P9910', year: 2023, brand: 'Polaris', model: 'RZR Pro R Sport', condition: 'New', type: 'SXS', price: 38000, cost: 34500, days: 112, fpCost: 650 },
-    { stock: 'K2291', year: 2024, brand: 'Kawasaki', model: 'Ninja ZX-6R', condition: 'New', type: 'Motorcycle', price: 11299, cost: 9800, days: 5, fpCost: 20 },
-    { stock: 'H7721', year: 2018, brand: 'Harley-Davidson', model: 'Street Glide', condition: 'Used', type: 'Motorcycle', price: 15500, cost: 13000, days: 92, fpCost: 420 },
-    { stock: 'C3345', year: 2024, brand: 'Can-Am', model: 'Maverick X3 X RS Turbo', condition: 'New', type: 'SXS', price: 29500, cost: 26000, days: 22, fpCost: 95 },
-  ];
-
-  const filteredStock = inventoryStock.filter(item => 
+  React.useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        const data = await fetchMockData(() => [
+          { stock: 'H8842', year: 2024, brand: 'Honda', model: 'Talon 1000R', condition: 'New', type: 'SXS', price: 23500, cost: 21000, days: 12, fpCost: 50 },
+          { stock: 'Y1102', year: 2023, brand: 'Yamaha', model: 'YZF-R7', condition: 'Used', type: 'Motorcycle', price: 8200, cost: 6500, days: 45, fpCost: 180 },
+          { stock: 'P9910', year: 2023, brand: 'Polaris', model: 'RZR Pro R Sport', condition: 'New', type: 'SXS', price: 38000, cost: 34500, days: 112, fpCost: 650 },
+          { stock: 'K2291', year: 2024, brand: 'Kawasaki', model: 'Ninja ZX-6R', condition: 'New', type: 'Motorcycle', price: 11299, cost: 9800, days: 5, fpCost: 20 },
+          { stock: 'H7721', year: 2018, brand: 'Harley-Davidson', model: 'Street Glide', condition: 'Used', type: 'Motorcycle', price: 15500, cost: 13000, days: 92, fpCost: 420 },
+          { stock: 'C3345', year: 2024, brand: 'Can-Am', model: 'Maverick X3 X RS Turbo', condition: 'New', type: 'SXS', price: 29500, cost: 26000, days: 22, fpCost: 95 },
+        ]);
+        setGlobalStock(data);
+      } catch (err) {} finally { setIsLoading(false); }
+    };
+    fetchInventory();
+  }, []);
+  const filteredStock = globalStock.filter(item => 
     (filterType === 'All' || item.type === filterType) &&
     (filterCondition === 'All' || item.condition === filterCondition)
   );
@@ -106,8 +116,18 @@ export const InventoryModule = ({ onDrillDown }) => {
                  </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
-                  {filteredStock.map((unit) => (
-                    <tr key={unit.stock} className="hover:bg-black/60 transition-colors group cursor-pointer" onClick={() => onDrillDown('InventoryUnit', { stock: unit.stock, make: unit.brand })}>
+                  {isLoading ? (
+                     [...Array(6)].map((_, i) => (
+                        <tr key={i} className="animate-pulse">
+                           <td className="px-4 py-4"><div className="h-4 bg-panel rounded w-16"></div></td>
+                           <td className="px-4 py-4"><div className="h-4 bg-panel rounded w-12"></div></td>
+                           <td className="px-4 py-4"><div className="h-4 bg-panel rounded w-32"></div></td>
+                           <td className="px-4 py-4"><div className="h-4 bg-panel rounded w-16"></div></td>
+                           <td className="px-4 py-4 flex justify-end"><div className="h-4 bg-panel rounded w-20"></div></td>
+                        </tr>
+                     ))
+                  ) : filteredStock.map((unit) => (
+                    <tr key={unit.stock} className="hover:bg-black/60 transition-colors group cursor-pointer" onClick={() => onDrillDown('InventoryUnit', { stock: unit.stock, make: unit.brand, dataPayload: { Cost: unit.cost, Price: unit.price, Age: unit.days, Condition: unit.condition, Unit: `${unit.year} ${unit.brand} ${unit.model}` } })}>
                        <td className="px-4 py-4 text-white font-mono font-bold text-xs"><DrillDownValue value={unit.stock} label="DMS Profile" type="InventoryUnit" onDrillDown={onDrillDown} color="text-white hover:text-gold" /></td>
                        <td className="px-4 py-4">
                           <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border ${unit.condition === 'New' ? 'text-blue-400 border-blue-500/30 bg-blue-900/10' : 'text-amber-500 border-amber-500/30 bg-amber-900/10'}`}>

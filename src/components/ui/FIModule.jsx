@@ -10,6 +10,7 @@ import {
 import { DrillDownValue } from './DrillDownValue';
 import { AutomatedInsights } from './AutomatedInsights';
 import { RecommendationService } from '../../agents/services/RecommendationService';
+import { fetchMockData } from '../../api/mockClient';
 
 // Extensive Mock Data Collections
 const RAW_DEALS = [
@@ -44,10 +45,22 @@ export const FIModule = ({ onDrillDown }) => {
   const [managerFilter, setManagerFilter] = useState('All Managers');
   const [lenderFilter, setLenderFilter] = useState('All Lenders');
   const [projectionScenario, setProjectionScenario] = useState('Expected');
+  const [isLoading, setIsLoading] = useState(true);
+  const [globalDeals, setGlobalDeals] = useState([]);
+
+  React.useEffect(() => {
+     const loadDeals = async () => {
+         try {
+             const data = await fetchMockData(() => RAW_DEALS);
+             setGlobalDeals(data);
+         } catch (e) {} finally { setIsLoading(false); }
+     };
+     loadDeals();
+  }, []);
 
   // Dynamic computation logic based on filters
   const filteredDeals = useMemo(() => {
-    return RAW_DEALS.filter(deal => {
+    return globalDeals.filter(deal => {
       const matchManager = managerFilter === 'All Managers' || deal.manager === managerFilter;
       const matchLender = lenderFilter === 'All Lenders' || deal.lender === lenderFilter;
       // Date stub: in reality this would parse dates against 'MTD' or 'YTD' range logic
@@ -296,7 +309,21 @@ export const FIModule = ({ onDrillDown }) => {
               </tr>
             </thead>
             <tbody>
-              {filteredDeals.map(d => {
+              {isLoading ? (
+                  [...Array(6)].map((_, i) => (
+                      <tr key={i} className="animate-pulse border-b border-border/30">
+                          <td className="px-4 py-3"><div className="h-4 bg-panel rounded w-24"></div></td>
+                          <td className="px-4 py-3"><div className="h-4 bg-panel rounded w-32"></div></td>
+                          <td className="px-4 py-3"><div className="h-4 bg-panel rounded w-16"></div></td>
+                          <td className="px-4 py-3"><div className="h-4 bg-panel rounded w-20"></div></td>
+                          <td className="px-4 py-3 flex justify-end"><div className="h-4 bg-panel rounded w-12"></div></td>
+                          <td className="px-4 py-3 flex justify-end"><div className="h-4 bg-panel rounded w-12"></div></td>
+                          <td className="px-4 py-3 flex justify-end"><div className="h-4 bg-panel rounded w-12"></div></td>
+                          <td className="px-4 py-3 flex justify-end"><div className="h-4 bg-panel rounded w-12"></div></td>
+                          <td className="px-4 py-3 flex justify-end"><div className="h-4 bg-panel rounded w-16"></div></td>
+                      </tr>
+                  ))
+              ) : filteredDeals.map(d => {
                  const totalNet = d.reserve + d.vsc + d.gap + d.maint;
                  return (
                   <tr key={d.id} onClick={() => onDrillDown('Deal', {...d, total: totalNet})} className="border-b border-border/30 hover:bg-panel transition-colors cursor-pointer group">

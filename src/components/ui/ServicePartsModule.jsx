@@ -73,7 +73,7 @@ export const ServicePartsModule = ({ onDrillDown }) => {
             </div>
 
             <h4 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-4 border-b border-border/50 pb-2"><Calculator className="w-4 h-4 text-blue-500" /> Daily Financials</h4>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                <div className="bg-black border border-border p-3 rounded text-center cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Report', { name: 'Customer Paid Labor' })}>
                   <div className="text-[10px] text-text-muted font-mono uppercase">CP Labor</div>
                   <div className="text-lg font-bold text-white mt-1"><DrillDownValue value="$1,840" type="Financials" onDrillDown={onDrillDown} /></div>

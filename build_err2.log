@@ -1,0 +1,29 @@
+
+> dealercommand@0.0.0 build
+> vite build
+
+[36mvite v5.4.21 [32mbuilding for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 2247 modules transformed.
+x Build failed in 2.96s
+error during build:
+src/App.jsx (23:9): "DrillDownModal" is not exported by "src/components/ui/DrillDownModal.jsx", imported by "src/App.jsx".
+file: C:/dev/github/business/FriendlyPowerSports/src/App.jsx:23:9
+
+21: import { AutomatedInsights } from './components/ui/AutomatedInsights';
+22: import { DrillDownValue } from './components/ui/DrillDownValue';
+23: import { DrillDownModal } from './components/ui/DrillDownModal';
+             ^
+24: import { DetailReportView } from './components/ui/DetailReportView';
+25: import { AgentWidget } from './components/ui/AgentWidget';
+
+    at getRollupError (file:///C:/dev/github/business/FriendlyPowerSports/node_modules/rollup/dist/es/shared/parseAst.js:402:41)
+    at error (file:///C:/dev/github/business/FriendlyPowerSports/node_modules/rollup/dist/es/shared/parseAst.js:398:42)
+    at Module.error (file:///C:/dev/github/business/FriendlyPowerSports/node_modules/rollup/dist/es/shared/node-entry.js:17040:16)
+    at Module.traceVariable (file:///C:/dev/github/business/FriendlyPowerSports/node_modules/rollup/dist/es/shared/node-entry.js:17452:29)
+    at ModuleScope.findVariable (file:///C:/dev/github/business/FriendlyPowerSports/node_modules/rollup/dist/es/shared/node-entry.js:15070:39)
+    at ReturnValueScope.findVariable (file:///C:/dev/github/business/FriendlyPowerSports/node_modules/rollup/dist/es/shared/node-entry.js:5673:38)
+    at FunctionBodyScope.findVariable (file:///C:/dev/github/business/FriendlyPowerSports/node_modules/rollup/dist/es/shared/node-entry.js:5673:38)
+    at Identifier.bind (file:///C:/dev/github/business/FriendlyPowerSports/node_modules/rollup/dist/es/shared/node-entry.js:5447:40)
+    at CallExpression.bind (file:///C:/dev/github/business/FriendlyPowerSports/node_modules/rollup/dist/es/shared/node-entry.js:2825:28)
+    at CallExpression.bind (file:///C:/dev/github/business/FriendlyPowerSports/node_modules/rollup/dist/es/shared/node-entry.js:12179:15)

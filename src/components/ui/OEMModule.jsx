@@ -129,14 +129,14 @@ export const OEMModule = ({ onDrillDown }) => {
           
           {activeTab === 'Co-Op Advertising' && (
             <div className="space-y-4">
-              <div className="grid grid-cols-4 gap-4 mb-4 text-xs font-mono text-text-muted uppercase tracking-widest border-b border-border pb-2 px-2">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 text-xs font-mono text-text-muted uppercase tracking-widest border-b border-border pb-2 px-2">
                  <div>Brand</div>
                  <div className="text-right">Accrued YTD</div>
                  <div className="text-right">Spent / Submitted</div>
                  <div className="text-right">Available Balance</div>
               </div>
               {coopFunds.map(fund => (
-                <div key={fund.brand} className="grid grid-cols-4 gap-4 bg-black border border-border p-3 rounded items-center hover:border-gold transition-colors">
+                <div key={fund.brand} className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-black border border-border p-3 rounded items-center hover:border-gold transition-colors">
                    <div className="font-bold text-white"><DrillDownValue value={fund.brand} label={`${fund.brand} Co-Op Policy`} type="OEM" brand={fund.brand} onDrillDown={onDrillDown} /></div>
                    <div className="text-right text-text-muted"><DrillDownValue value={`$${fund.accrued.toLocaleString()}`} label="Accrual Ledger" type="Financials" onDrillDown={onDrillDown} /></div>
                    <div className="text-right text-text-muted"><DrillDownValue value={`$${fund.spent.toLocaleString()}`} label="Ad Spend LEDGER" type="Financials" onDrillDown={onDrillDown} /></div>

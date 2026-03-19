@@ -99,7 +99,7 @@ export const SettingsModule = ({ onDrillDown }) => {
     <div className="space-y-6 fade-in">
       <div className="bg-charcoal p-6 rounded border border-border/50">
          <h2 className="text-xl font-bold text-white mb-4 border-b border-border/50 pb-2">Dealership Legal Hierarchy</h2>
-         <div className="grid grid-cols-2 gap-4">
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                <label className="text-xs text-text-muted font-mono uppercase tracking-wider block mb-1">Business DBA Name</label>
                <input type="text" defaultValue="Friendly PowerSports" className="w-full bg-black border border-border rounded p-2 text-white focus:border-gold outline-none" />

@@ -104,13 +104,13 @@ export const DateRangePicker = ({ initialStart, initialEnd, onRangeChange }) => 
               <button className="text-text-muted hover:text-white transition-colors" onClick={handleNextMonth}><ChevronRight className="w-4 h-4"/></button>
            </div>
            
-           <div className="grid grid-cols-7 gap-1 text-center mb-2">
+           <div className="grid grid-cols-1 md:grid-cols-7 gap-1 text-center mb-2">
               {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => (
                  <div key={d} className="text-[10px] text-text-muted font-bold tracking-widest uppercase">{d}</div>
               ))}
            </div>
            
-           <div className="grid grid-cols-7 gap-y-1">
+           <div className="grid grid-cols-1 md:grid-cols-7 gap-y-1">
               {days.map((d, i) => {
                  if (!d) return <div key={i} className="p-1"></div>;
                  const selected = isSelected(d);
