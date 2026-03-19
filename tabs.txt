@@ -1,0 +1,34 @@
+1422: if (activeTab === 'Overview') {
+1451: if (activeTab === 'Sales') {
+1501: if (activeTab === 'Manager') {
+1575: if (activeTab === 'Finance') {
+1631: if (activeTab === 'Retention') {
+1686: <button key={tab} className={`text-sm font-bold px-4 py-2 transition-colors border-b-2 whitespace-nowrap ${activeTab === tab ? 'text-white border-b-gold' : 'text-text-muted border-b-transparent hover:text-white'}`} onClick={() => setActiveTab(tab)}>
+1708: let data = activeTab === 'Snoozed' ? RecommendationService.fetchSnoozed() : RecommendationService.fetchPending();
+1750: {activeTab === 'Pending' && <span className="bg-red-900/40 text-red-500 border border-red-500 px-2 py-1 rounded">URGENT: {recommendations.filter(r=>r.priority === 'URGENT').length}</span>}
+1756: <button key={tab} className={`text-sm font-bold px-4 py-2 transition-colors border-b-2 whitespace-nowrap ${activeTab === tab ? 'text-white border-b-gold' : 'text-text-muted border-b-transparent hover:text-white'}`} onClick={() => setActiveTab(tab)}>
+1762: {activeTab === 'Metrics' ? (
+1830: {activeTab === 'Pending' && filtered.length > 0 && (
+2643: const active = activeTab === item.name;
+2684: {activeTab === 'Dashboard' && (
+2739: {activeTab === "Dashboard" && enableDashboardV2 && <DashboardV2Module onNavigate={handleNavigate} onDrillDown={handleDrillDown} userRole={currentUser?.role} company={activeCompany} location={activeLocation} />}
+2740: {activeTab === "Dashboard" && !enableDashboardV2 && <OperationalDashboardsModule onNavigate={handleNavigate} onDrillDown={handleDrillDown} userRole={currentUser?.role} company={activeCompany} location={activeLocation} />}
+2741: {activeTab === "Sales" && <SalesModule onNavigate={handleNavigate} onDrillDown={handleDrillDown} />}
+2742: {activeTab === "Omni-Command" && <OmniCommandModule onDrillDown={handleDrillDown} initialContext={activeTabContext} />}
+2743: {activeTab === "Customer CRM" && <CustomerCRMModule onDrillDown={handleDrillDown} user={currentUser} />}
+2744: {activeTab === "AI Command Center" && <AICommandCenterModule onDrillDown={handleDrillDown} userRole={currentUser?.role} initialContext={activeTabContext} />}
+2745: {activeTab === "F&I / Finance" && <FIModule onDrillDown={handleDrillDown} />}
+2746: {activeTab === "Inventory" && <InventoryModule onDrillDown={handleDrillDown} />}
+2747: {activeTab === "Used Bikes / UBD" && <UsedBikesModule onDrillDown={handleDrillDown} />}
+2748: {activeTab === "Service & Parts" && <ServicePartsModule onDrillDown={handleDrillDown} />}
+2749: {activeTab === "Payroll" && <PayrollModule onDrillDown={handleDrillDown} />}
+2750: {activeTab === "OEM Incentives" && <OEMIncentivesModule onDrillDown={handleDrillDown} />}
+2751: {activeTab === "Marketing" && <MarketingModule onDrillDown={handleDrillDown} />}
+2752: {activeTab === "Reports" && <ReportsModule onDrillDown={handleDrillDown} />}
+2753: {activeTab === "ReportDetail" && <DetailReportView reportPayload={activeReportContext} onNavigate={setActiveTab} onDrillDown={handleDrillDown} />}
+2754: {activeTab === "Accounting & GL" && <AccountingGLModule onDrillDown={handleDrillDown} />}
+2755: {activeTab === "Employee Hub" && <EmployeeHubModule user={currentUser} onDrillDown={handleDrillDown} />}
+2756: {activeTab === "Settings" && <SettingsModule onDrillDown={handleDrillDown} />}
+2757: {activeTab === "Clock In / HR" && <ClockInModule user={currentUser} onDrillDown={handleDrillDown} />}
+2758: {activeTab === "OEM Incentives" && <OEMModule onDrillDown={handleDrillDown} />}
+2759: {activeTab === "Marketing" && <MarketingModule onDrillDown={handleDrillDown} />}

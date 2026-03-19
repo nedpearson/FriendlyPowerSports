@@ -1,0 +1,49 @@
+
+> dealercommand@0.0.0 build
+> vite build
+
+[36mvite v5.4.21 [32mbuilding for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 17 modules transformed.
+x Build failed in 169ms
+error during build:
+[vite:esbuild] Transform failed with 3 errors:
+C:/dev/github/business/FriendlyPowerSports/src/App.jsx:651:6: ERROR: The symbol "InventoryModule" has already been declared
+C:/dev/github/business/FriendlyPowerSports/src/App.jsx:906:6: ERROR: The symbol "ServicePartsModule" has already been declared
+C:/dev/github/business/FriendlyPowerSports/src/App.jsx:1048:6: ERROR: The symbol "PayrollModule" has already been declared
+file: C:/dev/github/business/FriendlyPowerSports/src/App.jsx:651:6
+
+The symbol "InventoryModule" has already been declared
+649|  
+650|  
+651|  const InventoryModule = ({ onDrillDown }) => {
+   |        ^
+652|    const [searchTerm, setSearchTerm] = useState('');
+653|    const [filterBrand, setFilterBrand] = useState('All');
+
+The symbol "ServicePartsModule" has already been declared
+904|  };
+905|  
+906|  const ServicePartsModule = ({ onDrillDown }) => {
+   |        ^
+907|    const serviceRecs = RecommendationService.fetchPending().filter(r => r.agentId === 'ag_service_advisor').slice(0, 1);
+908|    const serviceInsights = serviceRecs.length > 0 ? serviceRecs.map(rec => ({
+
+The symbol "PayrollModule" has already been declared
+1046|  };
+1047|  
+1048|  const PayrollModule = ({ onDrillDown }) => {
+   |        ^
+1049|    return (
+1050|      <div className="space-y-6">
+
+    at failureErrorWithLog (C:\dev\github\business\FriendlyPowerSports\node_modules\esbuild\lib\main.js:1472:15)
+    at C:\dev\github\business\FriendlyPowerSports\node_modules\esbuild\lib\main.js:755:50
+    at responseCallbacks.<computed> (C:\dev\github\business\FriendlyPowerSports\node_modules\esbuild\lib\main.js:622:9)
+    at handleIncomingPacket (C:\dev\github\business\FriendlyPowerSports\node_modules\esbuild\lib\main.js:677:12)
+    at Socket.readFromStdout (C:\dev\github\business\FriendlyPowerSports\node_modules\esbuild\lib\main.js:600:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:563:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+    at Readable.push (node:internal/streams/readable:394:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)

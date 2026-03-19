@@ -2,13 +2,13 @@ import React, { useState, useMemo } from 'react';
 import { 
   Settings, Users, Building2, Briefcase, DollarSign, Activity, 
   ShieldCheck, Wrench, Search, Plus, Save, Bell, CheckCircle2,
-  XCircle, Filter, FileText, ChevronRight, Lock, Trash2
+  XCircle, Filter, FileText, ChevronRight, Lock, Trash2, BrainCircuit
 } from 'lucide-react';
 import { DrillDownValue } from './DrillDownValue';
 
 // Import the existing mock data purely for reads so we don't break existing App state
 import { 
-  LOCATIONS, EMPLOYEES, DEPARTMENTS, LENDERS, BRANDS, CRM_AUTOMATION_RULES 
+  LOCATIONS, EMPLOYEES, DEPARTMENTS, LENDERS, BRANDS, CRM_AUTOMATION_RULES, AGENT_THRESHOLDS
 } from '../../data/mockDatabase';
 
 const SETTINGS_SECTIONS = [
@@ -17,6 +17,7 @@ const SETTINGS_SECTIONS = [
   { id: 'finance', label: 'Lender & Finance Config', icon: DollarSign },
   { id: 'rules', label: 'Lead & CRM Engine', icon: Activity },
   { id: 'departments', label: 'Department Settings', icon: Briefcase },
+  { id: 'ai_engine', label: 'AI Rules Engine', icon: BrainCircuit },
   { id: 'audit', label: 'Security & Audit Logs', icon: ShieldCheck },
   { id: 'system', label: 'System & Integrations', icon: Wrench },
 ];
@@ -287,6 +288,64 @@ export const SettingsModule = ({ onDrillDown }) => {
     </div>
   );
 
+  // 3.5 AI Engine Settings Configurator
+  const renderAIEngine = () => (
+    <div className="space-y-6 fade-in">
+       <div className="bg-charcoal p-6 rounded border border-border/50">
+         <div className="flex justify-between items-center mb-4 border-b border-border/50 pb-2">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2"><BrainCircuit className="text-gold w-6 h-6"/> AI Copilot Threshold Settings</h2>
+         </div>
+         <p className="text-xs text-text-muted mb-6">Global operating parameters dictating when the AI RecommendationService triggers multi-departmental Action tasks.</p>
+         
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-black p-4 rounded border border-border flex flex-col justify-between">
+               <div>
+                  <div className="text-sm font-bold text-white mb-1">VIP Lead Score Threshold</div>
+                  <div className="text-[10px] text-text-muted mb-3 leading-relaxed">Agent auto-assigns priority and alerts the GM if an unresponded lead has a score above this limit.</div>
+               </div>
+               <div className="flex items-center justify-between mt-4">
+                  <input type="range" min="50" max="99" defaultValue={AGENT_THRESHOLDS.leadVIP} onChange={(e) => { AGENT_THRESHOLDS.leadVIP = Number(e.target.value); setTick(t=>t+1); }} className="w-2/3 accent-gold" />
+                  <span className="text-xl font-bold text-white bg-charcoal px-3 py-1 rounded border border-border">{AGENT_THRESHOLDS.leadVIP}</span>
+               </div>
+            </div>
+
+            <div className="bg-black p-4 rounded border border-border flex flex-col justify-between">
+               <div>
+                  <div className="text-sm font-bold text-white mb-1">Aged Inventory Trigger (Days)</div>
+                  <div className="text-[10px] text-text-muted mb-3 leading-relaxed">Agent detects distressed capital and generates cross-store transfer logic or manager markdown alerts after this many days on ground.</div>
+               </div>
+               <div className="flex items-center justify-between mt-4">
+                  <input type="range" min="30" max="180" defaultValue={AGENT_THRESHOLDS.inventoryAged} onChange={(e) => { AGENT_THRESHOLDS.inventoryAged = Number(e.target.value); setTick(t=>t+1); }} className="w-2/3 accent-gold" />
+                  <span className="text-xl font-bold text-white bg-charcoal px-3 py-1 rounded border border-border">{AGENT_THRESHOLDS.inventoryAged} d</span>
+               </div>
+            </div>
+
+            <div className="bg-black p-4 rounded border border-border flex flex-col justify-between">
+               <div>
+                  <div className="text-sm font-bold text-white mb-1">Service Overdue Trigger (Months)</div>
+                  <div className="text-[10px] text-text-muted mb-3 leading-relaxed">Agent scans CRM metrics for sold units without service ROs and pushes retention campaign tasks.</div>
+               </div>
+               <div className="flex items-center justify-between mt-4">
+                  <input type="range" min="6" max="36" defaultValue={AGENT_THRESHOLDS.serviceOverdue} onChange={(e) => { AGENT_THRESHOLDS.serviceOverdue = Number(e.target.value); setTick(t=>t+1); }} className="w-2/3 accent-gold" />
+                  <span className="text-xl font-bold text-white bg-charcoal px-3 py-1 rounded border border-border">{AGENT_THRESHOLDS.serviceOverdue} m</span>
+               </div>
+            </div>
+
+            <div className="bg-black p-4 rounded border border-border flex flex-col justify-between">
+               <div>
+                  <div className="text-sm font-bold text-white mb-1">Slingshot Discount Max (%)</div>
+                  <div className="text-[10px] text-text-muted mb-3 leading-relaxed">The maximum variance from MSRP allowed by Deal Desk Simulator before requiring Finance Director override.</div>
+               </div>
+               <div className="flex items-center justify-between mt-4">
+                  <input type="range" min="0" max="30" defaultValue={AGENT_THRESHOLDS.slingshotDiscount} onChange={(e) => { AGENT_THRESHOLDS.slingshotDiscount = Number(e.target.value); setTick(t=>t+1); }} className="w-2/3 accent-gold" />
+                  <span className="text-xl font-bold text-white bg-charcoal px-3 py-1 rounded border border-border">{AGENT_THRESHOLDS.slingshotDiscount}%</span>
+               </div>
+            </div>
+         </div>
+       </div>
+    </div>
+  );
+
   // 4. Lead & CRM Engine Settings
   const renderLeadEngine = () => (
     <div className="space-y-6 fade-in">
@@ -337,6 +396,7 @@ export const SettingsModule = ({ onDrillDown }) => {
       case 'users': return renderUserManagement();
       case 'finance': return renderFinanceConfig();
       case 'rules': return renderLeadEngine();
+      case 'ai_engine': return renderAIEngine();
       case 'audit': return (
          <div className="flex flex-col items-center justify-center p-20 text-center border border-dashed border-border rounded bg-charcoal">
             <Lock className="w-12 h-12 text-blue-500/50 mb-4" />

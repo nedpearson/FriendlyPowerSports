@@ -8,7 +8,7 @@ import { ActionExecutionService } from '../../agents/services/ActionExecutionSer
 import { AgentMetrics } from '../../agents/audit/AgentMetrics';
 import {
   CheckCircle2, TrendingUp, User, Bike, AlertCircle, Command, Settings,
-  DollarSign, Megaphone, Search, FileBarChart, ChevronRight, TrendingDown, Users as UsersIcon, Clock, Database, BrainCircuit, Wrench, Package, Calculator, Camera, Filter, MapPin
+  DollarSign, Megaphone, Search, FileBarChart, ChevronRight, TrendingDown, Users as UsersIcon, Clock, Database, BrainCircuit, Wrench, Package, Calculator, Camera, Filter, MapPin, Upload
 } from 'lucide-react';
 
 export const DrillDownModal = ({ item, userRole = 'Owner', onClose, onDrillDown }) => {
@@ -444,11 +444,28 @@ const UniversalReportView = ({ item }) => {
 
                 {/* Middle & Right Column - Timeline */}
                 <div className="lg:col-span-2 space-y-6">
-                   <div className="flex gap-2 border-b border-border pb-4">
-                     <button className="bg-gold text-black px-4 py-2 rounded text-xs font-bold shadow hover:bg-gold-light transition-colors" onClick={() => onDrillDown('Action', {name: 'Send SMS', message: 'Opening SMS composer...'})}>Send SMS / Email</button>
-                     <button className="bg-panel border border-border text-white px-4 py-2 rounded text-xs font-bold hover:bg-black transition-colors" onClick={() => onDrillDown('Action', {name: 'Log Call', message: 'Opening call log overlay...'})}>Log Call</button>
-                     <button className="bg-charcoal border border-border text-white px-4 py-2 rounded text-xs font-bold hover:border-gold transition-colors ml-auto flex items-center gap-1" onClick={() => onDrillDown('Quote_Workbench', {customerId: crmData.customer.id})}><FileBarChart className="w-3 h-3"/> Build Quote</button>
-                   </div>
+                   
+                    {/* CRM Quick-Log Form */}
+                    <div className="bg-charcoal border border-border rounded p-5 shadow-inner relative overflow-hidden group mb-6">
+                       <div className="absolute top-0 right-0 w-32 h-32 bg-gold/5 rounded-full -translate-y-16 translate-x-16 blur-2xl group-hover:bg-gold/10 transition-colors"></div>
+                       <h4 className="text-gold text-xs uppercase tracking-widest font-mono mb-4 flex items-center gap-2 border-b border-border/50 pb-2"><CheckCircle2 className="w-4 h-4" /> Quick-Log Interaction</h4>
+                       <div className="flex flex-col md:flex-row gap-3 relative z-10">
+                          <select className="bg-black border border-border text-white px-3 py-2.5 rounded text-xs focus:border-gold outline-none w-full md:w-auto font-bold tracking-wide cursor-pointer text-center md:text-left">
+                             <option>Outbound Call</option>
+                             <option>Inbound Call</option>
+                             <option>Sent Text Message</option>
+                             <option>Showroom Visit (Walk-In)</option>
+                             <option>Sent Email</option>
+                          </select>
+                          <input type="text" placeholder="Interaction notes..." className="flex-1 bg-black border border-border text-white px-3 py-2.5 rounded text-xs focus:border-gold outline-none placeholder:text-text-muted/50" />
+                          <button className="bg-gold hover:bg-gold-light text-black font-bold px-6 py-2.5 rounded shadow-[0_0_15px_rgba(201,168,76,0.2)] text-xs uppercase tracking-wider transition-all whitespace-nowrap" onClick={(e) => { e.stopPropagation(); onDrillDown('Action', { name: "Save Activity Log", message: "Writing interaction strictly to Customer Timeline." }); }}>Log Activity</button>
+                       </div>
+                    </div>
+
+                    <div className="flex gap-2 border-b border-border pb-4 mt-2">
+                      <button className="bg-panel border border-border text-white px-4 py-2 rounded text-xs font-bold hover:bg-black transition-colors" onClick={() => onDrillDown('Action', {name: 'Send SMS', message: 'Opening SMS composer...'})}>Send SMS / Email</button>
+                      <button className="bg-charcoal border border-border text-white px-4 py-2 rounded text-xs font-bold hover:border-gold transition-colors ml-auto flex items-center gap-1" onClick={() => onDrillDown('Quote_Workbench', {customerId: crmData.customer.id})}><FileBarChart className="w-3 h-3"/> Build Quote</button>
+                    </div>
 
                    <div className="bg-charcoal border border-border rounded p-6 h-[400px] overflow-y-auto subtle-scrollbar relative">
                       <h4 className="text-white font-bold mb-6 flex items-center gap-2 sticky top-0 bg-charcoal pb-4 border-b border-border z-10"><Clock className="w-4 h-4 text-gold"/> Activity Timeline</h4>
@@ -865,32 +882,425 @@ const UniversalReportView = ({ item }) => {
                        </div>
                     </div>
                     
-                    <div className="text-white text-sm mb-4">
-                       {item.data.message || `EXECUTED PROTOCOL: ${(item.data.name || item.data.title || 'SYS_ACTION').toUpperCase()}`}
-                    </div>
+                     {item.data.message && typeof item.data.message === 'string' && !item.data.message.trim().startsWith('{') && !item.data.message.trim().startsWith('[') && (
+                        <div className="text-white text-sm mb-4">
+                           {item.data.message}
+                        </div>
+                     )}
                     
-                    <div className="mt-4 pt-4 border-t border-border/30">
-                       <div className="text-[10px] uppercase text-gold tracking-widest mb-3">Retrieved Context Payload:</div>
-                       <div className="bg-charcoal border border-border rounded p-3 text-xs overflow-auto max-h-48 custom-scrollbar">
-                          <pre className="text-text-muted font-mono leading-relaxed">
-                             {JSON.stringify(
-                                item.data.records && (Array.isArray(item.data.records) ? item.data.records.length > 0 : Object.keys(item.data.records).length > 0)
-                                  ? (Array.isArray(item.data.records) ? item.data.records.slice(0, 15) : item.data.records)
-                                  : {
-                                      status: "200_OK",
-                                      transactionId: `TXN-${Math.floor(Math.random() * 90000) + 10000}`,
-                                      timestamp: new Date().toISOString(),
-                                      action: item.data.name || item.data.title || "SYSTEM_DISPATCH",
-                                      matrix_trace: "No additional payload properties supplied.",
-                                      context_bind: "Anonymous parameters safely ignored."
-                                    }, null, 2
-                             )}
-                          </pre>
-                          {Array.isArray(item.data.records) && item.data.records.length > 15 && <div className="text-gold mt-2">...and {item.data.records.length - 15} more records hidden from console view.</div>}
-                       </div>
-                    </div>
-                 </div>
-               )}
+                                         <div className="mt-4 pt-4 border-t border-border/30">
+                        {(() => {
+                           const actionStr = (item.data.name || item.data.title || '').toLowerCase();
+                           
+                           if (actionStr.includes('reassign leads') || actionStr.includes('round robin')) {
+                              return (
+                                 <div className="space-y-4">
+                                    <h4 className="text-gold text-xs font-mono uppercase tracking-widest flex items-center gap-2 mb-3"><UsersIcon className="w-4 h-4" /> Lead Redistribution Matrix</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                       <div className="bg-charcoal p-4 rounded border border-border">
+                                          <div className="text-[10px] text-text-muted uppercase tracking-widest mb-2 font-mono">Origin Queue</div>
+                                          <div className="flex justify-between items-center bg-black/50 p-2 rounded border border-border/50 mb-2 font-mono text-xs">
+                                             <span className="text-white">Alex (BDC)</span>
+                                             <span className="text-red-500">-8 Leads</span>
+                                          </div>
+                                          <div className="flex justify-between items-center bg-black/50 p-2 rounded border border-border/50 font-mono text-xs">
+                                             <span className="text-white">System Pool</span>
+                                             <span className="text-red-500">-3 Leads</span>
+                                          </div>
+                                       </div>
+                                       <div className="bg-charcoal p-4 rounded border border-border">
+                                          <div className="text-[10px] text-text-muted uppercase tracking-widest mb-2 font-mono">Destination Round Robin</div>
+                                          <div className="flex justify-between items-center bg-black/50 p-2 rounded border border-border/50 mb-2 font-mono text-xs">
+                                             <span className="text-white">Sarah (Floor)</span>
+                                             <span className="text-green-500">+4 Leads</span>
+                                          </div>
+                                          <div className="flex justify-between items-center bg-black/50 p-2 rounded border border-border/50 mb-2 font-mono text-xs">
+                                             <span className="text-white">Marcus (Floor)</span>
+                                             <span className="text-green-500">+4 Leads</span>
+                                          </div>
+                                          <div className="flex justify-between items-center bg-black/50 p-2 rounded border border-border/50 font-mono text-xs">
+                                             <span className="text-white">Taylor (BDC)</span>
+                                             <span className="text-green-500">+3 Leads</span>
+                                          </div>
+                                       </div>
+                                    </div>
+                                    <div className="bg-blue-900/10 border border-blue-500/30 p-3 rounded text-xs text-blue-300">
+                                       <strong>AI Routing Active:</strong> Leads were dynamically re-assigned according to past closing ratios within the ATV/Heavyweight segments. Est. Conversion Uplift: <span className="text-green-500 font-bold">+14%</span>.
+                                    </div>
+                                 </div>
+                              );
+                           }
+
+                           if (actionStr.includes('markdown')) {
+                              return (
+                                 <div className="space-y-4">
+                                    <h4 className="text-red-500 text-xs font-mono uppercase tracking-widest flex items-center gap-2 mb-3"><TrendingDown className="w-4 h-4" /> Markdown Economics</h4>
+                                    <div className="grid grid-cols-3 gap-3">
+                                       <div className="bg-charcoal p-3 rounded border border-border text-center">
+                                          <div className="text-[10px] text-text-muted uppercase tracking-widest mb-1">Units Affected</div>
+                                          <div className="text-2xl font-playfair text-white">8</div>
+                                       </div>
+                                       <div className="bg-charcoal p-3 rounded border border-border text-center">
+                                          <div className="text-[10px] text-text-muted uppercase tracking-widest mb-1">Price Adjust</div>
+                                          <div className="text-2xl font-playfair text-red-500">-$500/ea</div>
+                                       </div>
+                                       <div className="bg-charcoal p-3 rounded border border-border text-center">
+                                          <div className="text-[10px] text-text-muted uppercase tracking-widest mb-1">Margin Hit</div>
+                                          <div className="text-2xl font-playfair text-amber-500">-$4,000</div>
+                                       </div>
+                                    </div>
+                                    <div className="bg-black p-4 rounded border border-border">
+                                       <div className="flex justify-between items-center border-b border-border/50 pb-2 mb-2">
+                                          <span className="text-xs font-bold text-white">Projected FP Savings (30d)</span>
+                                          <span className="text-sm font-bold text-green-500">+$2,560</span>
+                                       </div>
+                                       <div className="flex justify-between items-center">
+                                          <span className="text-xs font-bold text-white">Net Revenue Impact</span>
+                                          <span className="text-sm font-bold text-red-500">-$1,440</span>
+                                       </div>
+                                    </div>
+                                    <div className="bg-green-900/10 border border-green-500/30 p-3 rounded text-xs text-green-400">
+                                       <strong>Syndication Active:</strong> New pricing automatically pushed via API to CycleTrader, Facebook Marketplace, and Dealer Website. Sync completion estimated in 3 minutes.
+                                    </div>
+                                 </div>
+                              );
+                           }
+
+                           if (actionStr.includes('email blast') || actionStr.includes('sms')) {
+                              return (
+                                 <div className="space-y-4">
+                                    <h4 className="text-blue-500 text-xs font-mono uppercase tracking-widest flex items-center gap-2 mb-3"><Megaphone className="w-4 h-4" /> Communication Audience Segment</h4>
+                                    
+                                    <div className="flex items-center gap-4 bg-charcoal p-4 rounded border border-border">
+                                       <div className="w-16 h-16 rounded-full border-4 border-blue-500/30 border-t-blue-500 flex items-center justify-center relative">
+                                          <div className="absolute inset-2 bg-blue-500/10 rounded-full"></div>
+                                          <span className="font-bold text-blue-500 text-sm">Target</span>
+                                       </div>
+                                       <div className="flex-1">
+                                          <div className="text-2xl font-playfair text-white mb-1">1,452 Contacts</div>
+                                          <div className="text-xs text-text-muted">High-intent Service customers &gt; 2 yrs since primary unit purchase.</div>
+                                       </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                       <div className="bg-black border border-border p-3 rounded text-center">
+                                          <div className="text-[10px] text-text-muted uppercase tracking-widest mb-1">Est. Open Rate</div>
+                                          <div className="text-xl font-bold text-white">28.4%</div>
+                                       </div>
+                                       <div className="bg-black border border-border p-3 rounded text-center">
+                                          <div className="text-[10px] text-text-muted uppercase tracking-widest mb-1">Projected Leads</div>
+                                          <div className="text-xl font-bold text-gold">45 - 60</div>
+                                       </div>
+                                    </div>
+                                    <div className="bg-charcoal p-4 border border-border rounded">
+                                       <div className="text-[10px] text-text-dim uppercase tracking-widest mb-2 font-mono">Content Preview Snippet</div>
+                                       <div className="text-sm text-text-muted italic border-l-2 border-gold pl-3">"We noticed you're bringing your bike in for service soon. Did you know the equity in your current unit could put you on a brand new 2024 model for nearly the same monthly payment? Click here to see your personalized upgrade offers."</div>
+                                    </div>
+                                 </div>
+                              );
+                           }
+
+                           if (actionStr.includes('scan') || actionStr.includes('upload') || actionStr.includes('decode') || actionStr.includes('camera')) {
+                               return (
+                                 <div className="space-y-4">
+                                    <h4 className="text-gold text-xs font-mono uppercase tracking-widest flex items-center gap-2 mb-3"><Camera className="w-4 h-4" /> Action Verification: OCR Connect</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                       <div className="col-span-1 bg-black rounded border border-border flex items-center justify-center p-8 relative overflow-hidden h-40">
+                                          <div className="absolute inset-0 bg-gold/10 bg-cover opacity-50 grayscale blur-[1px]"></div>
+                                          <div className="absolute inset-0 border-2 border-green-500 mix-blend-overlay"></div>
+                                          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-green-500 shadow-[0_0_10px_#22c55e] animate-[bounce_2s_infinite]"></div>
+                                          <span className="relative z-10 text-white font-bold bg-black/80 px-3 py-1 text-xs rounded border border-border backdrop-blur-sm shadow">HOOKED</span>
+                                       </div>
+                                       <div className="col-span-2 bg-charcoal p-4 rounded border border-border space-y-3">
+                                          <div className="text-xs text-text-muted">Awaiting mobile device connection. A secure SMS upload link was dispatched to your registered cell number.</div>
+                                          <div className="bg-black p-2 rounded border border-border text-[10px] text-green-500 flex items-center gap-2">
+                                             <CheckCircle2 className="w-3 h-3" /> Secure WebSocket Established
+                                          </div>
+                                          <div className="bg-black p-2 rounded border border-border text-[10px] text-text-dim flex items-center gap-2">
+                                             Waiting for camera payload...
+                                          </div>
+                                       </div>
+                                    </div>
+                                 </div>
+                               );
+                           }
+
+                           if (actionStr.includes('unapproved punches') || actionStr.includes('timesheet')) {
+                              return (
+                                 <div className="space-y-4">
+                                    <h4 className="text-gold text-xs font-mono uppercase tracking-widest flex items-center gap-2 mb-3"><Clock className="w-4 h-4" /> HR Timesheet Exception Ledger</h4>
+                                    <div className="bg-black rounded border border-border overflow-hidden">
+                                       <table className="w-full text-left text-xs">
+                                          <thead className="bg-charcoal text-[10px] font-mono tracking-widest uppercase text-text-muted border-b border-border">
+                                             <tr>
+                                                <th className="p-3">Employee</th>
+                                                <th className="p-3">Date</th>
+                                                <th className="p-3">Exception Type</th>
+                                                <th className="p-3">Hrs</th>
+                                             </tr>
+                                          </thead>
+                                          <tbody className="text-white divide-y divide-border/50">
+                                             <tr className="hover:bg-charcoal transition-colors">
+                                                <td className="p-3 font-bold">Dave Mustaine</td>
+                                                <td className="p-3 text-text-muted">Mar 18</td>
+                                                <td className="p-3"><span className="text-amber-500 bg-amber-900/20 px-2 py-0.5 rounded border border-amber-500/30">Missing Clock-Out</span></td>
+                                                <td className="p-3">12.5</td>
+                                             </tr>
+                                             <tr className="hover:bg-charcoal transition-colors">
+                                                <td className="p-3 font-bold">Lars Ulrich</td>
+                                                <td className="p-3 text-text-muted">Mar 17</td>
+                                                <td className="p-3"><span className="text-amber-500 bg-amber-900/20 px-2 py-0.5 rounded border border-amber-500/30">Unapproved OT</span></td>
+                                                <td className="p-3">9.0</td>
+                                             </tr>
+                                          </tbody>
+                                       </table>
+                                    </div>
+                                    <div className="flex gap-4">
+                                       <div className="bg-charcoal p-3 rounded border border-border flex-1 border-l-2 border-l-red-500">
+                                          <div className="text-[10px] text-text-muted uppercase tracking-widest mb-1">Overtime Risk</div>
+                                          <div className="text-sm font-bold text-white">$450.00 / wk</div>
+                                       </div>
+                                       <div className="bg-charcoal p-3 rounded border border-border flex-1 border-l-2 border-l-green-500">
+                                          <div className="text-[10px] text-text-muted uppercase tracking-widest mb-1">Clear Punches</div>
+                                          <div className="text-sm font-bold text-white">42 Regular</div>
+                                       </div>
+                                    </div>
+                                 </div>
+                              );
+                           }
+
+                           if (actionStr.includes('audit global') || actionStr.includes('financial')) {
+                              return (
+                                 <div className="space-y-4">
+                                    <h4 className="text-gold text-xs font-mono uppercase tracking-widest flex items-center gap-2 mb-3"><DollarSign className="w-4 h-4" /> Global Treasury & Exposure Matrix</h4>
+                                    
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                       <div className="bg-charcoal border border-border rounded p-3 text-center">
+                                          <div className="text-[10px] text-text-muted font-mono uppercase tracking-widest mb-1 mt-1">Total CIT</div>
+                                          <div className="text-xl font-bold text-green-500">$1,854,200</div>
+                                       </div>
+                                       <div className="bg-charcoal border border-border rounded p-3 text-center">
+                                          <div className="text-[10px] text-text-muted font-mono uppercase tracking-widest mb-1 mt-1">Floorplan Bal</div>
+                                          <div className="text-xl font-bold text-red-500">$3,420,000</div>
+                                       </div>
+                                       <div className="bg-charcoal border border-border rounded p-3 text-center">
+                                          <div className="text-[10px] text-text-muted font-mono uppercase tracking-widest mb-1 mt-1">Operating Cash</div>
+                                          <div className="text-xl font-bold text-gold">$850,000</div>
+                                       </div>
+                                       <div className="bg-charcoal border border-border rounded p-3 text-center">
+                                          <div className="text-[10px] text-text-muted font-mono uppercase tracking-widest mb-1 mt-1">Leverage Ratio</div>
+                                          <div className="text-xl font-bold text-white">1.14x</div>
+                                       </div>
+                                    </div>
+                                    
+                                    <div className="bg-black rounded border border-border p-4">
+                                       <div className="flex justify-between items-center text-xs mb-4 border-b border-border/50 pb-2">
+                                          <span className="text-white font-bold uppercase tracking-widest font-mono">Store Capital Allocations</span>
+                                          <span className="text-text-muted">Trailing 30 Days</span>
+                                       </div>
+                                       <div className="space-y-4">
+                                          <div>
+                                             <div className="flex justify-between text-xs mb-1">
+                                                <span className="text-white">Baton Rouge (Main)</span>
+                                                <span className="text-text-muted">$2.1M Exposure</span>
+                                             </div>
+                                             <div className="w-full h-1.5 bg-charcoal rounded-full overflow-hidden flex">
+                                                <div className="h-full bg-red-500 w-[60%]"></div>
+                                                <div className="h-full bg-green-500 w-[40%]"></div>
+                                             </div>
+                                          </div>
+                                          <div>
+                                             <div className="flex justify-between text-xs mb-1">
+                                                <span className="text-white">Slidell (Expansion)</span>
+                                                <span className="text-text-muted">$1.3M Exposure</span>
+                                             </div>
+                                             <div className="w-full h-1.5 bg-charcoal rounded-full overflow-hidden flex">
+                                                <div className="h-full bg-red-500 w-[80%]"></div>
+                                                <div className="h-full bg-green-500 w-[20%]"></div>
+                                             </div>
+                                          </div>
+                                       </div>
+                                    </div>
+                                 </div>
+                              );
+                           }
+
+                           if (actionStr.includes('ai action plan') || actionStr.includes('strategy')) {
+                              return (
+                                 <div className="space-y-4">
+                                    <h4 className="text-gold text-xs font-mono uppercase tracking-widest flex items-center gap-2 mb-3"><BrainCircuit className="w-4 h-4" /> AI Synthesized Action Strategy</h4>
+                                    
+                                    <div className="bg-black border border-border rounded-lg relative overflow-hidden">
+                                       <div className="absolute top-0 right-0 p-4 opacity-5 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-gold via-transparent to-transparent h-full w-full pointer-events-none"></div>
+                                       
+                                       <div className="p-4 border-b border-border flex gap-4 items-center">
+                                          <div className="w-12 h-12 rounded-full border border-gold flex items-center justify-center bg-gold/10 text-gold shadow-[0_0_15px_rgba(201,168,76,0.3)] shrink-0">
+                                            <TrendingUp className="w-6 h-6" />
+                                          </div>
+                                          <div>
+                                             <div className="text-sm font-bold text-white">Aggressive Margin Preservation Campaign</div>
+                                             <div className="text-[10px] text-text-muted mt-0.5">Confidence Score: <span className="text-green-500">94.2%</span> — Execution Time: Immediate</div>
+                                          </div>
+                                       </div>
+                                       
+                                       <div className="p-4 space-y-4 relative z-10 text-xs text-text-muted">
+                                          <div className="flex gap-3">
+                                             <div className="bg-charcoal px-2 py-0.5 rounded border border-border text-white font-mono opacity-50 shrink-0 h-max mt-0.5">P1</div>
+                                             <div>
+                                                <strong className="text-white">Shift F&I Penetration Rules</strong>
+                                                <p className="mt-1 leading-relaxed">Require Service Contracts on all units &gt; 5 years old. The AI identified a 40% margin leak on older units without warranty attach.</p>
+                                             </div>
+                                          </div>
+                                          <div className="flex gap-3">
+                                             <div className="bg-charcoal px-2 py-0.5 rounded border border-border text-white font-mono opacity-50 shrink-0 h-max mt-0.5">P2</div>
+                                             <div>
+                                                <strong className="text-white">Relocate Stale Inventory</strong>
+                                                <p className="mt-1 leading-relaxed">Transfer 5 Heavyweight ATVs from Slidell to Baton Rouge. Demographic history predicts a turn within 14 days at the main location.</p>
+                                             </div>
+                                          </div>
+                                       </div>
+                                    </div>
+                                 </div>
+                              );
+                           }
+
+                           if (actionStr.includes('edit') || actionStr.includes('update')) {
+                              return (
+                                 <div className="space-y-4">
+                                    <h4 className="text-gold text-xs font-mono uppercase tracking-widest flex items-center gap-2 mb-3"><ActivityIcon className="w-4 h-4" /> Secure Record Modification</h4>
+                                    
+                                    <div className="bg-charcoal border border-border p-4 rounded mb-4">
+                                       <div className="text-[10px] text-text-muted uppercase tracking-widest font-mono mb-2">Field Diff Comparison</div>
+                                       <div className="flex items-center gap-4 text-xs font-mono">
+                                          <div className="flex-1 bg-red-900/10 border border-red-500/30 p-2 rounded text-red-400 line-through">
+                                             Status: "Pending Funding"
+                                          </div>
+                                          <div className="text-text-muted"><ArrowRight className="w-4 h-4" /></div>
+                                          <div className="flex-1 bg-green-900/10 border border-green-500/30 p-2 rounded text-green-400 font-bold">
+                                             Status: "Funded - Closed"
+                                          </div>
+                                       </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-3 text-xs">
+                                       <div className="bg-black p-3 rounded border border-border">
+                                          <span className="text-text-muted block text-[10px] uppercase font-mono mb-1">Authorization</span>
+                                          <span className="text-white font-bold">{item.userRole || 'Admin Manager'}</span>
+                                       </div>
+                                       <div className="bg-black p-3 rounded border border-border">
+                                          <span className="text-text-muted block text-[10px] uppercase font-mono mb-1">Audit Ledger</span>
+                                          <span className="text-green-500 font-bold">Successfully Logged</span>
+                                       </div>
+                                    </div>
+                                 </div>
+                              );
+                           }
+
+                           if (actionStr.includes('call') || actionStr.includes('dial')) {
+                              return (
+                                 <div className="space-y-4">
+                                    <h4 className="text-blue-500 text-xs font-mono uppercase tracking-widest flex items-center gap-2 mb-3"><Phone className="w-4 h-4" /> Active CTI Dialer Connection</h4>
+                                    
+                                    <div className="bg-black rounded border border-border flex items-center justify-between p-6 overflow-hidden relative">
+                                       <div className="absolute inset-x-0 h-1 bg-blue-500/20 bottom-0"><div className="w-full h-full bg-blue-500 animate-[pulse_1s_infinite]"></div></div>
+                                       <div className="flex items-center gap-4 relative z-10">
+                                          <div className="w-12 h-12 rounded-full border border-blue-500 flex items-center justify-center bg-blue-500/10 text-blue-500 animate-pulse">
+                                             <Phone className="w-5 h-5" />
+                                          </div>
+                                          <div>
+                                             <div className="text-white font-bold text-lg mb-1">{actionStr.replace('call ', '').replace(' now', '').toUpperCase() || 'CUSTOMER'}</div>
+                                             <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase">Connecting... 00:03</div>
+                                          </div>
+                                       </div>
+                                       <div className="text-right">
+                                          <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-xs font-bold transition-colors">END CALL</button>
+                                       </div>
+                                    </div>
+
+                                    <div className="bg-charcoal p-4 rounded border border-border">
+                                       <div className="text-[10px] text-gold uppercase tracking-widest font-mono mb-3"><BrainCircuit className="w-3 h-3 inline mr-1" /> AI Generated Talk Track</div>
+                                       <div className="text-xs text-text-muted leading-relaxed border-l-2 border-gold pl-3">
+                                          "Hi, this is Alex from Friendly Powersports. I noticed you just submitted a request for our absolute best price on the 2023 YZF-R7. Because you live 45 miles away, I can actually waive your freight fee today to make the drive worth it. Are you trading in that 2019 Ninja?"
+                                       </div>
+                                    </div>
+                                 </div>
+                              );
+                           }
+
+                           if (actionStr.includes('quote') || actionStr.includes('deal')) {
+                              return (
+                                 <div className="space-y-4">
+                                    <h4 className="text-gold text-xs font-mono uppercase tracking-widest flex items-center gap-2 mb-3"><DollarSign className="w-4 h-4" /> Preliminary Deal Worksheet</h4>
+                                    
+                                    <div className="bg-charcoal border border-border rounded overflow-hidden">
+                                       <div className="grid grid-cols-2 text-xs font-mono">
+                                          <div className="p-3 border-b border-r border-border/50">
+                                             <span className="text-text-muted block text-[10px] mb-1">MSRP / Price</span>
+                                             <span className="text-white font-bold">$14,500.00</span>
+                                          </div>
+                                          <div className="p-3 border-b border-border/50">
+                                             <span className="text-text-muted block text-[10px] mb-1">Trade Allowance</span>
+                                             <span className="text-red-500 font-bold">-$4,200.00</span>
+                                          </div>
+                                          <div className="p-3 border-b border-r border-border/50">
+                                             <span className="text-text-muted block text-[10px] mb-1">Fees & Taxes</span>
+                                             <span className="text-white font-bold">$1,142.50</span>
+                                          </div>
+                                          <div className="p-3 border-b border-border/50">
+                                             <span className="text-text-muted block text-[10px] mb-1">Amount Financed</span>
+                                             <span className="text-gold font-bold text-lg">$11,442.50</span>
+                                          </div>
+                                       </div>
+                                    </div>
+
+                                    <div className="bg-black border border-border rounded p-3 text-center">
+                                       <div className="text-[10px] text-text-muted uppercase tracking-widest mb-2 font-mono">Est Payments (8.99%)</div>
+                                       <div className="flex justify-evenly">
+                                          <div>
+                                             <div className="text-white font-bold text-sm">$365</div>
+                                             <div className="text-[10px] text-text-muted">36mo</div>
+                                          </div>
+                                          <div>
+                                             <div className="text-white font-bold text-sm">$284</div>
+                                             <div className="text-[10px] text-text-muted">48mo</div>
+                                          </div>
+                                          <div>
+                                             <div className="text-gold font-bold text-sm bg-gold/10 px-2 rounded">$236</div>
+                                             <div className="text-[10px] text-gold">60mo</div>
+                                          </div>
+                                       </div>
+                                    </div>
+                                 </div>
+                              );
+                           }
+
+                           return (
+                              <div className="bg-charcoal border border-border rounded p-4 text-xs mt-4">
+                                 <div className="text-[10px] text-text-dim uppercase tracking-widest mb-3 font-mono border-b border-border/50 pb-2"><Database className="w-3 h-3 inline mr-1 text-gold" /> Remote Execution Telemetry</div>
+                                 <div className="space-y-3 font-mono">
+                                    <div className="flex justify-between border-b border-border/50 pb-2">
+                                       <span className="text-text-muted">Result Hash</span>
+                                       <span className="text-green-500">200_OK_SUCCESS</span>
+                                    </div>
+                                    <div className="flex justify-between border-b border-border/50 pb-2">
+                                       <span className="text-text-muted">Query Checksum</span>
+                                       <span className="text-white">TXN-{Math.floor(Math.random() * 900000) + 100000}</span>
+                                    </div>
+                                    <div className="flex justify-between border-b border-border/50 pb-2">
+                                       <span className="text-text-muted">Compute Node</span>
+                                       <span className="text-white">aws-es-cluster-4a</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                       <span className="text-text-muted">Processing Time</span>
+                                       <span className="text-white">142.06ms</span>
+                                    </div>
+                                 </div>
+                              </div>
+                           );
+                        })()}
+                     </div>
+                  </div>
+                )}
             </div>
             <div className="flex gap-4 pt-4 border-t border-border mt-4">
                 <button className="bg-panel hover:bg-black text-white px-6 py-3 rounded text-sm transition-colors flex-1 shadow font-bold border border-border" onClick={onClose}>Acknowledge & Close</button>
@@ -1368,6 +1778,120 @@ const UniversalReportView = ({ item }) => {
          const reportName = item.data.name || item.data.label || 'Data Analysis';
          const isAuditLog = reportName.toLowerCase().includes('log') || reportName.toLowerCase().includes('audit');
          
+         const isMarketing = ['Ad Spend', 'Acquisition', 'Return on Ad Spend', 'Cost Per', 'Marketing', 'Campaigns'].some(t => reportName.includes(t));
+         if (isMarketing) {
+             return (
+               <div className="space-y-6 animate-in zoom-in-95 duration-500">
+                  <div className="flex justify-between items-end border-b border-border pb-4">
+                    <div>
+                       <h3 className="text-3xl font-playfair text-white flex items-center gap-3"><FileBarChart className="w-8 h-8 text-gold"/> {reportName}</h3>
+                       <p className="text-sm text-text-muted mt-2">
+                         Comprehensive cross-channel analytics ledger and performance decomposition.
+                       </p>
+                    </div>
+                    <div className="bg-charcoal border border-border px-4 py-2 rounded text-right flex gap-3">
+                       <div className="flex flex-col">
+                          <span className="text-[10px] tracking-widest text-text-muted font-mono uppercase">Data Integrity</span>
+                          <span className="text-green-500 font-bold text-sm uppercase">100% Synced</span>
+                       </div>
+                       <div className="w-px bg-border my-1"></div>
+                       <div className="flex flex-col">
+                          <span className="text-[10px] tracking-widest text-text-muted font-mono uppercase">Last Index</span>
+                          <span className="text-white font-bold text-sm uppercase">LIVE</span>
+                       </div>
+                    </div>
+                  </div>
+     
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-black border border-border rounded p-4 shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]">
+                       <div className="text-[10px] text-text-muted uppercase tracking-widest font-mono mb-1">Period Variance</div>
+                       <div className="text-2xl font-bold text-green-500">+14.2%</div>
+                       <div className="text-[10px] text-text-dim mt-2 bg-charcoal p-1.5 rounded">Exceeds trailing 90-day average.</div>
+                    </div>
+                    <div className="bg-black border border-border rounded p-4 shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]">
+                       <div className="text-[10px] text-text-muted uppercase tracking-widest font-mono mb-1">Attribution Confidence</div>
+                       <div className="text-2xl font-bold text-white">96.8%</div>
+                       <div className="text-[10px] text-text-dim mt-2 bg-charcoal p-1.5 rounded">First-touch click modeling active.</div>
+                    </div>
+                    <div className="bg-black border border-border rounded p-4 shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]">
+                       <div className="text-[10px] text-text-muted uppercase tracking-widest font-mono mb-1">Anomalies Detected</div>
+                       <div className="text-2xl font-bold text-amber-500">2 Fluxes</div>
+                       <div className="text-[10px] text-text-dim mt-2 bg-charcoal p-1.5 rounded">Weekend bidding inefficiency identified.</div>
+                    </div>
+                    <div className="bg-black border border-gold/50 rounded p-4 shadow-[inset_0_0_20px_rgba(201,168,76,0.1)]">
+                       <div className="text-[10px] text-gold uppercase tracking-widest font-mono mb-1">AI Recommendation</div>
+                       <div className="text-lg font-bold text-white leading-tight">Scale Budget 15%</div>
+                       <div className="text-[10px] text-text-dim mt-2 bg-charcoal p-1.5 rounded border-l-2 border-gold mx-[-2px]">Projected ROI delta: +320%</div>
+                    </div>
+                  </div>
+     
+                  <div className="bg-charcoal border border-border rounded-lg overflow-hidden">
+                     <div className="p-3 border-b border-border bg-black/50 text-xs font-mono uppercase tracking-widest text-text-muted flex justify-between">
+                        <span>Constituent Data Stream ({reportName})</span>
+                        <span className="flex gap-2">
+                           <button className="hover:text-gold transition-colors">Export CSV</button>
+                        </span>
+                     </div>
+                     <div className="overflow-x-auto subtle-scrollbar">
+                        <table className="w-full text-left border-collapse text-sm min-w-max">
+                           <thead>
+                              <tr className="border-b border-border/50 text-[10px] uppercase tracking-widest text-text-muted bg-black">
+                                 <th className="p-3 font-medium">Dimension</th>
+                                 <th className="p-3 font-medium text-right">Volume</th>
+                                 <th className="p-3 font-medium text-right">Cost Center</th>
+                                 <th className="p-3 font-medium text-right">MoM Delta</th>
+                                 <th className="p-3 font-medium">AI Audit Tracket</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              <tr className="border-b border-border/20 hover:bg-black transition-colors">
+                                 <td className="p-3 text-white font-medium">Google Performance Max</td>
+                                 <td className="p-3 text-right text-text-muted">14,392 Clicks</td>
+                                 <td className="p-3 text-right font-mono text-gold">$5,150.00</td>
+                                 <td className="p-3 text-right text-green-500">+4.2%</td>
+                                 <td className="p-3 text-[10px]"><span className="bg-green-900/30 text-green-400 px-2 py-0.5 rounded border border-green-500/20">Optimized</span></td>
+                              </tr>
+                              <tr className="border-b border-border/20 hover:bg-black transition-colors">
+                                 <td className="p-3 text-white font-medium">Meta Audience Network</td>
+                                 <td className="p-3 text-right text-text-muted">21,044 Clicks</td>
+                                 <td className="p-3 text-right font-mono text-gold">$3,650.00</td>
+                                 <td className="p-3 text-right text-red-400">-1.8%</td>
+                                 <td className="p-3 text-[10px]"><span className="bg-amber-900/30 text-amber-500 px-2 py-0.5 rounded border border-amber-500/20">Saturating</span></td>
+                              </tr>
+                              <tr className="border-b border-border/20 hover:bg-black transition-colors">
+                                 <td className="p-3 text-white font-medium">Organic SEO (Local)</td>
+                                 <td className="p-3 text-right text-text-muted">8,401 Sessions</td>
+                                 <td className="p-3 text-right font-mono text-gold">$0.00</td>
+                                 <td className="p-3 text-right text-green-500">+12.4%</td>
+                                 <td className="p-3 text-[10px]"><span className="bg-green-900/30 text-green-400 px-2 py-0.5 rounded border border-green-500/20">Scaling</span></td>
+                              </tr>
+                              <tr className="hover:bg-black transition-colors">
+                                 <td className="p-3 text-white font-medium">Email / SMS Lifecycle</td>
+                                 <td className="p-3 text-right text-text-muted">4,112 Opens</td>
+                                 <td className="p-3 text-right font-mono text-gold">$140.00</td>
+                                 <td className="p-3 text-right text-green-500">+8.9%</td>
+                                 <td className="p-3 text-[10px]"><span className="bg-green-900/30 text-green-400 px-2 py-0.5 rounded border border-green-500/20">Highly Engaged</span></td>
+                              </tr>
+                           </tbody>
+                        </table>
+                     </div>
+                  </div>
+                  
+                  <div className="bg-charcoal border border-border rounded-lg p-5">
+                     <h4 className="text-sm font-bold text-white mb-4 uppercase tracking-widest border-b border-border/50 pb-2">Diagnostic Data Point Array</h4>
+                     <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                        {['CAC Offset', 'LTV Decay', 'Churn Ratio', 'Click Saturation', 'ROAS Trailing'].map(metric => (
+                           <div key={metric} className="bg-black border border-border p-3 text-center rounded hover:border-gold transition-colors cursor-pointer" onClick={() => onDrillDown('Action', { name: 'Deep Audit ' + metric })}>
+                              <div className="text-[10px] tracking-widest uppercase text-text-muted font-mono mb-1">{metric}</div>
+                              <div className="text-white font-bold text-lg">{(Math.random() * 80 + 10).toFixed(1)}</div>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+               </div>
+             );
+         }
+         
          // Generate robust mock records for Audit logs or synthesize data for bare KPIs
          let displayRecords = (item.data.records && item.data.records.length > 0) 
             ? item.data.records 
@@ -1405,95 +1929,6 @@ const UniversalReportView = ({ item }) => {
              <GenericDataTable data={displayRecords} tableName={reportName} />
            </div>
          );
-      case 'Employee': {
-        const emp = getEmployeeData(item.data?.id || item.data?.name || item.data);
-        if (!emp) return <div className="p-8 text-white">Employee details not found.</div>;
-        return (
-          <div className="space-y-6">
-             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
-                <div className="flex items-center gap-3"><UsersIcon className="w-7 h-7" /> Employee 360: {emp.name}</div>
-                <div className="flex gap-2">
-                  <span className="text-[10px] font-mono bg-panel border border-border px-2 py-1 rounded text-text-muted">{emp.role}</span>
-                  <span className="text-[10px] font-mono bg-green-900/10 border border-green-500/30 px-2 py-1 rounded text-green-500">ACTIVE</span>
-                </div>
-             </h3>
-             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-charcoal p-4 rounded border border-border">
-                   <div className="text-[10px] uppercase text-text-muted tracking-widest font-mono mb-2">Close Rate MTD</div>
-                   <div className="text-3xl font-playfair text-white">{emp.performance?.closeRate || 0}%</div>
-                </div>
-                <div className="bg-charcoal p-4 rounded border border-border">
-                   <div className="text-[10px] uppercase text-text-muted tracking-widest font-mono mb-2">Avg Front Gross</div>
-                   <div className="text-3xl font-playfair text-green-400">${emp.performance?.avgFrontGross || 0}</div>
-                </div>
-                <div className="bg-charcoal p-4 rounded border border-border">
-                   <div className="text-[10px] uppercase text-text-muted tracking-widest font-mono mb-2">Avg Back Gross</div>
-                   <div className="text-3xl font-playfair text-gold">${emp.performance?.avgBackGross || 0}</div>
-                </div>
-                <div className="bg-charcoal p-4 border border-gold-dim rounded shadow-[0_0_15px_rgba(201,168,76,0.1)] relative overflow-hidden">
-                   <div className="absolute top-0 right-0 w-16 h-16 bg-gold/10 rounded-full blur-xl translate-x-4 -translate-y-4"></div>
-                   <div className="text-[10px] uppercase text-gold tracking-widest font-mono mb-2 flex items-center gap-1"><BrainCircuit className="w-3 h-3"/> AI Adoption Rate</div>
-                   <div className="text-3xl font-playfair text-white relative z-10">{emp.performance?.aiAdoptionRate || 0}%</div>
-                </div>
-             </div>
-             
-             <div className="bg-black p-6 rounded-lg border border-border shadow-inner">
-                 <strong className="text-white text-[10px] uppercase tracking-[0.15em] mb-4 block border-b border-border/50 pb-2 font-mono flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" /> Active System Rules & Interventions
-                 </strong>
-                 <div className="space-y-2">
-                    <button className="w-full text-left bg-panel hover:bg-black border border-border px-4 py-3 rounded text-sm transition-colors text-white font-bold flex justify-between items-center group" onClick={() => onDrillDown('Action', { name: `View Active Task Queue for ${emp.name}`, message: `Fetching task execution queue...` })}>
-                      <span>View Open Agent-Assigned Tasks</span>
-                      <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-gold transition-colors" />
-                    </button>
-                    <button className="w-full text-left bg-panel hover:bg-black border border-border px-4 py-3 rounded text-sm transition-colors text-white font-bold flex justify-between items-center group" onClick={() => onDrillDown('Action', { name: `Execute Training/Coaching Module`, message: `Triggering AI coaching module for ${emp.name}...` })}>
-                      <span>Dispatch AI Coaching / Training Payload</span>
-                      <BrainCircuit className="w-4 h-4 text-text-muted group-hover:text-gold transition-colors" />
-                    </button>
-                 </div>
-             </div>
-          </div>
-        );
-      }
-      
-      case 'Lender': {
-        const lender = getLenderData(item.data?.name || item.data);
-        if (!lender) return <div className="p-8 text-white">Lender details not found.</div>;
-        return (
-          <div className="space-y-6">
-             <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
-                <div className="flex items-center gap-3"><DollarSign className="w-7 h-7" /> Bank Profile: {lender.name}</div>
-                <div className="flex gap-2">
-                  <span className="text-[10px] font-mono bg-panel border border-border px-2 py-1 rounded text-text-muted">{lender.type}</span>
-                </div>
-             </h3>
-             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="bg-charcoal p-4 rounded border border-border">
-                   <div className="text-[10px] uppercase text-text-muted tracking-widest font-mono mb-2">Approval Ratio MTD</div>
-                   <div className="text-3xl font-playfair text-white">{lender.metrics?.approvalRatio || 0}%</div>
-                </div>
-                <div className="bg-charcoal p-4 rounded border border-border">
-                   <div className="text-[10px] uppercase text-text-muted tracking-widest font-mono mb-2">Look-To-Book</div>
-                   <div className="text-3xl font-playfair text-white">{lender.metrics?.lookToBook || 0}%</div>
-                </div>
-                <div className="bg-charcoal p-4 rounded border border-border">
-                   <div className="text-[10px] uppercase text-text-muted tracking-widest font-mono mb-2">Avg Funding Speed</div>
-                   <div className="text-3xl font-playfair text-white">{lender.metrics?.avgFundingTimeDays || 0} <span className="text-lg text-text-muted">Days</span></div>
-                </div>
-             </div>
-             <div className="bg-black p-6 border border-gold-dim rounded shadow-[0_0_15px_rgba(201,168,76,0.1)] relative overflow-hidden group">
-                 <div className="absolute inset-0 bg-gradient-to-br from-gold/5 via-transparent to-transparent opacity-100"></div>
-                 <strong className="text-gold text-[10px] uppercase tracking-[0.15em] mb-4 block border-b border-border/50 pb-2 font-mono flex items-center gap-2">
-                    <BrainCircuit className="w-4 h-4 text-gold" /> Advanced F&I Intelligence
-                 </strong>
-                 <p className="text-white text-sm leading-relaxed mb-4 relative z-10">
-                    {lender.metrics?.aiInsight || "No specific insights at this time."}
-                 </p>
-                 <button className="text-[10px] text-gold uppercase tracking-widest border border-gold/30 hover:bg-gold/10 px-3 py-1.5 rounded transition-all font-bold w-max relative z-10" onClick={() => onDrillDown('Action', { name: `View ${lender.name} Tier Sheets` })}>View Program Guidelines →</button>
-             </div>
-          </div>
-        );
-      }
 
       case 'Campaign': {
         const camp = getCampaignData(item.data?.name || item.data);
@@ -1953,6 +2388,145 @@ const UniversalReportView = ({ item }) => {
           </div>
         );
       }
+
+      case 'Appraisal':
+        return (
+          <div className="space-y-6">
+            <h3 className="text-2xl font-playfair text-white border-b border-border pb-3 flex items-center justify-between">
+               <div className="flex items-center gap-3"><Camera className="w-6 h-6 text-gold" /> Driveway Appraisal Utility</div>
+               <span className="text-[10px] font-mono bg-panel border border-border px-2 py-1 rounded text-text-muted">MOBILE VIEW</span>
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+               {/* Left Column - VIN & Details */}
+               <div className="space-y-4">
+                 <div className="bg-charcoal p-4 rounded border border-border">
+                   <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider block mb-2">Scan VIN Barcode</label>
+                   <div className="relative">
+                     <input type="text" placeholder="Enter or Scan 17-digit VIN..." className="w-full bg-black border border-border rounded p-3 text-white focus:border-gold outline-none pl-10 h-10 text-sm" />
+                     <Camera className="w-4 h-4 absolute left-3 top-3.5 text-text-muted" />
+                     <button className="absolute right-1 top-1 bg-gold text-black text-[10px] font-bold px-3 py-1.5 rounded h-8" onClick={() => onDrillDown('Action', {name: "Decoder Error", message: "Simulating NADA Decoder API hit..."})}>DECODE</button>
+                   </div>
+                 </div>
+
+                 <div className="bg-charcoal p-4 rounded border border-border space-y-3">
+                   <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider block mb-1">Make</label>
+                        <select className="w-full bg-black border border-border rounded p-2 text-white outline-none text-sm">
+                           <option>Select...</option><option>Honda</option><option>Yamaha</option><option>Kawasaki</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider block mb-1">Year</label>
+                        <input type="number" placeholder="YYYY" className="w-full bg-black border border-border rounded p-2 text-white outline-none text-sm" />
+                      </div>
+                   </div>
+                   <div>
+                     <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider block mb-1">Model / Trim</label>
+                     <input type="text" placeholder="e.g. YZF-R1M" className="w-full bg-black border border-border rounded p-2 text-white outline-none text-sm" />
+                   </div>
+                   <div>
+                     <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider block mb-1">Odometer (Miles/Hours)</label>
+                     <input type="number" placeholder="0" className="w-full bg-black border border-border rounded p-2 text-white outline-none text-sm" />
+                   </div>
+                 </div>
+               </div>
+
+               {/* Right Column - Media & Action */}
+               <div className="space-y-4">
+                  <div className="bg-charcoal p-4 rounded border border-border">
+                     <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider block mb-2">Condition Visual Walkaround</label>
+                     <div className="grid grid-cols-2 gap-2">
+                        <div className="border border-dashed border-border rounded bg-black h-24 flex flex-col items-center justify-center text-text-muted hover:border-gold transition-colors cursor-pointer" onClick={() => onDrillDown('Action', {name: "Upload", message: "Simulating native iOS/Android camera hook..."})}>
+                           <Camera className="w-5 h-5 mb-1 opacity-50" />
+                           <span className="text-[10px] uppercase font-mono tracking-widest text-text-dim">Left Profile</span>
+                        </div>
+                        <div className="border border-dashed border-border rounded bg-black h-24 flex flex-col items-center justify-center text-text-muted hover:border-gold transition-colors cursor-pointer" onClick={() => onDrillDown('Action', {name: "Upload", message: "Simulating native iOS/Android camera hook..."})}>
+                           <Camera className="w-5 h-5 mb-1 opacity-50" />
+                           <span className="text-[10px] uppercase font-mono tracking-widest text-text-dim">Right Profile</span>
+                        </div>
+                        <div className="border border-dashed border-border rounded bg-black h-24 flex flex-col items-center justify-center text-text-muted hover:border-gold transition-colors cursor-pointer" onClick={() => onDrillDown('Action', {name: "Upload", message: "Simulating native iOS/Android camera hook..."})}>
+                           <Camera className="w-5 h-5 mb-1 opacity-50" />
+                           <span className="text-[10px] uppercase font-mono tracking-widest text-text-dim">Odometer</span>
+                        </div>
+                        <div className="border border-dashed border-border rounded bg-black h-24 flex flex-col items-center justify-center text-text-muted hover:border-gold transition-colors cursor-pointer" onClick={() => onDrillDown('Action', {name: "Upload", message: "Simulating native iOS/Android camera hook..."})}>
+                           <Camera className="w-5 h-5 mb-1 opacity-50" />
+                           <span className="text-[10px] uppercase font-mono tracking-widest text-text-dim">Damage / Scuffs</span>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="bg-black p-4 rounded border border-border">
+                    <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider block mb-2">Appraisal Notes & Damage Report</label>
+                    <textarea rows="3" className="w-full bg-charcoal border border-border rounded p-2 text-white focus:border-gold outline-none resize-none placeholder-text-muted text-sm" placeholder="e.g. Scratched left fairing, needs new rear tire..."></textarea>
+                  </div>
+               </div>
+            </div>
+
+            <div className="pt-4 border-t border-border mt-6">
+              <button 
+                className="w-full bg-gold hover:bg-gold-light text-black py-4 rounded font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(201,168,76,0.3)] flex items-center justify-center gap-2 transition-all" 
+                onClick={() => {
+                   onClose();
+                   onDrillDown('Action', { name: "Submit Appraisal to Desk", message: "Queuing Agent task for Manager ACV Review and integrating trade valuation into Pipeline..." });
+                }}
+              >
+                 <Upload className="w-5 h-5" /> Push to Deal Desk
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'Notification':
+        return (
+          <div className="space-y-6">
+            <h3 className="text-2xl font-playfair text-gold border-b border-border pb-3 flex items-center justify-between">
+              <div className="flex items-center gap-3"><AlertCircle className="w-6 h-6" /> {item.data.name || 'Notifications'}</div>
+              <div className="flex gap-2">
+                 <button className="bg-charcoal px-3 py-1 rounded text-[10px] font-mono tracking-widest uppercase border border-border text-white hover:border-gold transition-colors">Mark All Read</button>
+              </div>
+            </h3>
+
+            <div className="space-y-3 mt-4">
+              {item.data.items && item.data.items.length > 0 ? item.data.items.map(notif => {
+                 let Icon = AlertCircle;
+                 if (notif.icon === 'user') Icon = User;
+                 if (notif.icon === 'check') Icon = CheckCircle2;
+                 if (notif.icon === 'brain') Icon = BrainCircuit;
+                 if (notif.icon === 'clock') Icon = Clock;
+                 if (notif.icon === 'wrench') Icon = Wrench;
+                 
+                 return (
+                   <div key={notif.id} className={`bg-black p-4 rounded border ${notif.unread ? 'border-gold/50 shadow-[0_0_10px_rgba(201,168,76,0.1)]' : 'border-border'} flex gap-4 transition-colors hover:border-gold hover:bg-charcoal cursor-pointer group`}>
+                     <div className="shrink-0 pt-0.5 relative">
+                        <Icon className={`w-5 h-5 ${notif.priority === 'High' ? 'text-red-500' : notif.priority === 'Action' ? 'text-gold' : 'text-text-muted'}`} />
+                     </div>
+                     <div className="flex-1">
+                        <div className="flex justify-between items-start mb-1">
+                           <div className="font-bold text-white text-sm flex items-center gap-2 group-hover:text-gold transition-colors duration-300">
+                              {notif.title}
+                              {notif.unread && <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse"></span>}
+                           </div>
+                           <span className="text-[10px] text-text-muted font-mono tracking-widest uppercase">{notif.time}</span>
+                        </div>
+                        <p className="text-xs text-text-muted leading-relaxed">{notif.desc}</p>
+                     </div>
+                     <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
+                        <ChevronRight className="w-4 h-4 text-gold" />
+                     </div>
+                   </div>
+                 );
+              }) : (
+                 <div className="bg-black p-8 rounded border border-border text-center">
+                    <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-3 opacity-50" />
+                    <div className="text-white font-bold mb-1">You're all caught up!</div>
+                    <div className="text-xs text-text-muted">No pending system notifications to review.</div>
+                 </div>
+              )}
+            </div>
+          </div>
+        );
 
       case 'OEM':
       default:

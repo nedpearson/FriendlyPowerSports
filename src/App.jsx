@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, AreaChart, Area,
   XAxis, YAxis, Tooltip, ResponsiveContainer, Cell
@@ -7,7 +7,7 @@ import {
   LayoutDashboard, TrendingUp, CreditCard, Package, Bike, Wrench,
   Clock, DollarSign, Megaphone, Award, FileBarChart, Users as UsersIcon, Settings,
   Bell, Search, ChevronRight, CheckCircle2, ChevronDown, User, Play, Calendar, AlertCircle, Command,
-  Briefcase, Users, BrainCircuit, TrendingDown, Database, Filter, Zap, Layout, Grid3X3, RefreshCw, Activity, X, MessageSquare, Terminal
+  Briefcase, Users, BrainCircuit, TrendingDown, Database, Filter, Zap, Layout, Grid3X3, RefreshCw, Activity, X, MessageSquare, Terminal, Phone, PhoneCall, PhoneForwarded, MessageSquareText
 } from 'lucide-react';
 
 import {
@@ -27,6 +27,12 @@ import { ReportsModule } from './components/ui/ReportsModule';
 import { FIModule } from './components/ui/FIModule';
 import { SettingsModule } from './components/ui/SettingsModule';
 import { AccountingGLModule } from './components/ui/AccountingGLModule';
+import { OEMModule } from './components/ui/OEMModule';
+import { MarketingModule } from './components/ui/MarketingModule';
+import { InventoryModule } from './components/ui/InventoryModule';
+import { ServicePartsModule } from './components/ui/ServicePartsModule';
+import { PayrollModule } from './components/ui/PayrollModule';
+import { ClockInModule } from './components/ui/ClockInModule';
 import { DateRangePicker } from './components/ui/DateRangePicker';
 import dealerLogo from './assets/logo.png';
 
@@ -37,7 +43,7 @@ import { RecommendationService } from './agents/services/RecommendationService';
 import { AgentMetrics } from './agents/audit/AgentMetrics';
 import { ActionExecutionService } from './agents/services/ActionExecutionService';
 
-import { INVENTORY, DEALS, CUSTOMERS, AGENT_RECOMMENDATIONS, AGENT_ACTIONS, AGENT_AUDIT_LOGS, EMPLOYEES, AGENT_THRESHOLDS } from './data/mockDatabase';
+import { INVENTORY, DEALS, CUSTOMERS, AGENT_RECOMMENDATIONS, AGENT_ACTIONS, AGENT_AUDIT_LOGS, EMPLOYEES, AGENT_THRESHOLDS, LEADS, CRM_OPPORTUNITIES, SERVICE_ORDERS } from './data/mockDatabase';
 import { 
   getKpiStats, getLiveLeads, getTopPerformers, getInventoryAging,
   getAlerts, getReconPipeline, getROBoard, getCRMInbox, getCustomer360Data, getPipelineKanban, getAppointmentsTimeline, getPrequalQueue, getManagerOpportunityBoard, getGlobalInventory
@@ -416,6 +422,67 @@ const DashboardModule = ({ onNavigate, onDrillDown, company, location }) => {
   );
 };
 
+const PipelineKanban = ({ onDrillDown, onNavigate }) => {
+  const stages = ['New', 'Working', 'Demo', 'Quote', 'Stipulations', 'Sold'];
+  
+  return (
+     <div className="bg-charcoal border border-border rounded p-6">
+       <h2 className="text-gold font-playfair text-xl mb-4 flex items-center gap-2">
+         <Layout className="w-5 h-5"/> Active Deal Pipeline
+       </h2>
+       <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-border scrollbar-track-black min-h-[500px]">
+          {stages.map(stage => {
+             const stageLeads = LEADS.filter(l => l.stage === stage);
+             
+             return (
+                <div key={stage} className="bg-black border border-border rounded w-[320px] flex-shrink-0 flex flex-col">
+                   <div className="p-3 border-b border-border/50 font-bold flex justify-between items-center text-sm sticky top-0 bg-black z-10">
+                      <span className="text-white tracking-wide uppercase font-mono">{stage}</span>
+                      <span className="text-text-muted text-xs bg-panel px-2 rounded-full border border-border/50">{stageLeads.length}</span>
+                   </div>
+                   <div className="p-3 space-y-3 flex-1 overflow-y-auto min-h-[100px]">
+                      {stageLeads.length === 0 ? (
+                         <div className="text-center text-text-dim text-xs mt-4 italic font-mono">No deals in {stage}</div>
+                      ) : (
+                         stageLeads.map((lead, idx) => {
+                            const cust = CUSTOMERS.find(c => c.id === lead.customerId);
+                            const opp = CRM_OPPORTUNITIES.find(o => o.leadId === lead.id);
+                            const rep = EMPLOYEES.find(e => e.id === lead.empId);
+                            const frontNet = opp ? opp.estimatedFrontGross || 0 : 0;
+                            const backNet = opp ? opp.estimatedBackGross || 0 : 0;
+                            const totalNet = frontNet + backNet;
+                            
+                            return (
+                               <div key={lead.id} className="bg-charcoal border border-border/70 p-3 rounded cursor-pointer hover:border-gold shadow-md transition-all group" onClick={() => onDrillDown('Action', { name: "Inspect Lead", lead })}>
+                                  <div className="flex justify-between items-start mb-2">
+                                     <div className="font-bold text-white text-sm group-hover:text-gold transition-colors">{cust ? cust.name : 'Unknown Customer'}</div>
+                                     <div className="text-[10px] text-text-muted bg-black px-1.5 rounded">{new Date(lead.createdAt).toLocaleDateString(undefined, {month:'short', day:'numeric'})}</div>
+                                  </div>
+                                  
+                                  <div className="text-xs text-text-muted mb-2 font-mono flex items-center gap-2">
+                                     <span className="text-green-500 font-bold bg-green-500/10 px-1.5 rounded border border-green-500/20">${totalNet.toLocaleString()} GP</span>
+                                     {opp && opp.probPct && <span className="text-[10px]">{opp.probPct}% Ptw</span>}
+                                  </div>
+                                  
+                                  <div className="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
+                                     <div className="text-[10px] text-text-muted font-mono flex items-center gap-1"><User className="w-3 h-3"/> {rep ? rep.name.split(' ')[0] : 'Unassigned'}</div>
+                                     <div className={`text-[9px] px-2 py-0.5 rounded uppercase tracking-widest font-bold ${lead.status === 'Unresponded' ? 'bg-red-500/20 text-red-500 border border-red-500/50' : 'bg-green-500/20 text-green-500 border border-green-500/50'}`}>
+                                        {lead.status}
+                                     </div>
+                                  </div>
+                               </div>
+                            )
+                         })
+                      )}
+                   </div>
+                </div>
+             )
+          })}
+       </div>
+    </div>
+  );
+};
+
 const SalesModule = ({ onDrillDown }) => {
   const [dealDeskUnit, setDealDeskUnit] = useState("V1");
   const [salePrice, setSalePrice] = useState(23500);
@@ -441,20 +508,70 @@ const SalesModule = ({ onDrillDown }) => {
     { type: "opportunity", message: <>A deal penciled by Jake for a 2024 MT-07 has <DrillDownValue value="$0 back-end gross" label="Jack Deal Margin" type="Deal" onDrillDown={onDrillDown} />. Adding GAP and Tire/Wheel brings this deal to standard profitability.</>, actionText: "Review Deal Structure" }
   ];
 
+  const [viewMode, setViewMode] = useState("Pipeline");
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-playfair text-white">Sales & Deal Pipeline</h2>
-        <div className="flex gap-2">
-          <button className="bg-charcoal border border-border px-3 py-1 rounded text-sm text-text-muted hover:text-white" onClick={() => onDrillDown('Action', { name: 'Filter Deals', message: 'Opening advanced filtering modal.' })}>Filter</button>
-          <button className="bg-panel border border-border px-4 py-1 rounded text-sm text-white hover:text-gold transition-colors font-bold flex items-center gap-2" onClick={() => onDrillDown('DealSimulator', { msrp: 18500, invoice: 16000, customer: "Pending Structure" })}>AI Simulator</button>
-          <button className="bg-gold text-black px-4 py-1 rounded text-sm font-bold shadow-[0_0_10px_rgba(201,168,76,0.2)]" onClick={() => onDrillDown('Agent', { intent: 'Cross-Database Deal Synthesis' })}>Write New Deal</button>
+        <div className="flex gap-2 items-center">
+          <div className="flex bg-charcoal border border-border rounded overflow-hidden mr-4">
+             <button className={`px-4 py-1.5 text-xs font-bold transition-colors flex items-center gap-1 ${viewMode === 'Pipeline' ? 'bg-gold text-black' : 'text-text-muted hover:text-white'}`} onClick={() => setViewMode('Pipeline')}><Layout className="w-4 h-4"/> Pipeline</button>
+             <button className={`px-4 py-1.5 text-xs font-bold transition-colors flex items-center gap-1 border-l border-border ${viewMode === 'Up Log' ? 'bg-gold text-black' : 'text-text-muted hover:text-white'}`} onClick={() => setViewMode('Up Log')}><UsersIcon className="w-4 h-4"/> Up Log</button>
+             <button className={`px-4 py-1.5 text-xs font-bold transition-colors flex items-center gap-1 border-l border-border ${viewMode === 'Deal Desk' ? 'bg-gold text-black' : 'text-text-muted hover:text-white'}`} onClick={() => setViewMode('Deal Desk')}><Settings className="w-4 h-4"/> Deal Desk</button>
+          </div>
+          <button className="bg-charcoal border border-border px-3 py-1.5 rounded text-sm text-text-muted hover:text-white" onClick={() => onDrillDown('Action', { name: 'Filter Deals', message: 'Opening advanced filtering modal.' })}>Filter</button>
+          <button className="bg-panel border border-border px-4 py-1.5 rounded text-sm text-white hover:text-gold transition-colors font-bold flex items-center gap-2" onClick={() => onDrillDown('DealSimulator', { msrp: 18500, invoice: 16000, customer: "Pending Structure" })}>AI Simulator</button>
+          <button className="bg-gold text-black px-4 py-1.5 rounded text-sm font-bold shadow-[0_0_10px_rgba(201,168,76,0.2)]" onClick={() => onDrillDown('Agent', { intent: 'Cross-Database Deal Synthesis' })}>Write New Deal</button>
         </div>
       </div>
 
       <AutomatedInsights onDrillDown={onDrillDown} insights={salesInsights} />
 
-      {/* Deal Desk Calculator */}
+      {viewMode === "Pipeline" ? (
+         <div className="animate-in fade-in duration-500"><PipelineKanban onDrillDown={onDrillDown} /></div>
+      ) : viewMode === "Up Log" ? (
+         <div className="animate-in fade-in duration-500 bg-charcoal border border-border rounded overflow-hidden p-6 text-sm">
+            <div className="flex justify-between items-center mb-4">
+               <h2 className="text-xl font-playfair text-gold"><UsersIcon className="w-5 h-5 inline-block mr-2 text-white" /> Live Showroom Up Log</h2>
+               <button className="bg-gold text-black px-4 py-1.5 rounded text-xs font-bold transition-colors" onClick={() => onDrillDown('Action', { name: "Add Up", message: "Logging new walk-in traffic to exact timestamp."})}>+ Log Walk-In</button>
+            </div>
+            <table className="w-full text-left">
+               <thead className="bg-black text-text-muted uppercase tracking-widest text-[10px]">
+                  <tr>
+                     <th className="px-4 py-3">Time In</th>
+                     <th className="px-4 py-3">Customer</th>
+                     <th className="px-4 py-3">Salesperson</th>
+                     <th className="px-4 py-3">Status</th>
+                     <th className="px-4 py-3 text-right">T.O. / Desk</th>
+                  </tr>
+               </thead>
+               <tbody className="divide-y divide-border/50">
+                  <tr className="hover:bg-panel transition-colors cursor-pointer" onClick={() => onDrillDown('Action', {name: "View Up", message: "Opening up parameters for David"})}>
+                     <td className="px-4 py-3 font-mono text-text-muted">08:15 AM</td>
+                     <td className="px-4 py-3 text-white font-bold"><DrillDownValue value="David O." label="CRM Profile" type="CRM_Customer360" onDrillDown={onDrillDown} color="text-white hover:text-gold" /></td>
+                     <td className="px-4 py-3 text-gold"><DrillDownValue value="Jake F." label="Rep Profile" type="Employee" onDrillDown={onDrillDown} color="text-gold hover:text-white" /></td>
+                     <td className="px-4 py-3"><span className="bg-amber-900/40 border border-amber-500/50 text-amber-500 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest">Demo / Ride</span></td>
+                     <td className="px-4 py-3 text-right">-</td>
+                  </tr>
+                  <tr className="hover:bg-panel transition-colors cursor-pointer" onClick={() => onDrillDown('Action', {name: "View Up", message: "Opening up parameters for Sarah"})}>
+                     <td className="px-4 py-3 font-mono text-text-muted">09:10 AM</td>
+                     <td className="px-4 py-3 text-white font-bold"><DrillDownValue value="Sarah M." label="CRM Profile" type="CRM_Customer360" onDrillDown={onDrillDown} color="text-white hover:text-gold" /></td>
+                     <td className="px-4 py-3 text-gold"><DrillDownValue value="Marcus B." label="Rep Profile" type="Employee" onDrillDown={onDrillDown} color="text-gold hover:text-white" /></td>
+                     <td className="px-4 py-3"><span className="bg-blue-900/40 border border-blue-500/50 text-blue-500 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest">Write Up</span></td>
+                     <td className="px-4 py-3 text-right"><span className="text-[10px] text-red-500 font-bold uppercase tracking-widest">Mgr Desking</span></td>
+                  </tr>
+                  <tr className="hover:bg-panel transition-colors cursor-pointer" onClick={() => onDrillDown('Action', {name: "View Up", message: "Opening up parameters for Unknown Phone"})}>
+                     <td className="px-4 py-3 font-mono text-text-muted">09:42 AM</td>
+                     <td className="px-4 py-3 text-white font-bold text-text-muted/50 italic"><DrillDownValue value="Unknown Phone-Up" label="Action Required" type="Action" onDrillDown={onDrillDown} color="text-text-muted/50 hover:text-gold" /></td>
+                     <td className="px-4 py-3 text-gold"><DrillDownValue value="Tony G." label="Rep Profile" type="Employee" onDrillDown={onDrillDown} color="text-gold hover:text-white" /></td>
+                     <td className="px-4 py-3"><span className="bg-green-900/40 border border-green-500/50 text-green-500 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest">Greeting</span></td>
+                     <td className="px-4 py-3 text-right">-</td>
+                  </tr>
+               </tbody>
+            </table>
+         </div>
+      ) : (
       <div className="bg-charcoal border border-border rounded p-6">
         <h2 className="text-gold font-playfair text-xl mb-4 flex items-center gap-2">
           <Settings className="w-5 h-5"/> Deal Desk — Total Economic Profit Calculator
@@ -518,454 +635,86 @@ const SalesModule = ({ onDrillDown }) => {
               <div className="text-sm border-l-2 border-gold pl-3 py-1 bg-panel text-white">
                 <span className="font-bold text-gold">Recommendation:</span> <DrillDownValue value="PUSH (Finance Maximize)" label="Finance Strategy" type="Deal" onDrillDown={onDrillDown} />
               </div>
+              
+              <button className="w-full mt-4 bg-red-900/40 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white py-2 rounded text-xs font-bold uppercase tracking-widest transition-colors flex justify-center items-center gap-2" onClick={(e) => { e.stopPropagation(); onDrillDown('Action', { name: "Request T.O.", message: "Paging Sales Manager to Desk 4 for Turnover." }); }}>
+                 <AlertCircle className="w-4 h-4" /> Request T.O.
+              </button>
             </div>
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 };
 
 
-const InventoryModule = ({ onDrillDown }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterBrand, setFilterBrand] = useState('All');
-  const [filterCondition, setFilterCondition] = useState('All');
-  const [filterStatus, setFilterStatus] = useState('Active');
 
-  const invRecs = RecommendationService.fetchPending().filter(r => r.agentId === 'ag_inventory_match').slice(0, 2);
-  const invInsights = invRecs.length > 0 ? invRecs.map(rec => ({
-    type: rec.priority === 'URGENT' ? 'warning' : 'action',
-    message: <>{rec.title} — <span className="text-text-muted">{rec.description}</span></>,
-    actionText: "Review Match",
-    onAction: () => onDrillDown('AgentRecommendation', { ...rec })
-  })) : [
-    { type: "action", message: <>3 Polaris RZRs in Slidell have been in stock for <DrillDownValue value="115 days" label="Slidell Aged RZRs" type="Inventory" onDrillDown={onDrillDown} color="text-amber-500" />. Baton Rouge has turned the same model 4 times in the last 60 days.</>, actionText: "Initiate Transfer" },
-    { type: "negative", message: <>Floorplan interest for 'Used Bikes Direct' inventory is currently pacing <DrillDownValue value="14% higher" label="Floorplan Interest Variance" type="Financials" onDrillDown={onDrillDown} color="text-red-400" /> than last month due to aged Harley-Davidson units.</>, actionText: "View Markdown Recommendations" }
-  ];
-
-  const allInv = getGlobalInventory();
-  
-  const filteredInv = allInv.filter(inv => {
-    if (filterBrand !== 'All' && inv.brandName !== filterBrand) return false;
-    if (filterCondition !== 'All' && inv.condition !== filterCondition) return false;
-    if (filterStatus !== 'All' && inv.status !== filterStatus) return false;
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      return (
-        inv.stock.toLowerCase().includes(term) ||
-        inv.vin.toLowerCase().includes(term) ||
-        inv.model.toLowerCase().includes(term)
-      );
-    }
-    return true;
-  });
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-playfair text-white">Inventory Intelligence</h2>
-        <div className="flex space-x-2">
-          <button className="bg-charcoal border border-border text-text px-4 py-2 rounded text-sm" onClick={() => onDrillDown('Action', { name: 'Add Unit', message: 'Opening new inventory intake form...' })}>Add Unit</button>
-          <button className="bg-gold text-black px-4 py-2 rounded text-sm font-bold shadow-lg shadow-gold/20" onClick={() => onDrillDown('Action', { name: 'Print Labels', message: 'Generating QR code labels for current view...' })}>Print Labels</button>
-        </div>
-      </div>
-
-      <AutomatedInsights onDrillDown={onDrillDown} insights={invInsights} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="bg-charcoal p-4 rounded border border-border flex flex-col items-center justify-center">
-          <div className="font-playfair text-5xl text-gold">
-             <DrillDownValue value="830" label="Total Active Units" type="Inventory" onDrillDown={onDrillDown} reportId="INV_AGING" />
-          </div>
-          <div className="text-text-muted font-mono mt-2">TOTAL UNITS</div>
-          <div className="flex gap-4 mt-4 text-sm">
-             <div className="text-green-500 font-bold">
-               <DrillDownValue value="520 New" label="New Inventory" type="Inventory" onDrillDown={onDrillDown} color="text-green-500" reportId="INV_AGING" />
-             </div>
-             <div className="text-white">
-               <DrillDownValue value="310 Used" label="Used Inventory" type="Inventory" onDrillDown={onDrillDown} reportId="INV_AGING" />
-             </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-3 bg-charcoal p-4 rounded border border-border">
-           <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase">Brand Mix</h3>
-           <div className="flex gap-2 h-12 w-full mt-8 rounded overflow-hidden">
-             <div onClick={() => onDrillDown('Report', { reportId: 'INV_AGING', label: 'Honda Inventory (187)', searchTerm: 'Honda' })} className="bg-red-600 flex items-center justify-center text-xs font-bold text-white transition-all hover:opacity-80 cursor-pointer" style={{width: '22%'}}>Honda (187)</div>
-             <div onClick={() => onDrillDown('Report', { reportId: 'INV_AGING', label: 'Yamaha Inventory (164)', searchTerm: 'Yamaha' })} className="bg-blue-600 flex items-center justify-center text-xs font-bold text-white transition-all hover:opacity-80 cursor-pointer" style={{width: '20%'}}>Yamaha (164)</div>
-             <div onClick={() => onDrillDown('Report', { reportId: 'INV_AGING', label: 'Polaris Inventory (142)', searchTerm: 'Polaris' })} className="bg-gray-200 text-black flex items-center justify-center text-xs font-bold transition-all hover:opacity-80 cursor-pointer" style={{width: '17%'}}>Polaris (142)</div>
-             <div onClick={() => onDrillDown('Report', { reportId: 'INV_AGING', label: 'Kawasaki Inventory (89)', searchTerm: 'Kawasaki' })} className="bg-green-600 flex items-center justify-center text-xs font-bold text-white transition-all hover:opacity-80 cursor-pointer" style={{width: '11%'}}>Kawasaki (89)</div>
-             <div onClick={() => onDrillDown('Report', { reportId: 'INV_AGING', label: 'Used Inventory (220)', searchTerm: 'Used' })} className="bg-panel flex items-center justify-center text-xs font-bold text-white border border-border cursor-pointer hover:opacity-80" style={{width: '30%'}}>Used (220)</div>
-           </div>
-        </div>
-      </div>
-
-      <div className="bg-charcoal border border-border rounded p-4">
-        <div className="flex justify-between items-center mb-4">
-           <h3 className="text-sm font-mono text-text-muted tracking-wide uppercase">Live Inventory Ledger</h3>
-           <div className="flex gap-2">
-             <button className="bg-black border border-border text-xs px-3 py-1 rounded hover:text-white" onClick={() => onDrillDown('Action', { name: 'Export Inventory', message: 'Exporting ledger to CSV...' })}>Export</button>
-           </div>
-        </div>
-        
-        {/* Advanced Filter Bar */}
-        <div className="flex flex-wrap gap-3 mb-4 bg-black p-3 rounded border border-border">
-          <div className="flex-1 min-w-[200px] relative">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-text-muted" />
-            <input 
-              type="text" 
-              placeholder="Search Stock, VIN, or Model..." 
-              className="w-full bg-charcoal border border-border rounded pl-9 pr-3 py-1.5 text-sm text-text focus:outline-none focus:border-gold"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <select 
-            className="bg-charcoal border border-border rounded px-3 py-1.5 text-sm text-text focus:outline-none focus:border-gold"
-            value={filterBrand}
-            onChange={(e) => setFilterBrand(e.target.value)}
-          >
-            <option value="All">All Brands</option>
-            <option value="Yamaha">Yamaha</option>
-            <option value="Honda">Honda</option>
-            <option value="Polaris">Polaris</option>
-            <option value="Kawasaki">Kawasaki</option>
-          </select>
-          <select 
-            className="bg-charcoal border border-border rounded px-3 py-1.5 text-sm text-text focus:outline-none focus:border-gold"
-            value={filterCondition}
-            onChange={(e) => setFilterCondition(e.target.value)}
-          >
-            <option value="All">All Conditions</option>
-            <option value="New">New</option>
-            <option value="Used">Used</option>
-          </select>
-          <select 
-            className="bg-charcoal border border-border rounded px-3 py-1.5 text-sm text-text focus:outline-none focus:border-gold"
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-          >
-            <option value="All">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Pending">Pending (Stalls/Deals)</option>
-            <option value="Recon">In Recon</option>
-            <option value="Inspection">Needs Inspection</option>
-          </select>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left text-text">
-            <thead className="text-xs text-text-muted bg-black font-mono">
-              <tr>
-                <th className="px-4 py-3 rounded-tl">Stock#</th>
-                <th className="px-4 py-3">Unit</th>
-                <th className="px-4 py-3">Loc</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Price / Cost</th>
-                <th className="px-4 py-3 text-center">Open Deals</th>
-                <th className="px-4 py-3">Days</th>
-                <th className="px-4 py-3 rounded-tr text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredInv.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="px-4 py-8 text-center text-text-muted">No inventory matches these filters.</td>
-                </tr>
-              ) : (
-                filteredInv.map((inv) => (
-                  <tr 
-                    key={inv.id}
-                    onClick={() => onDrillDown('Inventory', { invId: inv.id, stock: inv.stock, unit: `${inv.year} ${inv.model}` })} 
-                    className={`border-b border-border/50 hover:bg-panel transition-colors cursor-pointer ${inv.isAged ? 'bg-red-900/10' : ''}`}
-                  >
-                    <td className={`px-4 py-3 font-mono font-bold ${inv.isAged ? 'text-red-500' : 'text-text-dim'}`}>{inv.stock}</td>
-                    <td className="px-4 py-3 text-white">
-                      {inv.year} {inv.brandName} {inv.model}
-                      <div className="text-xs text-text-muted">{inv.condition} • {inv.category}</div>
-                    </td>
-                    <td className="px-4 py-3">{inv.locationCode}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded text-xs ${inv.status === 'Active' ? 'bg-green-900/30 text-green-400 border border-green-800' : inv.status === 'Pending' ? 'bg-amber-900/30 text-amber-400 border border-amber-800' : 'bg-gray-800 text-gray-400 border border-gray-700'}`}>
-                        {inv.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="font-bold">{inv.price ? `$${inv.price.toLocaleString()}` : 'N/A'}</div>
-                      <div className="text-xs text-text-muted text-red-400">Cost: ${inv.cost.toLocaleString()}</div>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {inv.activeDealCount > 0 || inv.activeOppCount > 0 ? (
-                        <span className="text-amber-500 font-bold">{inv.activeDealCount + inv.activeOppCount}</span>
-                      ) : (
-                        <span className="text-text-muted">-</span>
-                      )}
-                    </td>
-                    <td className={`px-4 py-3 font-bold ${inv.isAged ? 'text-red-400' : 'text-green-500'}`}>{inv.ageDays}</td>
-                    <td className="px-4 py-3 text-right">
-                      {inv.isAged ? (
-                        <button className="text-xs bg-red-900/40 text-red-300 border border-red-800 px-2 py-1 rounded hover:bg-red-800">MARKDOWN</button>
-                      ) : (
-                        <button className="text-xs bg-panel border border-border px-2 py-1 rounded hover:text-white">VIEW</button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const UsedBikesModule = ({ onDrillDown }) => {
+  const pipelineData = getReconPipeline();
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'Inspection': return 'border-green-500 text-green-500';
+      case 'Recon In Progress': return 'border-amber-500 text-amber-500';
+      case 'Detail & Photos': return 'border-blue-500 text-blue-500';
+      default: return 'border-border text-white';
+    }
+  };
+
   return (
     <div className="space-y-6">
        <div className="flex justify-between items-center">
          <h1 className="text-2xl font-playfair text-white">Used Bikes Direct</h1>
-         <button className="bg-gold hover:bg-gold-light text-black px-4 py-2 rounded text-sm font-bold flex items-center gap-2" onClick={() => onDrillDown('Action', { name: 'New Appraisal', message: 'Launching standard UBD evaluation tool...' })}>
-           <Bike className="w-4 h-4" /> New Appraisal
+         <button className="bg-gold hover:bg-gold-light text-black px-4 py-2 rounded text-sm font-bold flex items-center gap-2 shadow" onClick={() => onDrillDown('Appraisal', { type: 'New' })}>
+           <Bike className="w-4 h-4" /> Driveway Appraisal
          </button>
       </div>
 
-      <div className="bg-charcoal border border-border rounded p-6">
-         <h2 className="text-gold font-playfair text-xl mb-6">Recon Pipeline</h2>
+      <div className="bg-charcoal border border-border rounded p-6 shadow-inner">
+         <h2 className="text-gold font-playfair text-xl mb-6 flex justify-between items-center">
+            Recon Pipeline
+            <span className="text-xs bg-black text-white px-3 py-1 rounded border border-border"><DrillDownValue value={`${pipelineData.length} Units`} label="Pipeline Ledger" type="Report" onDrillDown={onDrillDown} /></span>
+         </h2>
          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-           {['Acquired / Insp.', 'Recon In Progress', 'Detail & Photos', 'Frontline Ready'].map((stage, i) => (
-             <div key={i} className="bg-black border border-border rounded p-3 min-h-[400px]">
-                <h3 className="text-xs text-text-muted font-mono mb-4 text-center border-b border-border pb-2">{stage}</h3>
-                {i === 1 && (
-                  <div onClick={() => onDrillDown('Inventory', {unit: '2021 Yamaha MT-07', cost: '$5,100', spend: '$340', days: 8, tech: 'Sam L.', stage: 'Recon In Progress'})} className="bg-panel rounded border-l-4 border-amber-500 p-3 shadow text-sm mb-3 cursor-pointer hover:border-gold transition-colors group">
-                    <div className="font-bold text-white mb-1 group-hover:text-gold transition-colors">2021 Yamaha MT-07</div>
-                    <div className="flex justify-between text-xs text-text-muted"><span>Cost: <DrillDownValue value="$5,100" label="Recon Cost Basis" type="Inventory" onDrillDown={onDrillDown} /></span> <span>Spend: <DrillDownValue value="$340" label="Recon Spend" type="Financials" onDrillDown={onDrillDown} /></span></div>
-                    <div className="mt-2 text-xs flex justify-between"><span className="text-amber-500"><DrillDownValue value="Day 8" label="Recon Days" type="Inventory" onDrillDown={onDrillDown} color="text-amber-500"/></span> <span><DrillDownValue value="Sam L." label="Tech: Sam L." type="Employee" onDrillDown={onDrillDown} color="text-text-muted group-hover:text-white" /></span></div>
+           {['Inspection', 'Recon In Progress', 'Detail & Photos', 'Frontline Ready'].map((stage, i) => {
+             const colItems = pipelineData.filter(item => item.status === stage);
+             
+             return (
+               <div key={i} className="bg-black border border-border rounded p-3 min-h-[400px] flex flex-col">
+                  <div className="flex justify-between items-center border-b border-border pb-2 mb-4">
+                     <h3 className="text-xs text-text-muted font-mono uppercase tracking-widest">{stage}</h3>
+                     <span className="text-xs bg-charcoal px-2 py-0.5 rounded text-white border border-border"><DrillDownValue value={colItems.length} label={`${stage} Volume`} type="Report" onDrillDown={onDrillDown} color="hover:text-gold" /></span>
                   </div>
-                )}
-                {i === 0 && (
-                  <div onClick={() => onDrillDown('Inventory', {unit: '2019 Honda Rebel 500', cost: '$3,200', spend: '$0', days: 2, tech: 'Tony G.', stage: 'Acquired / Insp.'})} className="bg-panel rounded border-l-4 border-green-500 p-3 shadow text-sm mb-3 cursor-pointer hover:border-gold transition-colors group">
-                    <div className="font-bold text-white mb-1 group-hover:text-gold transition-colors">2019 Honda Rebel 500</div>
-                    <div className="flex justify-between text-xs text-text-muted"><span>Cost: <DrillDownValue value="$3,200" label="Recon Cost Basis" type="Inventory" onDrillDown={onDrillDown} /></span> <span>Spend: <DrillDownValue value="$0" label="Recon Spend" type="Financials" onDrillDown={onDrillDown} /></span></div>
-                    <div className="mt-2 text-xs flex justify-between"><span className="text-green-500"><DrillDownValue value="Day 2" label="Recon Days" type="Inventory" onDrillDown={onDrillDown} color="text-green-500"/></span> <span><DrillDownValue value="Tony G." label="Tech: Tony G." type="Employee" onDrillDown={onDrillDown} color="text-text-muted group-hover:text-white" /></span></div>
+                  
+                  <div className="flex-1 space-y-3">
+                     {colItems.map(item => (
+                       <div key={item.id} onClick={() => onDrillDown('Inventory', { unitId: item.id, ...item })} className={`bg-panel rounded border-l-4 p-3 shadow text-sm cursor-pointer hover:border-gold transition-colors group ${getStatusColor(item.status).split(' ')[0]}`}>
+                         <div className="font-bold text-white mb-2 group-hover:text-gold transition-colors text-xs">{item.unit}</div>
+                         <div className="flex justify-between text-[11px] text-text-muted mb-1">
+                           <span>Cost: <DrillDownValue value={`$${item.cost.toLocaleString()}`} label="Recon Cost Basis" type="Inventory" onDrillDown={onDrillDown} /></span> 
+                           <span>Spend: <DrillDownValue value={`$${item.spend.toLocaleString()}`} label="Recon Spend Tracking" type="Financials" onDrillDown={onDrillDown} color="text-red-400 group-hover:text-white" /></span>
+                         </div>
+                         <div className="mt-2 pt-2 border-t border-border/50 text-[10px] flex justify-between items-center">
+                           <span className={`font-bold ${getStatusColor(item.status).split(' ')[1]}`}><DrillDownValue value={`Day ${item.days}`} label="Aging Warning" type="Report" onDrillDown={onDrillDown} color={`hover:text-white font-mono ${getStatusColor(item.status).split(' ')[1]}`}/></span> 
+                           <span className="bg-black px-1.5 py-0.5 rounded border border-border uppercase tracking-widest"><DrillDownValue value={item.tech} label="Assigned Tech Profile" type="Employee" onDrillDown={onDrillDown} color="text-text-muted group-hover:text-white" /></span>
+                         </div>
+                       </div>
+                     ))}
                   </div>
-                )}
-             </div>
-           ))}
+               </div>
+             );
+           })}
          </div>
       </div>
     </div>
   );
 };
 
-const ServicePartsModule = ({ onDrillDown }) => {
-  const serviceRecs = RecommendationService.fetchPending().filter(r => r.agentId === 'ag_service_advisor').slice(0, 1);
-  const serviceInsights = serviceRecs.length > 0 ? serviceRecs.map(rec => ({
-    type: rec.priority === 'URGENT' ? 'warning' : 'opportunity',
-    message: <>{rec.title} — <span className="text-text-muted">{rec.description}</span></>,
-    actionText: "Review Service Plan",
-    onAction: () => onDrillDown('AgentRecommendation', { ...rec })
-  })) : [
-    { type: "opportunity", message: <>Service to Sales AI has identified <DrillDownValue value="12 customers" label="Equity Candidates" type="Report" onDrillDown={onDrillDown} /> with positive equity currently in the active Service bay. Target them before ticket close.</>, actionText: "View Lane Conquests" }
-  ];
 
-  const roBoard = getROBoard();
 
-  return (
-    <div className="space-y-6 h-full flex flex-col">
-       <div className="flex justify-between items-center bg-charcoal p-4 rounded border border-border">
-         <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-black border border-border rounded flex items-center justify-center text-blue-500 shadow-inner">
-              <Wrench className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-playfair text-white">Fixed Operations Control</h1>
-              <p className="text-text-muted text-sm border-l-2 border-blue-500 pl-2 ml-1">Service Bays & Parts Inventory Intelligence</p>
-            </div>
-         </div>
-         <div className="flex gap-2">
-            <button className="bg-charcoal border border-border text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:border-blue-500 transition-colors" onClick={() => onDrillDown('Action', { name: 'Log Walk-In', message: 'Opening terminal...' })}>
-              + Write Repair Order
-            </button>
-         </div>
-      </div>
 
-      <AutomatedInsights onDrillDown={onDrillDown} insights={serviceInsights} />
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-charcoal border border-border rounded p-4 shadow-inner hover:border-gold-dim transition-colors group cursor-pointer" onClick={() => onDrillDown('Report', { name: 'Retention Drilldown', reportId: 'SVC_RO_VOLUME' })}>
-           <div className="flex items-center gap-2 text-blue-500 text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><UsersIcon className="w-4 h-4"/> Automated Retention</div>
-           <div className="text-xl font-bold text-white mb-1"><DrillDownValue value="142 Defectors" label="Retention Risk" type="Report" onDrillDown={onDrillDown} reportId="SVC_RO_VOLUME" /></div>
-           <div className="text-xs text-text-muted mb-2">Saved MTD: <span className="text-green-500 font-bold"><DrillDownValue value="18 Customers" label="Saved MTD" type="Report" onDrillDown={onDrillDown} color="text-green-500" /></span></div>
-           <div className="text-[10px] text-text-dim leading-relaxed bg-black p-2 rounded">
-              AI has queued 142 clients who missed their 12-month service window for automated Twilio outreach.
-           </div>
-        </div>
-
-        <div className="bg-charcoal border border-border rounded p-4 shadow-inner hover:border-gold-dim transition-colors group cursor-pointer flex flex-col" onClick={() => onDrillDown('Report', { name: 'Tech Efficiency' })}>
-           <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><Clock className="w-4 h-4"/> Technician Efficiency</div>
-           <div className="flex-1 space-y-2 font-mono text-xs">
-              <div className="flex justify-between items-center bg-black p-1.5 rounded border border-border/50">
-                 <span className="text-white"><DrillDownValue value="Tony G." label="Employee Profile" type="Employee" onDrillDown={onDrillDown} color="text-white hover:text-gold transition-colors" /></span>
-                 <span className="text-green-500 font-bold"><DrillDownValue value="104% (42h / 40h)" label="Labor Efficiency" type="Report" onDrillDown={onDrillDown} color="text-green-500" /></span>
-              </div>
-              <div className="flex justify-between items-center bg-black p-1.5 rounded border border-border/50">
-                 <span className="text-white"><DrillDownValue value="Chris F." label="Employee Profile" type="Employee" onDrillDown={onDrillDown} color="text-white hover:text-gold transition-colors" /></span>
-                 <span className="text-gold font-bold"><DrillDownValue value="92% (35h / 38h)" label="Labor Efficiency" type="Report" onDrillDown={onDrillDown} color="text-gold" /></span>
-              </div>
-              <div className="flex justify-between items-center bg-black p-1.5 rounded border border-border/50">
-                 <span className="text-white"><DrillDownValue value="Sam L." label="Employee Profile" type="Employee" onDrillDown={onDrillDown} color="text-white hover:text-gold transition-colors" /></span>
-                 <span className="text-red-500 font-bold"><DrillDownValue value="71% (27h / 38h)" label="Labor Efficiency" type="Report" onDrillDown={onDrillDown} color="text-red-500" /></span>
-              </div>
-           </div>
-        </div>
-        
-        <div className="bg-charcoal border border-border rounded p-4 shadow-inner">
-           <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-widest font-mono mb-3 border-b border-border/50 pb-2"><DollarSign className="w-4 h-4"/> Fixed Ops Gross (MTD)</div>
-           <div className="text-3xl font-playfair text-white text-center mt-2">
-              <DrillDownValue value="$188,200" label="Fixed Ops Pacing" type="Financials" onDrillDown={onDrillDown} />
-           </div>
-           <div className="flex justify-between text-xs mt-4 px-2">
-              <span className="text-text-muted">Labor: <span className="text-white"><DrillDownValue value="$89k" label="Labor Ledger" type="Report" onDrillDown={onDrillDown} color="text-white hover:text-gold transition-colors" /></span></span>
-              <span className="text-text-muted">Parts: <span className="text-white"><DrillDownValue value="$99k" label="Parts Ledger" type="Report" onDrillDown={onDrillDown} color="text-white hover:text-gold transition-colors" /></span></span>
-           </div>
-        </div>
-        
-        <div className="bg-charcoal border border-border rounded p-4 shadow-inner border-y-[3px] border-y-blue-500 relative flex flex-col justify-center items-center text-center">
-            <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 rounded-full blur-xl"></div>
-            <Package className="w-8 h-8 text-blue-500 mb-2" />
-            <div className="text-sm font-bold text-white uppercase tracking-widest mb-1">Parts Inventory</div>
-            <div className="text-2xl font-mono text-gold mb-1"><DrillDownValue value="$412,500" label="Total Parts Value" type="Report" onDrillDown={onDrillDown} /></div>
-            <div className="text-[10px] text-text-muted bg-black border border-border px-2 py-1 rounded mt-2">Obsolete (&gt;12mo): <span className="text-red-500"><DrillDownValue value="$18k" label="Obsolete Inventory" type="Report" onDrillDown={onDrillDown} color="text-red-500 hover:text-white transition-colors" /></span></div>
-        </div>
-      </div>
-
-      <div className="bg-charcoal border border-border rounded overflow-hidden flex-1 flex flex-col min-h-[500px]">
-         <div className="p-4 border-b border-border bg-black flex justify-between items-center">
-            <div className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
-               <Grid3X3 className="w-4 h-4 text-gold"/> Live Service Bay Tracker
-            </div>
-         </div>
-         <div className="flex-1 overflow-x-auto overflow-y-hidden subtle-scrollbar p-4">
-            <div className="flex gap-4 h-full min-w-max">
-               {['Waiting / Write-Up', 'In Bay / Progress', 'Quality Check / Parts Hold', 'Ready for Delivery'].map((statusFilter, idx) => {
-                  
-                  // Map column names to our mock RO statuses
-                  const statusMap = {
-                     'Waiting / Write-Up': ['Waiting Parts', 'Scheduled'],
-                     'In Bay / Progress': ['In Progress', 'In Bay'],
-                     'Quality Check / Parts Hold': ['Quality Check'],
-                     'Ready for Delivery': ['Ready for Pickup', 'Completed']
-                  };
-                  
-                  const activeStatuses = statusMap[statusFilter] || [];
-                  const colOrders = roBoard.filter(ro => activeStatuses.includes(ro.status));
-                  
-                  return (
-                     <div key={statusFilter} className="w-80 flex flex-col bg-black border border-border rounded shadow-md shrink-0 h-full overflow-hidden">
-                        <div className="p-3 border-b border-border bg-panel flex justify-between items-center">
-                           <div className="font-bold text-white text-xs uppercase tracking-wide">{statusFilter}</div>
-                           <div className="bg-charcoal px-2 py-0.5 rounded text-xs font-mono text-text-muted border border-border"><DrillDownValue value={colOrders.length} label={`${statusFilter} Volume`} type="Report" onDrillDown={onDrillDown} color="text-text-muted hover:text-white transition-colors" /></div>
-                        </div>
-                        <div className="p-3 flex-1 overflow-y-auto subtle-scrollbar space-y-3 bg-gradient-to-b from-transparent to-black/20">
-                           {colOrders.map(ro => (
-                              <div key={ro.id} className="bg-charcoal border border-border p-3 rounded shadow hover:border-blue-500 transition-colors cursor-pointer group" onClick={() => onDrillDown('RO', ro)}>
-                                 <div className="flex justify-between items-start mb-2">
-                                    <div className="font-bold text-white text-sm group-hover:text-blue-400 transition-colors line-clamp-1"><DrillDownValue value={ro.unitDesc} label="Unit Details" type="Report" onDrillDown={onDrillDown} color="text-white group-hover:text-blue-400 transition-colors line-clamp-1 block" /></div>
-                                 </div>
-                                 <div className="text-xs text-text-muted mb-3 flex items-center justify-between">
-                                    <span className="font-mono text-gold tracking-widest">{ro.id}</span>
-                                    <span className="bg-panel px-1.5 py-0.5 rounded border border-border">{ro.type}</span>
-                                 </div>
-                                 <div className="flex justify-between items-center bg-black rounded p-2 mt-2 border border-border/50">
-                                    <div className="text-[10px] text-text-dim flex items-center gap-1">
-                                       <User className="w-3 h-3 text-blue-500" />
-                                       <DrillDownValue value={ro.techName} label="Technician Profile" type="Employee" onDrillDown={onDrillDown} color="text-text-dim hover:text-white transition-colors" />
-                                    </div>
-                                    <div className="text-[10px] font-mono font-bold text-green-500">
-                                       <DrillDownValue value={`${((ro.partsSale||0) + ((ro.laborHoursSold||0) * 125)).toLocaleString()}`} label="RO Margin" type="Report" onDrillDown={onDrillDown} color="text-green-500 hover:text-white transition-colors" />
-                                    </div>
-                                 </div>
-                              </div>
-                           ))}
-                           {colOrders.length === 0 && <div className="text-center text-text-muted mt-6 font-mono text-xs uppercase tracking-widest opacity-50">Empty Lane</div>}
-                        </div>
-                     </div>
-                  );
-               })}
-            </div>
-         </div>
-      </div>
-    </div>
-  );
-};
-
-const PayrollModule = ({ onDrillDown }) => {
-  return (
-    <div className="space-y-6">
-       <div className="flex justify-between items-center">
-         <h1 className="text-2xl font-playfair text-white">Payroll & Commission</h1>
-         <button className="bg-gold hover:bg-gold-light text-black px-4 py-2 rounded text-sm font-bold" onClick={() => onDrillDown('Action', { name: 'Approve Payroll', message: 'Finalizing current period payroll register...' })}>
-           Approve Payroll
-         </button>
-      </div>
-
-       <div className="bg-charcoal p-4 rounded border border-border flex justify-between items-center mx-auto max-w-4xl">
-          <div className="text-center">
-            <div className="text-xs text-text-muted font-mono tracking-wide">CURRENT PERIOD</div>
-            <div className="text-white font-bold mt-1">Sept 1 - Sept 15, 2025</div>
-          </div>
-          <div className="text-center px-8 border-x border-border">
-            <div className="text-xs text-text-muted font-mono tracking-wide">TOTAL LIABILITY</div>
-            <div className="text-3xl font-playfair mt-1">
-               <DrillDownValue value="$142,500" label="Total Payroll Liability" type="Financials" onDrillDown={onDrillDown} color="text-gold" />
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="text-xs text-text-muted font-mono tracking-wide">STATUS</div>
-            <div className="text-amber-500 font-bold mt-1">Pending Approval</div>
-          </div>
-       </div>
-
-      <div className="bg-charcoal border border-border rounded p-4">
-        <h3 className="text-sm font-mono text-text-muted mb-4 tracking-wide uppercase">Payroll Register</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left text-text">
-            <thead className="text-xs text-text-muted bg-black font-mono">
-              <tr>
-                <th className="px-4 py-3 rounded-tl">Employee</th>
-                <th className="px-4 py-3">Role</th>
-                <th className="px-4 py-3">Location</th>
-                <th className="px-4 py-3 text-right">Regular Hrs</th>
-                <th className="px-4 py-3 text-right">OT Hrs</th>
-                <th className="px-4 py-3 text-right">Commission</th>
-                <th className="px-4 py-3 rounded-tr text-right">Total Net</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Mock Data Loop */}
-              {[['Jake Fontenot', 'Sales', 'BTR', '80.0', '2.5', '$4,200', '$5,450'],
-                ['Marcus Broussard', 'Sales', 'BTR', '80.0', '0.0', '$3,400', '$4,600'],
-                ['Rachel Tran', 'F&I', 'BTR', '80.0', '0.0', '$6,100', '$7,300'],
-                ['Tony Guillory', 'Service', 'BTR', '80.0', '12.0', '$0', '$3,250']].map((row, i) => (
-                <tr key={i} onClick={() => onDrillDown('Employee', {name: row[0], role: row[1], loc: row[2], regularHrs: row[3], otHrs: row[4], commission: row[5], totalNet: row[6]})} className="border-b border-border/50 hover:bg-panel transition-colors cursor-pointer">
-                  <td className="px-4 py-3 text-white font-bold">{row[0]}</td>
-                  <td className="px-4 py-3 text-text-muted">{row[1]}</td>
-                  <td className="px-4 py-3">{row[2]}</td>
-                  <td className="px-4 py-3 text-right"><DrillDownValue value={row[3]} label={`${row[0]} Regular Hrs`} type="Employee" onDrillDown={onDrillDown} /></td>
-                  <td className="px-4 py-3 text-right text-red-500"><DrillDownValue value={row[4]} label={`${row[0]} OT Hrs`} type="Employee" onDrillDown={onDrillDown} color="text-red-500" /></td>
-                  <td className="px-4 py-3 text-right text-green-500"><DrillDownValue value={row[5]} label={`${row[0]} Commission`} type="Employee" onDrillDown={onDrillDown} color="text-green-500" /></td>
-                  <td className="px-4 py-3 text-right font-bold text-gold"><DrillDownValue value={row[6]} label={`${row[0]} Total Net`} type="Financials" onDrillDown={onDrillDown} color="text-gold" /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const OEMIncentivesModule = ({ onDrillDown }) => {
   return (
@@ -1012,58 +761,6 @@ const OEMIncentivesModule = ({ onDrillDown }) => {
   );
 };
 
-const MarketingModule = ({ onDrillDown }) => {
-  return (
-    <div className="space-y-6">
-        <div className="bg-charcoal border border-border rounded p-6">
-           <h2 className="text-gold font-playfair text-xl mb-6">Cost Per Sold Unit (MTD)</h2>
-           <div className="space-y-3">
-             {[{ chan: 'Organic SEO', cost: 187, color: 'text-green-500', bg: 'bg-green-500', width: '20%' },
-               { chan: 'Referral', cost: 42, color: 'text-green-500', bg: 'bg-green-500', width: '5%' },
-               { chan: 'Google Paid', cost: 394, color: 'text-gold', bg: 'bg-gold', width: '40%' },
-               { chan: 'Facebook Ads', cost: 521, color: 'text-amber-500', bg: 'bg-amber-500', width: '60%' },
-               { chan: 'Lead Aggregators', cost: 1240, color: 'text-red-500', bg: 'bg-red-500', width: '90%' }
-             ].map(m => (
-               <div key={m.chan} className="relative">
-                 <div className="flex justify-between text-xs mb-1">
-                   <span className="text-white">{m.chan}</span>
-                   <span className={`font-bold ${m.color}`}>
-                      <DrillDownValue value={`$${m.cost}/sold`} label={`${m.chan} Acquisition Cost`} type="Financials" onDrillDown={onDrillDown} color={m.color} />
-                   </span>
-                 </div>
-                 <div className="w-full bg-black h-2 rounded-full overflow-hidden">
-                   <div className={`h-full ${m.bg}`} style={{width: m.width}}></div>
-                 </div>
-               </div>
-             ))}
-           </div>
-        </div>
-        
-        <div className="bg-charcoal border border-border rounded p-6">
-           <h2 className="text-gold font-playfair text-xl mb-6">Campaign Performance</h2>
-           <div className="space-y-3">
-              {[
-               { name: 'Fall Yamaha Push', spend: '$2,400', leads: 42, sold: 4, roas: '2.8x', status: 'Good' },
-               { name: 'Retargeting (General)', spend: '$800', leads: 15, sold: 1, roas: '1.2x', status: 'Watch' },
-               { name: 'Facebook Used Inventory', spend: '$1,200', leads: 88, sold: 12, roas: '8.4x', status: 'Excellent' }
-             ].map(c => (
-               <div key={c.name} onClick={() => onDrillDown('Campaign', c)} className="bg-black border border-border p-3 rounded text-sm cursor-pointer hover:border-gold transition-colors">
-                 <div className="flex justify-between items-center mb-1">
-                   <span className="font-bold text-white">{c.name}</span>
-                   <span className={`text-xs px-2 py-1 rounded border border-current font-bold ${c.roas === '8.4x' ? 'text-green-500' : c.roas === '1.2x' ? 'text-amber-500' : 'text-gold'}`}>{c.roas} ROAS</span>
-                 </div>
-                 <div className="text-xs text-text-muted flex justify-between">
-                   <span>Spend: <DrillDownValue value={c.spend} label={`${c.name} Spend`} type="Financials" onDrillDown={onDrillDown} color="text-white" /></span>
-                   <span>Leads: <DrillDownValue value={c.leads} label={`${c.name} Leads`} type="Campaign" onDrillDown={onDrillDown} color="text-white" /></span>
-                   <span>Sold: <DrillDownValue value={c.sold} label={`${c.name} Sold Units`} type="Campaign" onDrillDown={onDrillDown} color="text-white" /></span>
-                 </div>
-               </div>
-              ))}
-            </div>
-         </div>
-    </div>
-  );
-};
 
 const EmployeeHubModule = ({ user, onDrillDown }) => {
   const leaderboard = [
@@ -1168,50 +865,7 @@ const PlaceholderModule = ({ title, desc }) => (
 );
 
 
-const ClockInModule = ({ user, onDrillDown }) => {
-  const [clockedIn, setClockedIn] = useState(false);
-  const [time, setTime] = useState(new Date());
 
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="bg-charcoal border border-border rounded p-8 text-center">
-        <h1 className="text-4xl font-mono text-white mb-2 pb-6 border-b border-border">
-          {time.toLocaleTimeString()}
-        </h1>
-        <div className="py-6">
-          <div className="w-20 h-20 bg-panel border-2 border-gold rounded-full flex items-center justify-center text-2xl font-bold text-gold mx-auto mb-4">
-            {user?.avatar}
-          </div>
-          <h2 className="text-xl font-bold text-white">{user?.name}</h2>
-          <p className="text-text-muted text-sm">{user?.role} · {user?.location}</p>
-        </div>
-        
-        <div className="bg-black rounded border border-border p-4 mb-6 text-sm">
-          {clockedIn ? 
-            <span className="text-green-500 font-bold flex items-center justify-center gap-2"><CheckCircle2 className="w-5 h-5"/> Clocked In — 4h 12m Today</span> : 
-            <span className="text-text-muted">Not clocked in</span>
-          }
-        </div>
-
-        <button 
-          onClick={() => setClockedIn(!clockedIn)}
-          className={`w-full py-2 rounded text-sm font-bold transition-all ${clockedIn ? 'bg-panel border border-border text-red-500 hover:text-white hover:border-red-500/50' : 'bg-panel border border-border text-gold hover:text-white hover:border-gold/50'}`}
-        >
-          {clockedIn ? 'CLOCK OUT' : 'CLOCK IN'}
-        </button>
-        
-        <div className="mt-8">
-           <button onClick={() => onDrillDown('Employee', {name: user?.name, role: user?.role, action: 'Timesheet Audit'})} className="text-xs text-text-muted hover:text-gold uppercase font-bold tracking-widest border-b border-transparent hover:border-gold pb-1 transition-all">View Timesheet Deep-Dive →</button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 
 
@@ -1241,7 +895,7 @@ class CRMErrorBoundary extends React.Component {
 }
 
 const CustomerCRMModuleInner = ({ onDrillDown, user }) => {
-  const [activeView, setActiveView] = useState('Inbox'); // 'Inbox', 'Pipeline', 'Appointments', 'Finance'
+  const [activeView, setActiveView] = useState('Inbox'); // 'Inbox', 'Pipeline', 'Appointments', 'Finance', 'WorkPlan'
   const [filter, setFilter] = useState('All');
   
   const userRole = user?.role || user?.systemRole;
@@ -1267,6 +921,7 @@ const CustomerCRMModuleInner = ({ onDrillDown, user }) => {
     <div className="space-y-6 h-full flex flex-col">
       <div className="flex justify-between items-center bg-charcoal p-4 rounded border border-border">
          <div className="flex gap-4">
+            <button className={`text-lg font-playfair flex items-center gap-2 px-4 py-2 hover:text-white transition-colors border-b-2 ${activeView === 'WorkPlan' ? 'text-white border-b-gold' : 'text-text-muted border-b-transparent'}`} onClick={() => setActiveView('WorkPlan')}><CheckCircle2 className="w-5 h-5"/> Daily Work Plan</button>
             <button className={`text-lg font-playfair flex items-center gap-2 px-4 py-2 hover:text-white transition-colors border-b-2 ${activeView === 'Inbox' ? 'text-white border-b-gold' : 'text-text-muted border-b-transparent'}`} onClick={() => setActiveView('Inbox')}><UsersIcon className="w-5 h-5"/> Lead Inbox</button>
             <button className={`text-lg font-playfair flex items-center gap-2 px-4 py-2 hover:text-white transition-colors border-b-2 ${activeView === 'Pipeline' ? 'text-white border-b-gold' : 'text-text-muted border-b-transparent'}`} onClick={() => setActiveView('Pipeline')}><LayoutDashboard className="w-5 h-5"/> Deal Pipeline</button>
             <button className={`text-lg font-playfair flex items-center gap-2 px-4 py-2 hover:text-white transition-colors border-b-2 ${activeView === 'Appointments' ? 'text-white border-b-gold' : 'text-text-muted border-b-transparent'}`} onClick={() => setActiveView('Appointments')}><Calendar className="w-5 h-5"/> Showroom Tracker</button>
@@ -1359,6 +1014,40 @@ const CustomerCRMModuleInner = ({ onDrillDown, user }) => {
                     </div>
                  </div>
                ))}
+            </div>
+         </div>
+      )}
+
+      {activeView === 'WorkPlan' && (
+         <div className="bg-charcoal border border-border rounded overflow-hidden flex-1 flex flex-col p-6">
+            <h2 className="text-xl font-playfair text-gold mb-2"><CheckCircle2 className="w-6 h-6 inline-block mr-2" /> My Daily Work Plan</h2>
+            <p className="text-sm text-text-muted mb-6">Complete these tasks to adhere to BDC follow-up requirements.</p>
+            <div className="space-y-3">
+               {[
+                  { type: 'Phone Call', customer: 'David O.', reason: 'Day 1 Follow-up (New R1)', time: 'Overdue 2h', priority: 'High', action: 'Log Call' },
+                  { type: 'Email', customer: 'Sarah M.', reason: 'Equity Alert Triggered', time: 'Due Today', priority: 'Medium', action: 'Send Email Tracking' },
+                  { type: 'SMS Text', customer: 'Mike T.', reason: 'Finance App Approved', time: 'Due Today', priority: 'Medium', action: 'Text Customer' },
+                  { type: 'Phone Call', customer: 'Jessica V.', reason: 'Missed Appointment', time: 'Due Tomorrow', priority: 'Low', action: 'Reschedule' }
+               ].map((task, i) => (
+                  <div key={i} className={`flex items-center justify-between p-4 bg-black border ${task.priority === 'High' ? 'border-red-500/50' : 'border-border'} rounded cursor-pointer hover:border-gold transition-colors`} onClick={() => onDrillDown('Action', { name: task.action, message: `Opening execution modal for ${task.customer}` })}>
+                     <div className="flex items-center gap-4">
+                        <div className={`p-2 rounded-full ${task.type === 'Phone Call' ? 'bg-blue-900/30 text-blue-500' : task.type === 'Email' ? 'bg-amber-900/30 text-amber-500' : 'bg-green-900/30 text-green-500'}`}>
+                           {task.type === 'Phone Call' ? <Phone className="w-5 h-5" /> : task.type === 'Email' ? <MessageSquare className="w-5 h-5" /> : <MessageSquareText className="w-5 h-5" />}
+                        </div>
+                        <div>
+                           <div className="text-white font-bold">{task.customer}</div>
+                           <div className="text-xs text-text-muted">{task.type} &middot; {task.reason}</div>
+                        </div>
+                     </div>
+                     <div className="flex items-center gap-6">
+                        <div className={`text-xs font-bold ${task.priority === 'High' ? 'text-red-500 animate-pulse' : 'text-text-muted'}`}>{task.time}</div>
+                        <button className="bg-charcoal hover:bg-gold hover:text-black border border-border text-white px-4 py-1.5 rounded text-xs font-bold transition-colors">Start Task</button>
+                     </div>
+                  </div>
+               ))}
+               <div className="mt-8 text-center pt-4 border-t border-border">
+                  <span className="text-xs font-mono text-green-500 uppercase tracking-widest"><CheckCircle2 className="w-4 h-4 inline-block mr-1" /> 14 Tasks Completed Today</span>
+               </div>
             </div>
          </div>
       )}
@@ -1624,6 +1313,108 @@ const RETENTION_TREND = [
   { month: 'W3', reactivation: 10, loyalty: 12 },
   { month: 'W4', reactivation: 22, loyalty: 15 }
 ];
+
+const DashboardV2Module = ({ onDrillDown, onNavigate, userRole, company, location }) => {
+  const [activeDepartment, setActiveDepartment] = useState('My Day');
+
+  const renderContent = () => {
+    // OWNER VIEW: High Level Risk & Trend Consolidation
+    if (userRole === 'Owner' || userRole === 'General Manager') {
+       const mgrDb = getManagerDashboardData();
+       const retDb = getRetentionDashboardData();
+       return (
+         <div className="space-y-6">
+           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-charcoal border-l-4 border-l-red-500 border border-border rounded p-4 flex-1 hover:border-r-red-500 transition-colors cursor-pointer group" onClick={() => onNavigate('Omni-Command', { filter: 'URGENT' })}>
+                 <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-1 flex justify-between items-center group-hover:text-red-500 transition-colors"><span>Urgent Items</span> <Command className="w-3 h-3 text-red-500"/></div>
+                 <div className="text-2xl font-bold text-white mb-1"><DrillDownValue value="12" label="Urgent Items" type="Action" onDrillDown={onDrillDown} color="text-white" /></div>
+              </div>
+              <KPICard title="Total Units MTD" value="38" onDrillDown={() => onDrillDown('Report', { name: "Sales Log" })} type="Report" />
+              <KPICard title="Projected Gross" value="1.2M" isCurrency={true} onDrillDown={() => onDrillDown('Report', { name: "Gross Margin Detail" })} type="Report" />
+              <div className="bg-charcoal border-l-4 border-l-green-500 border border-border rounded p-4 flex flex-col justify-center cursor-pointer hover:border-gold transition-colors group" onClick={() => onDrillDown('Report', { name: "Equity Pitch Queue", records: retDb.serviceData })}>
+                 <div className="text-[10px] text-text-muted font-mono mb-1 uppercase tracking-wider group-hover:text-gold transition-colors">Service Equity Op</div>
+                 <div className="text-2xl font-bold text-white group-hover:text-gold drop-shadow-md"><DrillDownValue value={retDb.serviceToSales.toString()} label="Svc to Sales Ops" type="Report" onDrillDown={onDrillDown} color="text-white" /></div>
+                 <div className="text-[10px] text-green-500">+12% Conquest Rate</div>
+              </div>
+           </div>
+           
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-charcoal border border-border p-5 rounded">
+                 <h4 className="text-gold text-sm font-bold border-b border-border/50 pb-2 mb-4">Pipeline Risk By Stage</h4>
+                 <div className="space-y-4 pt-2">
+                    {mgrDb.byStageAging.map((s,i) => (
+                      <div key={i} className="flex flex-col cursor-pointer group" onClick={() => onDrillDown('Report', { name: `${s.stage} Aging Matrix` })}>
+                        <div className="flex justify-between text-xs mb-1">
+                           <span className="text-white group-hover:text-gold transition-colors"><DrillDownValue value={s.stage} label="Aging Stage" type="Report" onDrillDown={onDrillDown} color="text-white group-hover:text-gold" /></span>
+                           <span className="text-amber-500 font-mono"><DrillDownValue value={`${s.avgDays} days avg`} label="Average Aging" type="Report" onDrillDown={onDrillDown} color="text-amber-500" /></span>
+                        </div>
+                        <div className="w-full bg-black h-2 rounded overflow-hidden">
+                           <div className={`h-full rounded ${s.avgDays > 5 ? 'bg-red-500' : s.avgDays > 2 ? 'bg-amber-500' : 'bg-green-500'}`} style={{width: `${Math.min((s.avgDays/14)*100, 100)}%`}}></div>
+                        </div>
+                      </div>
+                    ))}
+                 </div>
+              </div>
+              <div className="bg-charcoal border border-border p-5 rounded">
+                 <h4 className="text-gold text-sm font-bold border-b border-border/50 pb-2 mb-4 flex justify-between items-center cursor-pointer">
+                    <span>Performance by Rep</span> <ChevronRight className="w-4 h-4" />
+                 </h4>
+                 <div className="space-y-1">
+                    {mgrDb.byRep.slice(0, 4).map((r,i) => (
+                      <div key={i} className="flex justify-between items-center text-sm cursor-pointer hover:bg-black p-3 rounded -mx-3 transition-colors border-b border-border/30 last:border-0 group" onClick={() => onDrillDown('Employee', r)}>
+                        <div><span className="text-white font-bold block"><DrillDownValue value={r.name} label="Rep Profile" type="Employee" onDrillDown={onDrillDown} color="text-white" /></span></div>
+                        <div className="text-right flex flex-col items-end">
+                          <span className="text-green-500 font-bold bg-green-900/20 px-2 py-0.5 rounded mb-1"><DrillDownValue value={`${r.units} Units`} label="Total Units" type="Report" color="text-green-500" /></span>
+                          <span className="text-gold font-mono text-[10px] block"><DrillDownValue value={`$${r.gross.toLocaleString()}`} label="Gross Profit" type="Report" color="text-gold" /></span>
+                        </div>
+                      </div>
+                    ))}
+                 </div>
+              </div>
+           </div>
+         </div>
+       );
+    }
+    
+    // SALES ASSOCIATE VIEW: Actionable Queue
+    if (userRole === 'Sales Associate') {
+       const salesDb = getSalesDashboardData();
+       return (
+         <div className="space-y-6">
+           <AutomatedInsights onDrillDown={onDrillDown} insights={[
+              { type: "opportunity", message: <>Internet lead conversion is trending <span className="text-green-500 font-bold">12% higher</span>. Keep the momentum.</>, actionText: "View My Funnel", data: { name: 'Lead Conversion Records' } },
+           ]} />
+           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-charcoal border-l-4 border-l-green-500 border border-border rounded p-4 flex-1 hover:border-r-green-500 transition-colors cursor-pointer group" onClick={() => onNavigate('Omni-Command', { filter: 'HOT_LEADS' })}>
+                 <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-1 flex justify-between items-center group-hover:text-green-500 transition-colors"><span>My Hot Leads</span> <TrendingUp className="w-3 h-3 text-green-500"/></div>
+                 <div className="text-2xl font-bold text-white mb-1"><DrillDownValue value="8" label="Hot Leads" type="Action" onDrillDown={onDrillDown} color="text-white" /></div>
+              </div>
+              <KPICard title="My Quotes Sent" value={salesDb.quotesSent.toString()} onDrillDown={() => onDrillDown('Report', { name: "Desking Log" })} type="Report" />
+              <KPICard title="My Close Ratio" value={salesDb.closeRate} onDrillDown={() => onDrillDown('Report', { name: "Closing Performance" })} type="Report" />
+              <div className="bg-charcoal border-l-4 border-l-amber-500 border border-border rounded p-4 flex-1 hover:border-r-amber-500 transition-colors cursor-pointer group" onClick={() => onNavigate('Omni-Command', { filter: 'STALLED_OPPS' })}>
+                 <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-1 flex justify-between items-center group-hover:text-amber-500 transition-colors"><span>Stalled Opps</span> <TrendingDown className="w-3 h-3 text-amber-500"/></div>
+                 <div className="text-2xl font-bold text-white mb-1"><DrillDownValue value="24" label="Stalled Opps" type="Action" onDrillDown={onDrillDown} color="text-white" /></div>
+              </div>
+           </div>
+         </div>
+       );
+    }
+
+    // Default Fallback
+    return <DashboardModule onDrillDown={onDrillDown} company={company} location={location} />;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+         <h1 className="text-2xl font-playfair text-white flex items-center gap-3"><LayoutDashboard className="w-6 h-6 text-gold"/> My Dashboard <span className="text-[10px] bg-gold text-black font-mono font-bold px-2 py-0.5 rounded tracking-widest">ROLE-BASED V2</span></h1>
+      </div>
+      <div className="animate-in fade-in duration-500">
+         {renderContent()}
+      </div>
+    </div>
+  );
+};
 
 const OperationalDashboardsModule = ({ onDrillDown, onNavigate, userRole, company, location }) => {
   const [activeTab, setActiveTab] = useState('Overview');
@@ -2120,6 +1911,50 @@ const AICommandCenterModule = ({ onDrillDown, userRole }) => {
 const CopilotModal = ({ isOpen, onClose, onDrillDown }) => {
   const [query, setQuery] = useState("");
   
+  const allInv = getGlobalInventory();
+  
+  const searchResults = useMemo(() => {
+    if (query.length <= 2) return [];
+    const q = query.toLowerCase();
+    
+    const custMatches = CUSTOMERS.filter(c => 
+      c.name.toLowerCase().includes(q) || c.phone.includes(q) || c.email.toLowerCase().includes(q)
+    ).map(c => ({
+      id: c.id,
+      title: c.name,
+      subtitle: `${c.phone} • ${c.email}`,
+      type: 'Customer',
+      icon: User,
+      action: () => onDrillDown('CRM_Customer360', { customerId: c.id, customerName: c.name })
+    }));
+
+    const invMatches = allInv.filter(i => 
+      i.stock.toLowerCase().includes(q) || i.vin.toLowerCase().includes(q) || i.model.toLowerCase().includes(q) || (i.brandName && i.brandName.toLowerCase().includes(q))
+    ).map(i => ({
+      id: i.id,
+      title: `${i.year} ${i.brandName} ${i.model}`,
+      subtitle: `Stock: ${i.stock} • VIN: ${i.vin}`,
+      type: 'Inventory',
+      icon: Bike,
+      badge: i.status === 'Active' ? null : i.status,
+      action: () => onDrillDown('Inventory', { stock: i.stock, make: i.brandName, unit: `${i.year} ${i.model}` })
+    }));
+
+    const roMatches = SERVICE_ORDERS.filter(ro => 
+      ro.id.toLowerCase().includes(q) || (ro.unitDesc && ro.unitDesc.toLowerCase().includes(q))
+    ).map(ro => ({
+      id: ro.id,
+      title: `Repair Order: ${ro.id}`,
+      subtitle: `Unit: ${ro.unitDesc} • Status: ${ro.status}`,
+      type: 'Service RO',
+      icon: Wrench,
+      action: () => onDrillDown('Action', { name: "Inspect Service RO", message: `Opening Repair Order ${ro.id}` })
+    }));
+
+    // Limit to prevent huge DOM slowdowns on vague searches like "a"
+    return [...custMatches, ...invMatches, ...roMatches].slice(0, 10);
+  }, [query, allInv]);
+
   if (!isOpen) return null;
 
   return (
@@ -2130,7 +1965,7 @@ const CopilotModal = ({ isOpen, onClose, onDrillDown }) => {
           <input 
             autoFocus 
             type="text" 
-            placeholder="Ask Copilot or search globally... (e.g. 'Show Yamaha aged over 90 days')" 
+            placeholder="Search Customers, VINs, Stock#, or ask Copilot..." 
             className="w-full bg-transparent text-white text-lg focus:outline-none placeholder-text-muted"
             value={query}
             onChange={e => setQuery(e.target.value)}
@@ -2139,21 +1974,38 @@ const CopilotModal = ({ isOpen, onClose, onDrillDown }) => {
         </div>
         
         {query.length > 2 ? (
-          <div className="p-4 bg-charcoal">
-            <h3 className="text-xs font-mono text-text-muted uppercase tracking-wider mb-3">AI Copilot Analysis</h3>
-            <div className="p-4 bg-panel border-l-4 border-gold rounded text-white text-sm leading-relaxed mb-4">
-              <strong>Copilot:</strong> I found 4 Yamaha units currently on floorplan that have aged past 90 days. Their combined floorplan carry cost is currently $48/day. I recommend moving 2 of them to the Slidell location based on their faster turn rate for these specific models.
-            </div>
-            <h3 className="text-xs font-mono text-text-muted uppercase tracking-wider mb-3">Matching Results</h3>
+          <div className="p-4 bg-charcoal max-h-[60vh] overflow-y-auto hidden-scrollbar">
+            {query.toLowerCase().includes('aged') && query.toLowerCase().includes('yamaha') && (
+              <div className="mb-6">
+                <h3 className="text-xs font-mono text-text-muted uppercase tracking-wider mb-3">AI Copilot Analysis</h3>
+                <div className="p-4 bg-panel border-l-4 border-gold rounded text-white text-sm leading-relaxed">
+                  <strong>Copilot:</strong> I found 4 Yamaha units currently on floorplan that have aged past 90 days. Their combined floorplan carry cost is currently $48/day. I recommend moving 2 of them to the Slidell location based on their faster turn rate for these specific models.
+                </div>
+              </div>
+            )}
+            
+            <h3 className="text-xs font-mono text-text-muted uppercase tracking-wider mb-3">Global Records ({searchResults.length})</h3>
             <div className="space-y-2">
-              <div onClick={() => {onClose(); onDrillDown('Inventory', {stock: 'H8842', make: 'Yamaha'});}} className="p-3 bg-panel hover:bg-black border border-border rounded cursor-pointer transition-colors flex justify-between items-center text-sm text-white">
-                <div className="flex items-center gap-3"><Bike className="w-4 h-4 text-gold"/> <span>2024 Yamaha YZF-R1</span></div>
-                <StatusChip status="Aged" color="text-red" />
-              </div>
-              <div onClick={() => {onClose(); onDrillDown('Inventory', {stock: 'T9021', make: 'Yamaha'});}} className="p-3 bg-panel hover:bg-black border border-border rounded cursor-pointer transition-colors flex justify-between items-center text-sm text-white">
-                <div className="flex items-center gap-3"><Bike className="w-4 h-4 text-gold"/> <span>2024 Yamaha MT-09</span></div>
-                <StatusChip status="Aged" color="text-red" />
-              </div>
+              {searchResults.length === 0 ? (
+                <div className="text-sm text-text-muted italic p-4 text-center border border-dashed border-border rounded">No records match '{query}' across Dealership data.</div>
+              ) : (
+                searchResults.map(res => {
+                  const Icon = res.icon;
+                  return (
+                    <div key={res.id} onClick={() => { onClose(); res.action(); }} className="p-3 bg-panel hover:bg-black border border-border rounded cursor-pointer transition-colors flex justify-between items-center text-white group">
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-3 mb-1">
+                          <div className="bg-charcoal p-1.5 rounded border border-border group-hover:border-gold transition-colors"><Icon className="w-4 h-4 text-gold"/></div>
+                          <span className="font-bold text-sm tracking-wide">{res.title}</span>
+                          <span className="text-[10px] uppercase font-mono bg-black text-text-muted px-2 py-0.5 border border-border rounded">{res.type}</span>
+                        </div>
+                        <div className="text-xs text-text-muted font-mono tracking-wide pl-[2.25rem]">{res.subtitle}</div>
+                      </div>
+                      {res.badge && <StatusChip status={res.badge} color="text-amber-500" />}
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         ) : (
@@ -2569,6 +2421,71 @@ const OmniCommandModule = ({ onDrillDown, initialContext }) => {
   );
 };
 
+const CommunicationFlyout = ({ isOpen, onClose, incomingCall, onDrillDown }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed top-16 right-0 bottom-0 w-80 bg-charcoal border-l border-border shadow-2xl z-40 flex flex-col animate-in slide-in-from-right duration-200">
+       <div className="p-4 border-b border-border flex justify-between items-center bg-black/50">
+          <div className="flex items-center gap-2">
+             <Phone className="w-5 h-5 text-gold" />
+             <span className="font-bold text-white tracking-widest font-mono text-sm uppercase">Live Connect</span>
+          </div>
+          <button onClick={onClose} className="text-text-muted hover:text-white"><X className="w-5 h-5" /></button>
+       </div>
+       
+       <div className="p-4 flex-1 overflow-y-auto">
+          {incomingCall ? (
+             <div className="bg-panel rounded-lg border border-green-500/50 p-4 mb-4 shadow-[0_0_15px_rgba(34,197,94,0.15)] relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-green-500 to-transparent animate-pulse"></div>
+                <div className="flex justify-between items-start mb-3">
+                   <div className="flex items-center gap-2 text-green-500 font-bold text-xs uppercase tracking-widest">
+                      <PhoneCall className="w-4 h-4 animate-bounce" /> INCOMING CALL
+                   </div>
+                   <span className="text-xs text-text-muted">00:14</span>
+                </div>
+                <div className="text-xl font-bold text-white mb-1">{incomingCall.name}</div>
+                <div className="text-sm font-mono text-text-muted mb-4">{incomingCall.phone}</div>
+                
+                <div className="grid grid-cols-2 gap-2">
+                   <button className="bg-green-600 hover:bg-green-500 text-white py-2 rounded text-xs font-bold transition-colors" onClick={() => onDrillDown('Action', { name: "Answer Call", message: "Connecting SIP trunk to agent..." })}>Answer</button>
+                   <button className="bg-red-900/40 border border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white py-2 rounded text-xs font-bold transition-colors" onClick={() => { onClose(); }}>Decline</button>
+                </div>
+                
+                <div className="mt-4 pt-4 border-t border-border/50">
+                   <button className="w-full bg-black hover:bg-gold/10 hover:text-gold border border-border text-white py-2 rounded text-xs font-bold flex items-center justify-center gap-2 transition-colors" onClick={() => { onClose(); onDrillDown('CRM_Customer360', { customerId: incomingCall.id || 'CUST-2' }); }}>
+                      <User className="w-4 h-4" /> Open CRM Profile
+                   </button>
+                </div>
+             </div>
+          ) : (
+             <div className="text-center py-8 text-text-muted">
+                <Phone className="w-8 h-8 mx-auto mb-3 opacity-20" />
+                <div className="text-sm font-mono uppercase tracking-widest">No Active Calls</div>
+             </div>
+          )}
+          
+          <h3 className="text-xs font-mono text-text-muted uppercase tracking-wider mb-3 mt-6">Recent Activity</h3>
+          <div className="space-y-2">
+             <div className="bg-black p-3 rounded border border-border cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Action', {name: "View SMS", message: "Opening SMS thread with Mike T."})}>
+                <div className="flex justify-between items-center mb-1">
+                   <div className="flex items-center gap-2 text-white text-sm font-bold"><MessageSquareText className="w-3 h-3 text-gold" /> Mike T.</div>
+                   <div className="text-[10px] text-text-muted">10m ago</div>
+                </div>
+                <div className="text-xs text-text-muted truncate">"Is that R1 still available at Slidell?"</div>
+             </div>
+             <div className="bg-black p-3 rounded border border-border cursor-pointer hover:border-gold transition-colors" onClick={() => onDrillDown('Action', {name: "View Call", message: "Opening Call log for 504-555-8821"})}>
+                <div className="flex justify-between items-center mb-1">
+                   <div className="flex items-center gap-2 text-white text-sm font-bold"><PhoneForwarded className="w-3 h-3 text-gold" /> Outbound Call</div>
+                   <div className="text-[10px] text-text-muted">1h ago</div>
+                </div>
+                <div className="text-xs text-text-muted truncate">Follow-up with Finance on Honda deal</div>
+             </div>
+          </div>
+       </div>
+    </div>
+  );
+};
+
 /* --- APP SHELL --- */
 const App = () => {
   const [currentUser, setCurrentUser] = useState(null);
@@ -2579,6 +2496,23 @@ const App = () => {
   const [activeCompany, setActiveCompany] = useState("Friendly Powersports");
   const [activeLocation, setActiveLocation] = useState("All Locations");
   const [activeReportContext, setActiveReportContext] = useState(null);
+  const [enableDashboardV2, setEnableDashboardV2] = useState(false);
+  const [isCommsOpen, setIsCommsOpen] = useState(false);
+  const [incomingCall, setIncomingCall] = useState(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIncomingCall({
+        name: "Sarah Miller",
+        phone: "(504) 555-0192",
+        status: "Ringing...",
+        type: "Sales Inquiry",
+        id: "CUST-2"
+      });
+      setIsCommsOpen(true);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleNavigate = (tabName, context = null) => {
      setActiveTabContext(context);
@@ -2641,7 +2575,6 @@ const App = () => {
     { name: "Inventory", icon: Package },
     { name: "Used Bikes / UBD", icon: Bike },
     { name: "Service & Parts", icon: Wrench },
-    { name: "Clock In / HR", icon: Clock },
     { name: "Payroll", icon: DollarSign },
     { name: "Marketing", icon: Megaphone },
     { name: "OEM Incentives", icon: Award },
@@ -2649,6 +2582,7 @@ const App = () => {
     { name: "Accounting & GL", icon: Briefcase },
     { name: "Employee Hub", icon: UsersIcon },
     { name: "Settings", icon: Settings },
+    { name: "Clock In / HR", icon: Clock },
   ];
 
   return (
@@ -2748,6 +2682,14 @@ const App = () => {
             <span className="hover:text-white cursor-pointer" onClick={() => setActiveTab('Dashboard')}>Dashboard</span>
             <ChevronRight className="w-4 h-4 mx-2" />
             <span className="text-gold">{activeTab}</span>
+            {activeTab === 'Dashboard' && (
+               <button 
+                  onClick={() => setEnableDashboardV2(!enableDashboardV2)}
+                  className="ml-4 text-[10px] bg-panel hover:bg-black border border-border text-text-muted hover:text-white px-2 py-1 rounded transition-colors uppercase tracking-widest"
+               >
+                  {enableDashboardV2 ? 'Switch to V1 (Legacy Tabs)' : 'Try Dashboard V2'}
+               </button>
+            )}
           </div>
           
           <div className="flex items-center space-x-6">
@@ -2756,7 +2698,27 @@ const App = () => {
               <input type="text" placeholder="Search Copilot... (Cmd+K)" className="bg-black border border-border rounded-full py-1.5 pl-9 pr-4 text-sm w-64 focus:outline-none focus:border-gold text-white cursor-pointer" readOnly />
             </div>
             
-            <div className="relative cursor-pointer group" onClick={() => handleDrillDown('Action', { name: "Notification Center", count: 7, priority: "High" })}>
+            <div className="relative cursor-pointer group" onClick={() => setIsCommsOpen(true)}>
+              <Phone className="w-5 h-5 text-text-muted group-hover:text-white transition-colors" />
+              {incomingCall && (
+                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex flex-col items-center justify-center text-[10px] font-bold text-white border border-charcoal animate-pulse">
+                   1
+                 </div>
+              )}
+            </div>
+            
+            <div className="relative cursor-pointer group" onClick={() => handleDrillDown('Notification', { 
+              name: "System Notifications", 
+              items: [
+                 { id: 1, title: "New Web Lead", desc: "John Doe interested in 2024 YZF-R7.", time: "2 min ago", unread: true, priority: "High", icon: "user" },
+                 { id: 2, title: "Margin Alert", desc: "Unit #40552 priced below floorplan threshold.", time: "14 min ago", unread: true, priority: "Action", icon: "alert" },
+                 { id: 3, title: "Approval Granted", desc: "Manager approved trade-in override for Deal #492.", time: "1 hr ago", unread: true, priority: "Normal", icon: "check" },
+                 { id: 4, title: "AI Strategy Inject", desc: "New budget reallocation strategy generated.", time: "2 hrs ago", unread: false, priority: "Normal", icon: "brain" },
+                 { id: 5, title: "Payroll Exception", desc: "Lars Ulrich missed clock-out.", time: "4 hrs ago", unread: false, priority: "Action", icon: "clock" },
+                 { id: 6, title: "Part Arrived", desc: "Special order stator received for RO# 4402.", time: "1 day ago", unread: false, priority: "Normal", icon: "wrench" },
+                 { id: 7, title: "Global Sync", desc: "CycleTrader inventory synchronized.", time: "1 day ago", unread: false, priority: "Low", icon: "sync" }
+              ] 
+            })}>
               <Bell className="w-5 h-5 text-text-muted group-hover:text-white transition-colors" />
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 rounded-full flex flex-col items-center justify-center text-[10px] font-bold text-white border border-charcoal">
                 7
@@ -2775,7 +2737,8 @@ const App = () => {
         {/* SCROLLABLE MODULE RENDERER */}
         <div className="flex-1 overflow-y-auto p-6 bg-black">
           <div className="max-w-[1600px] mx-auto">
-            {activeTab === "Dashboard" && <OperationalDashboardsModule onNavigate={handleNavigate} onDrillDown={handleDrillDown} userRole={currentUser?.role} company={activeCompany} location={activeLocation} />}
+            {activeTab === "Dashboard" && enableDashboardV2 && <DashboardV2Module onNavigate={handleNavigate} onDrillDown={handleDrillDown} userRole={currentUser?.role} company={activeCompany} location={activeLocation} />}
+            {activeTab === "Dashboard" && !enableDashboardV2 && <OperationalDashboardsModule onNavigate={handleNavigate} onDrillDown={handleDrillDown} userRole={currentUser?.role} company={activeCompany} location={activeLocation} />}
             {activeTab === "Sales" && <SalesModule onNavigate={handleNavigate} onDrillDown={handleDrillDown} />}
             {activeTab === "Omni-Command" && <OmniCommandModule onDrillDown={handleDrillDown} initialContext={activeTabContext} />}
             {activeTab === "Customer CRM" && <CustomerCRMModule onDrillDown={handleDrillDown} user={currentUser} />}
@@ -2807,6 +2770,7 @@ const App = () => {
       </div>
       {drillDown && <DrillDownModal item={drillDown} userRole={currentUser?.systemRole || 'Owner'} onClose={() => setDrillDown(null)} onDrillDown={handleDrillDown} />}
       <CopilotModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onDrillDown={handleDrillDown} />
+      <CommunicationFlyout isOpen={isCommsOpen} onClose={() => setIsCommsOpen(false)} incomingCall={incomingCall} onDrillDown={handleDrillDown} />
     </div>
   );
 };

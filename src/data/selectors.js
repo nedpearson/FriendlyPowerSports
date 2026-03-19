@@ -212,16 +212,26 @@ export const getInventoryAging = () => {
 };
 
 export const getReconPipeline = () => {
-  const reconUnits = INVENTORY.filter(i => i.status === 'Recon' || i.status === 'Inspection');
-  return reconUnits.map(u => ({
-    id: u.id,
-    unit: `${u.year} ${u.model}`,
-    cost: u.cost,
-    spend: u.reconSpend,
-    days: u.ageDays,
-    tech: EMPLOYEES.find(e => e.id === 'EMP-7').name, // Mock tech
-    status: u.status === 'Inspection' ? 'Inspection' : 'Recon In Progress'
-  }));
+  const reconUnits = INVENTORY.filter(i => ['Inspection', 'Recon', 'Detail', 'Frontline'].includes(i.status));
+  return reconUnits.map(u => {
+    const mockTech = EMPLOYEES.find(e => e.id === (u.techId || 'EMP-7'))?.name || 'Unassigned';
+    
+    let displayStatus = 'Recon In Progress';
+    if (u.status === 'Inspection') displayStatus = 'Inspection';
+    if (u.status === 'Detail') displayStatus = 'Detail & Photos';
+    if (u.status === 'Frontline') displayStatus = 'Frontline Ready';
+
+    return {
+      id: u.id,
+      unit: `${u.year} ${u.model}`,
+      cost: u.cost || 0,
+      spend: u.reconSpend || 0,
+      days: u.ageDays || 0,
+      tech: mockTech,
+      status: displayStatus,
+      vin: u.vin
+    };
+  });
 };
 
 export const getROBoard = () => {

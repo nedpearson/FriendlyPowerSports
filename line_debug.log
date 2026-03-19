@@ -1,0 +1,25 @@
+                                    <div className="flex justify-between">
+                                       <span className="text-text-muted">Processing Time</span>
+                                       <span className="text-white">142.06ms</span>
+                                    </div>
+                                 </div>
+                              </div>
+                           );
+                        })()}
+                     </div>
+                    </div>
+                 </div>
+               )}
+            </div>
+            <div className="flex gap-4 pt-4 border-t border-border mt-4">
+                <button className="bg-panel hover:bg-black text-white px-6 py-3 rounded text-sm transition-colors flex-1 shadow font-bold border border-border" onClick={onClose}>Acknowledge & Close</button>
+                {!actionProcessing && (
+                  <button className="bg-gold hover:bg-gold-light text-black px-6 py-3 rounded text-sm font-bold flex-1 shadow animate-in fade-in" onClick={() => {
+                     const logs = [
+                        { title: 'AUTH_VERIFY', subtitle: `Validate ${userRole} token`, value: '200 OK' },
+                        { title: 'API_DISPATCH', subtitle: `Route to ${String(item.data.name || item.data.title || 'SYS_ACTION').slice(0, 15)}...`, value: '202 ACCEPT' },
+                        { title: 'DB_COMMIT', subtitle: 'Transaction row locked', value: '1 ROW' }
+                     ];
+                     if (item.data.records && Array.isArray(item.data.records) && item.data.records.length > 0) {
+                        logs.push(...item.data.records.slice(0,5).map(r => ({ title: 'PAYLOAD_MAP', subtitle: r.title || r.name || 'Data Row', value: 'PARSED' })));
+                     } else if (item.data.records && Object.keys(item.data.records).length > 0) {

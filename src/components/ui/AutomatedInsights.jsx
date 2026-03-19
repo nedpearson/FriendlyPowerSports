@@ -37,7 +37,7 @@ const AutomatedInsightsInner = ({ insights, onDrillDown }) => {
             <div className="absolute top-0 left-0 w-1 h-full bg-gold opacity-0 group-hover:opacity-100 transition-opacity"></div>
             {getIcon(insight.type)}
             <div>
-              <p className="text-sm text-text leading-relaxed pointer-events-none">
+              <p className="text-sm text-text leading-relaxed">
                 {insight.message}
               </p>
               {insight.actionText && (

@@ -29,6 +29,8 @@ export const GenericDataTable = ({
   const [showColChooser, setShowColChooser] = useState(false);
   const [showSavedViews, setShowSavedViews] = useState(false);
   const [savedViews, setSavedViews] = useState({});
+  const [groupByCol, setGroupByCol] = useState('');
+  const [collapsedGroups, setCollapsedGroups] = useState(new Set());
   const colChooserRef = useRef(null);
   const savedViewsRef = useRef(null);
 
@@ -145,6 +147,36 @@ export const GenericDataTable = ({
 
     return result;
   }, [data, searchTerm, sortCol, sortDir, serverSide, activeFilters]);
+
+  // Grouping logic
+  const groupedData = useMemo(() => {
+    if (!groupByCol) return null;
+    const groupsMap = {};
+    filteredAndSortedData.forEach(row => {
+       const key = String(row[groupByCol] || 'Uncategorized');
+       if (!groupsMap[key]) groupsMap[key] = { key, rows: [], aggregates: {} };
+       groupsMap[key].rows.push(row);
+       
+       columns.forEach(col => {
+          if (col.key !== groupByCol) {
+             const val = row[col.key];
+             const strVal = String(val || '');
+             if (strVal.match(/[\d]/)) {
+                // Ignore IDs or Dates safely if they look like numbers?
+                // Basic check: if it has -, /, or too many letters, don't sum it unless it's a currency
+                if (!strVal.includes('-') || strVal.includes('$')) {
+                    const numVal = Number(strVal.replace(/[^0-9.-]+/g,""));
+                    if (!isNaN(numVal) && numVal < 999999999) { // Avoid summing massive IDs/phones
+                       groupsMap[key].aggregates[col.key] = (groupsMap[key].aggregates[col.key] || 0) + numVal;
+                       if (strVal.includes('$')) groupsMap[key].aggregates[`${col.key}_isCcy`] = true;
+                    }
+                }
+             }
+          }
+       });
+    });
+    return Object.values(groupsMap).sort((a,b) => a.key.localeCompare(b.key));
+  }, [filteredAndSortedData, groupByCol, columns]);
 
   const handleSort = (colKey) => {
     if (sortCol === colKey) {
@@ -342,6 +374,22 @@ export const GenericDataTable = ({
                  >Clear All</button>
               </div>
            )}
+
+           {/* Group By Selector */}
+           <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
+              <span className="text-[10px] uppercase text-text-muted font-mono tracking-widest">Group By:</span>
+              <select 
+                 className="bg-black border border-border text-xs text-white px-2 py-1.5 rounded outline-none focus:border-gold cursor-pointer"
+                 value={groupByCol}
+                 onChange={(e) => {
+                    setGroupByCol(e.target.value);
+                    setCollapsedGroups(new Set());
+                 }}
+              >
+                 <option value="">None (Flat List)</option>
+                 {columns.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+              </select>
+           </div>
         </div>
       )}
       {/* Responsive Table Wrapper */}
@@ -363,48 +411,110 @@ export const GenericDataTable = ({
              </tr>
           </thead>
           <tbody className="divide-y divide-border/50 bg-charcoal text-sm">
-             {paginatedData.map((row, i) => {
-               // Quick Actions heuristic: Look for canonical IDs
-               const rowIds = Object.values(row).filter(val => typeof val === 'string' && (val.startsWith('DL-') || val.startsWith('STK-') || val.startsWith('EMP-') || val.startsWith('INV-')));
-               const primaryId = rowIds.length > 0 ? rowIds[0] : null;
+             {groupByCol && groupedData ? (
+                 groupedData.map((group, gIdx) => (
+                    <React.Fragment key={gIdx}>
+                       {/* Header Row */}
+                       <tr className="bg-black border-y border-border/80 cursor-pointer hover:bg-black/80 transition-colors" onClick={() => {
+                          const next = new Set(collapsedGroups);
+                          if (next.has(group.key)) next.delete(group.key);
+                          else next.add(group.key);
+                          setCollapsedGroups(next);
+                       }}>
+                          <td colSpan={visibleColumns.length + (onRowAction ? 1 : 0)} className="px-4 py-3 font-bold text-gold">
+                             <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                   {collapsedGroups.has(group.key) ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                   <span className="uppercase tracking-widest text-xs font-mono">{columns.find(c=>c.key===groupByCol)?.label || groupByCol}: <span className="text-white">{group.key}</span></span>
+                                   <span className="text-[10px] bg-panel px-2 py-0.5 rounded border border-border text-text-muted ml-2">{group.rows.length} items</span>
+                                </div>
+                             </div>
+                          </td>
+                       </tr>
+                       {/* Aggregation Row (Always visible underneath header) */}
+                       <tr className="bg-charcoal/80 text-[10px] font-mono text-green-500 border-b border-border/50">
+                          {visibleColumns.map((col, idx) => {
+                             if (idx === 0) return <td key={col.key} className="px-4 py-2 text-text-muted italic border-r border-border/30">Aggregates &rarr;</td>;
+                             if (col.key === groupByCol) return <td key={col.key}></td>;
+                             const agg = group.aggregates[col.key];
+                             if (agg !== undefined) {
+                                return <td key={col.key} className="px-4 py-2 font-bold">{group.aggregates[`${col.key}_isCcy`] ? '$' : ''}{agg.toLocaleString(undefined, {minimumFractionDigits:group.aggregates[`${col.key}_isCcy`]?2:0, maximumFractionDigits:2})}</td>;
+                             }
+                             return <td key={col.key}></td>;
+                          })}
+                          {onRowAction && <td></td>}
+                       </tr>
+                       {/* Data Rows */}
+                       {!collapsedGroups.has(group.key) && group.rows.map((row, i) => {
+                          const rowIds = Object.values(row).filter(val => typeof val === 'string' && (val.startsWith('DL-') || val.startsWith('STK-') || val.startsWith('EMP-') || val.startsWith('INV-') || val.startsWith('OPP-')));
+                          const primaryId = rowIds.length > 0 ? rowIds[0] : null;
+                          return (
+                             <tr key={i} onClick={() => onRowAction && primaryId && onRowAction(primaryId, row)} className={`hover:bg-panel transition-colors ${onRowAction ? 'cursor-pointer' : ''} ${i % 2 === 0 ? 'bg-charcoal/30' : ''}`}>
+                                {visibleColumns.map(col => {
+                                   let val = row[col.key];
+                                   if (typeof val === 'object' && val !== null) val = '[Object]';
+                                   let customClasses = "";
+                                   if (formattingRules[col.key]) customClasses = formattingRules[col.key](val, row) || "";
+                                   return (
+                                     <td key={col.key} className={`px-4 py-3 max-w-[200px] truncate ${customClasses}`} title={val}>
+                                       {val === null || val === undefined ? <span className="text-text-dim text-xs">-</span> : String(val)}
+                                     </td>
+                                   )
+                                })}
+                                {onRowAction && (
+                                   <td className="px-4 py-2 text-center no-print align-middle">
+                                      {primaryId ? <button onClick={(e) => { e.stopPropagation(); onRowAction(primaryId, row); }} className="text-text-muted hover:text-gold transition-colors p-1"><ChevronRight className="w-4 h-4" /></button> : <span className="text-text-dim">-</span>}
+                                   </td>
+                                )}
+                             </tr>
+                          );
+                       })}
+                    </React.Fragment>
+                 ))
+             ) : (
+                paginatedData.map((row, i) => {
+                  // Quick Actions heuristic: Look for canonical IDs
+                  const rowIds = Object.values(row).filter(val => typeof val === 'string' && (val.startsWith('DL-') || val.startsWith('STK-') || val.startsWith('EMP-') || val.startsWith('INV-') || val.startsWith('OPP-')));
+                  const primaryId = rowIds.length > 0 ? rowIds[0] : null;
 
-               return (
-                 <tr key={i} onClick={() => onRowAction && primaryId && onRowAction(primaryId, row)} className={`hover:bg-panel transition-colors ${onRowAction ? 'cursor-pointer' : ''} ${i % 2 === 0 ? 'bg-charcoal/30' : ''}`}>
-                   {visibleColumns.map(col => {
-                      let val = row[col.key];
-                      if (typeof val === 'object' && val !== null) {
-                         val = '[Object]'; // Simplify complex embedded schemas for table view
-                      }
-                      
-                      // Inject conditional formatting rules dynamically
-                      let customClasses = "";
-                      if (formattingRules[col.key]) {
-                         customClasses = formattingRules[col.key](val, row) || "";
-                      }
+                  return (
+                    <tr key={i} onClick={() => onRowAction && primaryId && onRowAction(primaryId, row)} className={`hover:bg-panel transition-colors ${onRowAction ? 'cursor-pointer' : ''} ${i % 2 === 0 ? 'bg-charcoal/30' : ''}`}>
+                      {visibleColumns.map(col => {
+                         let val = row[col.key];
+                         if (typeof val === 'object' && val !== null) {
+                            val = '[Object]'; // Simplify complex embedded schemas for table view
+                         }
+                         
+                         // Inject conditional formatting rules dynamically
+                         let customClasses = "";
+                         if (formattingRules[col.key]) {
+                            customClasses = formattingRules[col.key](val, row) || "";
+                         }
 
-                      return (
-                        <td key={col.key} className={`px-4 py-3 max-w-[200px] truncate ${customClasses}`} title={val}>
-                          {val === null || val === undefined ? <span className="text-text-dim text-xs">-</span> : String(val)}
-                        </td>
-                      )
-                   })}
-                   {onRowAction && (
-                      <td className="px-4 py-2 text-center no-print align-middle">
-                         {primaryId ? (
-                             <button 
-                               onClick={() => onRowAction(primaryId, row)}
-                               className="text-text-muted hover:text-gold transition-colors p-1"
-                               title={`Inspect ${primaryId}`}
-                             >
-                                <ChevronRight className="w-4 h-4" />
-                             </button>
-                         ) : <span className="text-text-dim">-</span>}
-                      </td>
-                   )}
-                 </tr>
-               );
-             })}
-            {paginatedData.length === 0 && (
+                         return (
+                           <td key={col.key} className={`px-4 py-3 max-w-[200px] truncate ${customClasses}`} title={val}>
+                             {val === null || val === undefined ? <span className="text-text-dim text-xs">-</span> : String(val)}
+                           </td>
+                         )
+                      })}
+                      {onRowAction && (
+                         <td className="px-4 py-2 text-center no-print align-middle">
+                            {primaryId ? (
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); onRowAction(primaryId, row); }}
+                                  className="text-text-muted hover:text-gold transition-colors p-1"
+                                  title={`Inspect ${primaryId}`}
+                                >
+                                   <ChevronRight className="w-4 h-4" />
+                                </button>
+                            ) : <span className="text-text-dim">-</span>}
+                         </td>
+                      )}
+                    </tr>
+                  );
+                })
+             )}
+            {((!groupByCol && paginatedData.length === 0) || (groupByCol && (!groupedData || groupedData.length === 0))) && (
                <tr>
                  <td colSpan={visibleColumns.length + (onRowAction ? 1 : 0)} className="px-4 py-8 text-center text-text-muted text-sm font-mono bg-charcoal">
                     No matching records found.
